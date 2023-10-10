@@ -137,12 +137,17 @@ function Serve(config: Config) {
     const url = new URL(request.url);
     const route = routes.flat().find((route) => {
       return route.path === url.pathname;
-    })
+    });
     if (!route) {
       return new Response("Not Found", { status: 404 });
     }
     
-    return route.target.prototype[route.methodName]();
+    const routeFunc = route.target.prototype[route.methodName]();
+    if(routeFunc instanceof Response) {
+        return routeFunc;
+    }
+
+    return new Response(routeFunc);
   };
   (config.bunServeOptions as any as ServeOptions).port = config.port || 3000;
   (config.bunServeOptions as any as ServeOptions).hostname =
@@ -173,8 +178,6 @@ class TestController2 {
 }
 
 const config: Config = {
-  port: 3000,
-  hostname: "0.0.0.0",
   controllers: [TestController, TestController2],
 };
 

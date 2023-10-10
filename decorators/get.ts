@@ -11,5 +11,7 @@ export default function Get(path?: string) {
 
     Reflect.defineMetadata("path", routePath, target, key);
     Reflect.defineMetadata("method", "get", target, key);
-  };
+
+    // TODO: type check for (ctx: Context) => Response | Promise<Response>
+};
 }
