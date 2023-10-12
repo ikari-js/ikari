@@ -2,37 +2,37 @@
 
 ### Decorators
 
-- Controller
-- Post
-- Get
-- Put
-- Delete
-- Patch
-- Options
-- Head
-- Trace
-- All
+- [x] Controller
+- [x] Post
+- [x] Get
+- [ ] Put
+- [ ] Delete
+- [ ] Patch
+- [ ] Options // just return headers
+- [ ] Head // just return headers
+- [ ] Trace ???
+- [ ] All
 
 ### Built-in Middlewares
 
-- BasicAuth
-- Cache
-- Cors
-- Csrf
-- Gzip
-- Limiter
-- Logger
-- Monitor
-- Proxy
-- Redirect
-- JWT
-- Prometheus
-- RequestID
-- Static
-- Security
-- Session
-- Documentor
-- Validator
+- [ ] BasicAuth
+- [ ] Cache
+- [ ] Cors
+- [ ] Csrf
+- [ ] Gzip
+- [ ] Limiter
+- [ ] Logger
+- [ ] Monitor
+- [ ] Proxy
+- [ ] Redirect
+- [ ] JWT
+- [ ] Prometheus
+- [ ] RequestID
+- [ ] Static
+- [ ] Security
+- [ ] Session
+- [ ] Documentor
+- [ ] Validator
 
 ### Sample Config File
 
