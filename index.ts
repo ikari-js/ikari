@@ -96,18 +96,23 @@ export function Serve(config: Config) {
     throw new Error("Controllers must be an array");
   }
 
+  // TODO: check if all controllers are valid Controller type
   if (config.controllers.length === 0) {
     throw new Error("Controllers must not be empty");
   }
 
+  // TODO: check if all controllers are valid Controller type
   if (config.groups && !Array.isArray(config.groups)) {
     throw new Error("Groups must be an array");
   }
 
+  // TODO: check if all controllers are valid Middleware type
   if (config.middlewares && !Array.isArray(config.middlewares)) {
     throw new Error("Middlewares must be an array");
   }
 
+  // TODO: check if logger is valid Logger type
+  // TODO: default logger
   if (config.logger && typeof config.logger !== "object") {
     throw new Error("Logger must be an object");
   }
@@ -142,8 +147,7 @@ export function Serve(config: Config) {
     routesMap.set(route.path + ":" + route.method, route);
   });
 
-  console.log(routesMap);
-  // TODO: default logger
+
 
   (config.bunServeOptions as any as BunServe).fetch = async function (
     this: Server,
