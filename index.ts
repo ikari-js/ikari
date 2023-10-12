@@ -12,8 +12,7 @@ import {
   WebSocketServeOptions,
   Serve as BunServe,
 } from "bun";
-import Controller from "./decorators/controller";
-import Get from "./decorators/get";
+import Controller from "./src/decorators/controller";
 
 export interface Controller {}
 
@@ -23,13 +22,15 @@ export interface Group {
   controllers: Controller[];
 }
 
-export type Contex = {
+export type Context = {
   req: Request;
   res: Response;
 };
 
+export type Handler = (ctx: Context) => Promise<Response>;
+
 export interface Middleware {
-  use: (ctx: Contex, next: () => void) => void;
+  use: (ctx: Context, next: () => void) => void;
   ignoreOn?: string[];
 }
 
@@ -38,7 +39,10 @@ export interface Logger {
   error: (msg: string) => void;
 }
 
-export type ErrorHandler = (ctx: Contex) => void;
+export type ErrorHandler = (
+  ctx: Context,
+  err: Error
+) => Response | Promise<Response>;
 
 type BunServeOptions<T> = T extends {
   fetch(
@@ -71,11 +75,19 @@ export type Config<WebSocketDataType = undefined> = {
   bunServeOptions?: BunServeOptions<Serve<WebSocketDataType>>;
 };
 
-function defaultErrorHandler(ctx: Contex) {
-  // return error as json
+function defaultErrorHandler(_: Context, err: Error) {
+  const errorRes = {
+    message: err?.message,
+    stack: err?.stack,
+    cause: err?.cause,
+  };
+  return new Response(JSON.stringify(errorRes), {
+    status: 500,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
-function Serve(config: Config) {
+export function Serve(config: Config) {
   if (typeof config !== "object") {
     throw new Error("Config must be an Config object");
   }
@@ -84,9 +96,9 @@ function Serve(config: Config) {
     throw new Error("Controllers must be an array");
   }
 
-  //   if (config.controllers.length === 0) {
-  //     throw new Error("Controllers must not be empty");
-  //   }
+  if (config.controllers.length === 0) {
+    throw new Error("Controllers must not be empty");
+  }
 
   if (config.groups && !Array.isArray(config.groups)) {
     throw new Error("Groups must be an array");
@@ -116,10 +128,6 @@ function Serve(config: Config) {
     throw new Error("BunServeOptions must be an object");
   }
 
-  if (!config.errorHandler) {
-    config.errorHandler = defaultErrorHandler;
-  }
-
   if (!config.bunServeOptions) {
     config.bunServeOptions = {};
   }
@@ -128,57 +136,55 @@ function Serve(config: Config) {
     return Reflect.getMetadata("routes", (controller as any).prototype);
   });
 
-  // default logger
-  (config.bunServeOptions as any as BunServe).fetch = function async(
+  const routesMap = new Map<string, any>();
+
+  routes.flat().forEach((route) => {
+    routesMap.set(route.path + ":" + route.method, route);
+  });
+
+  console.log(routesMap);
+  // TODO: default logger
+
+  (config.bunServeOptions as any as BunServe).fetch = async function (
     this: Server,
     request: Request,
     server: Server
-  ): Response | Promise<Response> {
+  ): Promise<Response> {
     const url = new URL(request.url);
-    const route = routes.flat().find((route) => {
-      return route.path === url.pathname;
-    });
+
+    const route = routesMap.get(
+      url.pathname + ":" + request.method.toLowerCase()
+    );
     if (!route) {
       return new Response("Not Found", { status: 404 });
     }
-    
-    const routeFunc = route.target.prototype[route.methodName]();
-    if(routeFunc instanceof Response) {
-        return routeFunc;
+
+    const ctx: Context = {
+      req: request,
+      res: new Response(),
+    };
+
+    let handleResult;
+    try {
+      handleResult = await route.target.prototype[route.methodName](ctx);
+    } catch (err) {
+      // TODO: default error handler do it better
+      if (!config.errorHandler) {
+        config.errorHandler = defaultErrorHandler;
+      }
+      return config.errorHandler(ctx, err as Error);
     }
 
-    return new Response(routeFunc);
+    if (handleResult instanceof Response) {
+      return handleResult;
+    }
+
+    return new Response(handleResult);
   };
-  (config.bunServeOptions as any as ServeOptions).port = config.port || 3000;
+  (config.bunServeOptions as any as ServeOptions).port = config.port || 3001;
   (config.bunServeOptions as any as ServeOptions).hostname =
     config.hostname || "0.0.0.0";
 
+  // TODO use return value of bun.serve to close server and stuff
   Bun.serve(config.bunServeOptions as any as BunServe);
 }
-
-@Controller("/test")
-class TestController {
-  @Get()
-  public async test() {
-    return new Response("Hello World");
-  }
-}
-
-@Controller("/test2")
-class TestController2 {
-  @Get()
-  public async test2() {
-    return new Response("Hello World2");
-  }
-
-  @Get()
-  public async test3() {
-    return new Response("Hello World3");
-  }
-}
-
-const config: Config = {
-  controllers: [TestController, TestController2],
-};
-
-Serve(config);
