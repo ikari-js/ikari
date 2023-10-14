@@ -1,4 +1,5 @@
-import { Config, Context, Serve } from ".";
+import { Serve } from ".";
+import { Config } from "./src/type";
 import Controller from "./src/decorators/controller";
 import Get from "./src/decorators/get";
 import Post from "./src/decorators/post";
