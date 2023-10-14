@@ -1,8 +1,9 @@
 import "reflect-metadata";
 
 import { Server, ServeOptions, Serve as BunServe } from "bun";
-import { Config, Context } from "./src/type";
+import { Config, Controller, Route } from "./src/type";
 import { ServeValidator } from "./src/serve-validator";
+import { Context } from "./context";
 
 function defaultErrorHandler(_: Context, err: Error) {
   const errorRes = {
@@ -19,15 +20,19 @@ function defaultErrorHandler(_: Context, err: Error) {
 export function Serve(config: Config) {
   new ServeValidator(config).validate();
 
+  if (!config.errorHandler) {
+    config.errorHandler = defaultErrorHandler;
+  }
+
   if (!config.bunServeOptions) {
     config.bunServeOptions = {};
   }
 
-  const routes = config.controllers.map((controller) => {
-    return Reflect.getMetadata("routes", (controller as any).prototype);
+  const routes = config.controllers.map((controller: Controller) => {
+    return Reflect.getMetadata("routes", controller.prototype) as Route[];
   });
 
-  const routesMap = new Map<string, any>();
+  const routesMap = new Map<string, Route>();
 
   routes.flat().forEach((route) => {
     routesMap.set(route.path + ":" + route.method, route);
@@ -47,27 +52,20 @@ export function Serve(config: Config) {
       return new Response("Not Found", { status: 404 });
     }
 
-    const ctx: Context = {
-      req: request,
-      res: new Response(),
-    };
+    const ctx = new Context(server, request);
 
     let handleResult;
     try {
-      handleResult = await route.target.prototype[route.methodName](ctx);
+      handleResult = await route.target.prototype[route.fnName](ctx);
     } catch (err) {
-      // TODO: default error handler do it better
-      if (!config.errorHandler) {
-        config.errorHandler = defaultErrorHandler;
-      }
-      return config.errorHandler(ctx, err as Error);
+      return config.errorHandler!(ctx, err as Error);
     }
 
     if (handleResult instanceof Response) {
       return handleResult;
     }
-
-    return new Response(handleResult);
+    // TODO 
+    return ctx.res;
   };
   (config.bunServeOptions as any as ServeOptions).port = config.port || 3001;
   (config.bunServeOptions as any as ServeOptions).hostname =
