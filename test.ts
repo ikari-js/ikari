@@ -1,18 +1,28 @@
-import { Serve } from ".";
 import { Config } from "./src/type";
 import Controller from "./src/decorators/controller";
 import Get from "./src/decorators/get";
+import Middleware from "./src/decorators/middleware";
 import Post from "./src/decorators/post";
+import {  Serve } from ".";
+import { Context } from "./context";
+
+function testMiddleware(ctx: Context): Context {
+  console.log("testMiddleware");
+
+  return ctx;
+}
 
 @Controller("/test")
 class TestController2 {
   @Get("/test")
-  public async test1(ctx: any) {
-    return new Response("Hello World Get");
+  public async test1(ctx: Context) {
+    console.log(ctx.query("id"));
+    console.log(ctx.ip());
+
   }
 
   @Post("/test")
-  public async test2(ctx: any) {
+  public async test2(ctx: any): Promise<Response> {
     return new Response("Hello World Post");
   }
 
