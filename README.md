@@ -12,6 +12,7 @@
 - [ ] Head // just return headers
 - [ ] Trace ???
 - [ ] All
+- [x] Middleware
 
 ### Built-in Middlewares
 
