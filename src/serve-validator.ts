@@ -12,8 +12,7 @@ export class ServeValidator {
       .checkErrorHandlerIsFunction()
       .checkPortIsNumber()
       .checkHostnameIsString()
-      .checkBunServeOptionsIsObject()
-      .validate();
+      .checkBunServeOptionsIsObject();
   }
 
   private checkConfigIsObject() {
