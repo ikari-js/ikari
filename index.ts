@@ -16,7 +16,7 @@ function defaultErrorHandler(_: Context, err: Error) {
 }
 
 export function Serve(config: Config) {
-  if (typeof config !== "object") {
+  if (config && typeof config !== "object") {
     throw new Error("Config must be an Config object");
   }
 
