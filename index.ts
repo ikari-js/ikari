@@ -2,6 +2,7 @@ import "reflect-metadata";
 
 import { Server, ServeOptions, Serve as BunServe } from "bun";
 import { Config, Context } from "./src/type";
+import { ServeValidator } from "./src/serve-validator";
 
 function defaultErrorHandler(_: Context, err: Error) {
   const errorRes = {
@@ -16,50 +17,7 @@ function defaultErrorHandler(_: Context, err: Error) {
 }
 
 export function Serve(config: Config) {
-  if (config && typeof config !== "object") {
-    throw new Error("Config must be an Config object");
-  }
-
-  if (!Array.isArray(config.controllers)) {
-    throw new Error("Controllers must be an array");
-  }
-
-  // TODO: check if all controllers are valid Controller type
-  if (config.controllers.length === 0) {
-    throw new Error("Controllers must not be empty");
-  }
-
-  // TODO: check if all controllers are valid Controller type
-  if (config.groups && !Array.isArray(config.groups)) {
-    throw new Error("Groups must be an array");
-  }
-
-  // TODO: check if all controllers are valid Middleware type
-  if (config.middlewares && !Array.isArray(config.middlewares)) {
-    throw new Error("Middlewares must be an array");
-  }
-
-  // TODO: check if logger is valid Logger type
-  // TODO: default logger
-  if (config.logger && typeof config.logger !== "object") {
-    throw new Error("Logger must be an object");
-  }
-
-  if (config.errorHandler && typeof config.errorHandler !== "function") {
-    throw new Error("ErrorHandler must be a function");
-  }
-
-  if (config.port && typeof config.port !== "number") {
-    throw new Error("Port must be a number");
-  }
-
-  if (config.hostname && typeof config.hostname !== "string") {
-    throw new Error("Hostname must be a string");
-  }
-
-  if (config.bunServeOptions && typeof config.bunServeOptions !== "object") {
-    throw new Error("BunServeOptions must be an object");
-  }
+  new ServeValidator(config).validate();
 
   if (!config.bunServeOptions) {
     config.bunServeOptions = {};
