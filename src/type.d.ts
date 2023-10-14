@@ -11,7 +11,14 @@ import {
   Serve as BunServe,
 } from "bun";
 
-export interface Controller {}
+export type Controller = {} & { prototype: any };
+
+export type Route = {
+  path: string;
+  fnName: string;
+  method: string;
+  target: Controller;
+};
 
 export interface Group {
   prefix: string;
@@ -19,12 +26,9 @@ export interface Group {
   controllers: Controller[];
 }
 
-export type Context = {
-  req: Request;
-  res: Response;
-};
 
-export type Handler = (ctx: Context) => Promise<Response>;
+
+export type Handler = (ctx: Context) => Response | Promise<Response>;
 
 export interface Middleware {
   use: (ctx: Context, next: () => void) => void;
