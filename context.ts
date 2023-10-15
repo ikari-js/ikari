@@ -2,12 +2,18 @@ import { Server } from "bun";
 
 export class Context {
   private parsedUrl: URL;
+  /**
+   * Locals makes it possible to pass any values under keys scoped to the request
+   * and therefore available to all following routes that match the request.
+   */
+  public locals: Local;
   constructor(
     private server: Server,
     public req: Request,
     public res: Response = new Response()
   ) {
     this.parsedUrl = new URL(req.url);
+    this.locals = new Local();
   }
 
   /**
@@ -30,7 +36,7 @@ export class Context {
    * ```ts
    *  const remoteAddr = ctx.ip();
    *  const xForwardedFor = ctx.ip("x-forwarded-for");
-   *  
+   *
    * ```
    */
   public ip(ipHeader?: string): string | null {
@@ -61,15 +67,67 @@ export class Context {
     );
   }
 
+  /**
+   * Returns the value of the Authorization header.
+   *
+   * @example
+   * ```ts
+   *  const authorization = ctx.authorization();
+   * ```
+   */
+  public authorization(): string | null {
+    return this.req.headers.get("Authorization");
+  }
+
   // TODO
   // params
-  // baseUrl
-  // form values
-  // locals
-  // redirect
+  // baseUrl ?? => req.url
+  // form values ?? => req.formData()
+  // redirect ??
   // save file
   // status | nocontent
   // json
   // isFromLocal
   // auth
+}
+
+class Local {
+  /**
+   * Creates a new Local object.
+   */
+  constructor(private locals = new Map<string, any>()) {}
+
+  /**
+   * Returns the value of the specified local variable.
+   * @example
+   * ```ts
+   * const localValue = ctx.locals.get("local_value");
+   * console.log(localValue);
+   * ```
+   */
+  public get<T>(key: string): T | undefined {
+    return this.locals.get(key);
+  }
+
+  /**
+   * Sets the value of the specified local variable.
+   * @example
+   * ```ts
+   * ctx.locals.set("local_value", "test");
+   * ```
+   */
+  public set<T>(key: string, value: T): void {
+    this.locals.set(key, value);
+  }
+
+  /**
+   * Returns true if the specified local variable exists.
+   * @example
+   * ```ts
+   * const hasLocalValue = ctx.locals.has("local_value");
+   * console.log(hasLocalValue);
+   */
+  public has(key: string): boolean {
+    return this.locals.has(key);
+  }
 }
