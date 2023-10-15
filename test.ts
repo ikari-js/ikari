@@ -14,14 +14,11 @@ function testMiddleware(ctx: Context): Context {
 
 @Controller("/test")
 class TestController2 {
-  @Post("/test")
+  @Post("/test/:id/wqe/:id2")
   public async test1(ctx: Context) {
-    console.log(ctx.query("id"));
-    console.log(ctx.ip());
-    console.log(ctx.cookie("asd"));
-    ctx.locals.set("asd", [1, 2, 3])
-    console.log(ctx.locals.get<Array<Number>>("asd"));
-    console.log(ctx.queries());
+    console.log("hit test1")
+    console.log(ctx.param("id"));
+    console.log(ctx.param("id2"));
   }
 
   @Post("/test2")

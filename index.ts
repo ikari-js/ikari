@@ -33,9 +33,18 @@ export function Serve(config: Config) {
   });
 
   const routesMap = new Map<string, Route>();
+  const routesWithParamsMap = new Map<string, Route>();
 
   routes.flat().forEach((route) => {
-    routesMap.set(route.path + ":" + route.method, route);
+    if (!route.pathHasParams) {
+      // TODO: may need to change method separator
+      routesMap.set(route.path + ":" + route.method, route);
+    } else {
+      route.path = route.path.replace(/:([^\/]+)/g, (_, paramName) => {
+        return `(?<${paramName}>[^\/]+)`;
+      });
+      routesWithParamsMap.set(route.path + ":" + route.method, route);
+    }
   });
 
   (config.bunServeOptions as any as BunServe).fetch = async function (
@@ -44,15 +53,33 @@ export function Serve(config: Config) {
     server: Server
   ): Promise<Response> {
     const url = new URL(request.url);
+    const ctx = new Context(server, request);
 
-    const route = routesMap.get(
+    let route = routesMap.get(
       url.pathname + ":" + request.method.toLowerCase()
     );
+
+    if (!route) {
+      for (const [path, r] of routesWithParamsMap) {
+        const methodFromPath = path.slice(path.lastIndexOf(":") + 1);
+        const pathWithoutMethod = path.slice(0, path.lastIndexOf(":"));
+
+        const match = url.pathname.match(pathWithoutMethod);
+       
+        if (match && methodFromPath === request.method.toLowerCase()) {
+          const params = match.groups;
+          if(params)
+            ctx.setParams(params!);
+          route = r;
+          break;
+        }
+      }
+    }
+
     if (!route) {
       return new Response("Not Found", { status: 404 });
     }
 
-    const ctx = new Context(server, request);
 
     let handleResult;
     try {
@@ -64,7 +91,7 @@ export function Serve(config: Config) {
     if (handleResult instanceof Response) {
       return handleResult;
     }
-    // TODO 
+    // TODO
     return ctx.res;
   };
   (config.bunServeOptions as any as ServeOptions).port = config.port || 3001;
