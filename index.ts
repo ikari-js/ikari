@@ -116,14 +116,14 @@ export function Serve(config: Config) {
   return new Proxy(bunServe, {
     get(target, prop, receiver) {
       if (bannedProps.includes(prop as string)) {
-        throw new Error(`Cannot access ${prop.toString()} from bunServe`);
+        throw new Error(`Cannot access ${prop.toString()}`);
       }
 
       return Reflect.get(target, prop, receiver);
     },
     set(target, prop, value, receiver) {
       if (bannedProps.includes(prop as string)) {
-        throw new Error(`Cannot set ${prop.toString()} from bunServe`);
+        throw new Error(`Cannot set ${prop.toString()}`);
       }
 
       return Reflect.set(target, prop, value, receiver);
