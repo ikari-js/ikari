@@ -7,10 +7,11 @@ export class Context {
    * and therefore available to all following routes that match the request.
    */
   public locals: Local;
-  private params: { [key: string]: string } = {};
+
   constructor(
     private server: Server,
     public req: Request,
+    private params: { [key: string]: string } = {},
     public res: Response = new Response()
   ) {
     this.parsedUrl = new URL(req.url);
@@ -22,8 +23,9 @@ export class Context {
    *
    * @example
    * ```ts
+   *  // route: /test?id=1
    *  const id = ctx.query("id");
-   *  console.log(id);
+   *  console.log(id); // 1
    * ```
    * ```
    */
@@ -35,8 +37,10 @@ export class Context {
    * Returns the all query parameters.
    * @example
    * ```ts
+   * // route: /test?id=1&name=test
    * const queries = ctx.queries();
    * console.log(queries);
+   * // URLSearchParams { 'id' => '1', 'name' => 'test' }
    * ```
    */
   public queries(): URLSearchParams {
@@ -94,24 +98,54 @@ export class Context {
   }
 
   /**
-   * Returns the value of the specified param.
+   * Returns the value of the specified path parameter.
    * @example
    * ```ts
+   * // route: /test/:id => /test/1
    * const id = ctx.param("id");
-   * console.log(id);
+   * console.log(id); // 1
+   * ```
    */
   public param(name: string): string | null {
     return this.params[name] || null;
   }
 
-  // TODO private
-  public setParams(params: { [key: string]: string }) {
-    this.params = params;
+  /**
+   * Returns the parsed body of the request. If the Content-Type is application/json it will return a JSON object, if the Content-Type is application/x-www-form-urlencoded it will return a URLSearchParams object, if the Content-Type is multipart/form-data it will return a FormData object, otherwise it will return a string.
+   * @example
+   * ```ts
+   * const body = await ctx.body();
+   * console.log(body);
+   * ```
+   */
+  public body(): Promise<any | FormData | string> {
+    if (this.req.method === "GET" || this.req.method === "HEAD")
+      return Promise.resolve(null);
+
+    if (!this.req.body) return Promise.resolve(null);
+
+    const contentType =
+      this.req.headers.get("Content-Type")?.split(";")[0] || "";
+    switch (contentType) {
+      case "application/json":
+        return this.req.json()
+      case "application/x-www-form-urlencoded":
+        return this.req.formData();
+      case "multipart/form-data":
+        return this.req.formData();
+      case "text/plain":
+        return this.req.text();
+      case "application/octet-stream":
+        return this.req.arrayBuffer();
+    }
+
+    return Promise.resolve(null);
   }
+
   // TODO
-  // params
+  // params ?? 
   // baseUrl ?? => req.url
-  // form values ?? => req.formData()
+  
   // redirect ??
   // save file
   // status | nocontent
@@ -123,6 +157,7 @@ class Local {
   /**
    * Creates a new Local object.
    */
+  // TODO: weakmap
   constructor(private locals = new Map<string, any>()) {}
 
   /**
