@@ -7,6 +7,7 @@ export class Context {
    * and therefore available to all following routes that match the request.
    */
   public locals: Local;
+  private _body: any | FormData | string | null = null;
 
   constructor(
     private server: Server,
@@ -118,34 +119,47 @@ export class Context {
    * console.log(body);
    * ```
    */
-  public body(): Promise<any | FormData | string> {
+  public async body(): Promise<any | FormData | string> {
     if (this.req.method === "GET" || this.req.method === "HEAD")
       return Promise.resolve(null);
 
     if (!this.req.body) return Promise.resolve(null);
+    if (this._body) return Promise.resolve(this._body);
+    let body = null;
 
     const contentType =
       this.req.headers.get("Content-Type")?.split(";")[0] || "";
+
     switch (contentType) {
       case "application/json":
-        return this.req.json()
+        body = await this.req.json();
+        this._body = body;
+        break;
       case "application/x-www-form-urlencoded":
-        return this.req.formData();
+        body = await this.req.formData();
+        this._body = body;
+        break;
       case "multipart/form-data":
-        return this.req.formData();
+        body = await this.req.formData();
+        this._body = body;
+        break;
       case "text/plain":
-        return this.req.text();
+        body = await this.req.text();
+        this._body = body;
+        break;
       case "application/octet-stream":
-        return this.req.arrayBuffer();
+        body = await this.req.arrayBuffer();
+        this._body = body;
+        break;
     }
 
-    return Promise.resolve(null);
+    return Promise.resolve(this._body);
   }
 
   // TODO
-  // params ?? 
+  // params ??
   // baseUrl ?? => req.url
-  
+
   // redirect ??
   // save file
   // status | nocontent
