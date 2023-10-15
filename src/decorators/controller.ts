@@ -10,11 +10,13 @@ export default function Controller(prefix: string) {
       const routes = Reflect.getMetadata("routes", target.prototype) as Route[] || [];
       Reflect.defineMetadata("routes", routes, target.prototype);
       if (path) {
+        const pathHasParams = routePath.includes(":");
         routes.push({
           path: routePath,
           fnName: value,
           method,
           target,
+          pathHasParams,
         });
       }
     }

@@ -18,6 +18,7 @@ export type Route = {
   fnName: string;
   method: string;
   target: Controller;
+  pathHasParams: boolean;
 };
 
 export interface Group {
