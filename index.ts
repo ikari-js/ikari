@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
 import { Server, ServeOptions, Serve as BunServe } from "bun";
-import { Config, Controller, Route } from "./src/type";
+import { Config, Controller, KyteServer, Route } from "./src/type";
 import { ServeValidator } from "./src/serve-validator";
 import { Context } from "./context";
 
@@ -16,6 +16,15 @@ function defaultErrorHandler(_: Context, err: Error) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+const bannedProps = [
+  "fetch",
+  "publish",
+  "reload",
+  "upgrade",
+  "requestIP",
+  "pendingWebsockets",
+];
 
 export function Serve(config: Config) {
   new ServeValidator(config).validate();
@@ -101,6 +110,23 @@ export function Serve(config: Config) {
     config.hostname || "0.0.0.0";
 
   // TODO use return value of bun.serve to close server and stuff
-  // 
-  const s = Bun.serve(config.bunServeOptions as any as BunServe);
+  //
+  const bunServe = Bun.serve(config.bunServeOptions as any as BunServe);
+
+  return new Proxy(bunServe, {
+    get(target, prop, receiver) {
+      if (bannedProps.includes(prop as string)) {
+        throw new Error(`Cannot access ${prop.toString()} from bunServe`);
+      }
+
+      return Reflect.get(target, prop, receiver);
+    },
+    set(target, prop, value, receiver) {
+      if (bannedProps.includes(prop as string)) {
+        throw new Error(`Cannot set ${prop.toString()} from bunServe`);
+      }
+
+      return Reflect.set(target, prop, value, receiver);
+    },
+  }) as KyteServer;
 }

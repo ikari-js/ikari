@@ -27,8 +27,6 @@ export interface Group {
   controllers: Controller[];
 }
 
-
-
 export type Handler = (ctx: Context) => Response | Promise<Response>;
 
 export interface Middleware {
@@ -76,3 +74,8 @@ export type Config<WebSocketDataType = undefined> = {
   hostname?: string;
   bunServeOptions?: BunServeOptions<Serve<WebSocketDataType>>;
 };
+
+export type KyteServer = Omit<
+  Server,
+  "fetch" | "publish" | "reload" | "upgrade" | "requestIP" | "pendingWebSockets"
+>;
