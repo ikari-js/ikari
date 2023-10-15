@@ -7,6 +7,7 @@ export class Context {
    * and therefore available to all following routes that match the request.
    */
   public locals: Local;
+  private params: { [key: string]: string } = {};
   constructor(
     private server: Server,
     public req: Request,
@@ -92,6 +93,21 @@ export class Context {
     return this.req.headers.get("Authorization");
   }
 
+  /**
+   * Returns the value of the specified param.
+   * @example
+   * ```ts
+   * const id = ctx.param("id");
+   * console.log(id);
+   */
+  public param(name: string): string | null {
+    return this.params[name] || null;
+  }
+
+  // TODO private
+  public setParams(params: { [key: string]: string }) {
+    this.params = params;
+  }
   // TODO
   // params
   // baseUrl ?? => req.url
