@@ -24,9 +24,22 @@ export class Context {
    *  const id = ctx.query("id");
    *  console.log(id);
    * ```
+   * ```
    */
   public query(query: string): string | null {
     return this.parsedUrl.searchParams.get(query);
+  }
+
+  /**
+   * Returns the all query parameters.
+   * @example
+   * ```ts
+   * const queries = ctx.queries();
+   * console.log(queries);
+   * ```
+   */
+  public queries(): URLSearchParams {
+    return this.parsedUrl.searchParams;
   }
 
   /**
@@ -58,7 +71,7 @@ export class Context {
    */
   public cookie(name: string): string | null {
     return (
-      // TODO maybe we can set cookies in init and then use this.req.cookies.get(name)
+      // TODO maybe we can set cookies in init and then use this.req.cookies.get(name) for better performance
       this.req.headers
         .get("Cookie")
         ?.split(";")
@@ -87,8 +100,7 @@ export class Context {
   // save file
   // status | nocontent
   // json
-  // isFromLocal
-  // auth
+  // get and set headers ??
 }
 
 class Local {

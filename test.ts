@@ -21,6 +21,7 @@ class TestController2 {
     console.log(ctx.cookie("asd"));
     ctx.locals.set("asd", [1, 2, 3])
     console.log(ctx.locals.get<Array<Number>>("asd"));
+    console.log(ctx.queries());
   }
 
   @Post("/test2")
