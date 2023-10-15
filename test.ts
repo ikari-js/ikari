@@ -18,7 +18,7 @@ class TestController2 {
   public async test1(ctx: Context) {
     console.log(ctx.query("id"));
     console.log(ctx.ip());
-
+    console.log(ctx.cookie("asd"));
   }
 
   @Post("/test")
