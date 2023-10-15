@@ -53,7 +53,7 @@ export function Serve(config: Config) {
     server: Server
   ): Promise<Response> {
     const url = new URL(request.url);
-    const ctx = new Context(server, request);
+    let ctx = new Context(server, request);
 
     let route = routesMap.get(
       url.pathname + ":" + request.method.toLowerCase()
@@ -61,15 +61,17 @@ export function Serve(config: Config) {
 
     if (!route) {
       for (const [path, r] of routesWithParamsMap) {
+        // TODO: need to improve this with more path param separators
         const methodFromPath = path.slice(path.lastIndexOf(":") + 1);
         const pathWithoutMethod = path.slice(0, path.lastIndexOf(":"));
 
         const match = url.pathname.match(pathWithoutMethod);
-       
+
         if (match && methodFromPath === request.method.toLowerCase()) {
           const params = match.groups;
-          if(params)
-            ctx.setParams(params!);
+          if (params)
+            // TODO: maybe we can do it without reassigning ctx
+            ctx = new Context(server, request, params);
           route = r;
           break;
         }
@@ -79,7 +81,6 @@ export function Serve(config: Config) {
     if (!route) {
       return new Response("Not Found", { status: 404 });
     }
-
 
     let handleResult;
     try {
@@ -94,10 +95,12 @@ export function Serve(config: Config) {
     // TODO
     return ctx.res;
   };
+
   (config.bunServeOptions as any as ServeOptions).port = config.port || 3001;
   (config.bunServeOptions as any as ServeOptions).hostname =
     config.hostname || "0.0.0.0";
 
   // TODO use return value of bun.serve to close server and stuff
-  Bun.serve(config.bunServeOptions as any as BunServe);
+  // 
+  const s = Bun.serve(config.bunServeOptions as any as BunServe);
 }

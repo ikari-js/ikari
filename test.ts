@@ -19,6 +19,8 @@ class TestController2 {
     console.log("hit test1");
     console.log(ctx.param("id"));
     console.log(ctx.param("id2"));
+    const body = await ctx.body();
+    console.log(body.data);
   }
 
   @Post("/test2")
