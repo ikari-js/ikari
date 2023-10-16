@@ -8,6 +8,7 @@ export class Context {
    */
   public locals: Local;
   private _body: any | FormData | string | null = null;
+  private _headers: Record<string, string> = {};
 
   constructor(
     private server: Server,
@@ -160,11 +161,107 @@ export class Context {
   // params ??
   // baseUrl ?? => req.url
 
-  // redirect ??
+  /**
+   * Redirects to the specified URL with the specified status code. If the status code is not specified it will default to 302.
+   * @example
+   * ```ts
+   * ctx.redirect("/test-route");
+   * ctx.redirect("https://google.com");
+   *
+   * ```
+   */
+  public redirect(url: string, status: number = 302): void {
+    if (status < 300 || status > 399) {
+      throw new Error("Invalid redirect status code");
+    }
+    let href = url;
+    if (!url.startsWith("http")) {
+      href = new URL(url, this.req.url).href;
+    } else {
+      href = url;
+    }
+
+    this.res = new Response(null, {
+      status,
+      headers: {
+        location: href,
+      },
+    });
+  }
+
+  /**
+   * Sets the status code of the Response object.
+   * @example
+   * ```ts
+   * ctx.status(204);
+   * ```
+   */
+  public status(status: number): Context {
+    if (status < 100 || status > 599) {
+      throw new Error("Invalid status code");
+    }
+
+    this.res = new Response(null, {
+      status: status,
+      headers: this._headers,
+    });
+
+    return this;
+  }
+
+  /**
+   * Sets the JSON data to the Response object.
+   * @example
+   * ```ts
+   * ctx.json({ data: "Hello World" });
+   * ```
+   */
+  public json(data: any, status?: number): Context {
+    // TODO adition control for data
+    let jsonData;
+    if (typeof data === "string") {
+      jsonData = data;
+    } else {
+      jsonData = JSON.stringify(data);
+    }
+
+    this.res = new Response(jsonData, {
+      status: status || this.res.status,
+      headers: {
+        ...this._headers,
+        "Content-Type": "application/json",
+      },
+    });
+
+    return this;
+  }
+
+  /**
+   * Sets the specified header with the specified value to the Response object.
+   * @example
+   * ```ts
+   * ctx.set("x-request-id", "123");
+   * ```
+   */
+  public set(key: string, value: string): Context {
+    if (!key || !value) throw new Error("Invalid key or value");
+    this._headers[key] = value;
+    return this;
+  }
+
+  /**
+   * Returns the value of the specified header from the Request object.
+   * @example
+   * ```ts
+   * const xRequestId = ctx.get("x-request-id");
+   * console.log(xRequestId);
+   * ```
+   */
+  public get(key: string): string | null {
+    return this.req.headers.get(key);
+  }
+
   // save file
-  // status | nocontent
-  // json
-  // get and set headers ??
 }
 
 class Local {
