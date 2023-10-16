@@ -23,16 +23,17 @@ class TestController2 {
     console.log(body.data);
   }
 
-  @Post("/test2")
+  @Get("/test2")
   public async test2(ctx: any): Promise<Response> {
     return new Response("Hello World Post");
   }
 
-  @Get()
-  public async test3() {
-    await test();
-
-    return new Response("Hello World3");
+  @Get("/redirect")
+  public test3(ctx: Context): Context {
+    return ctx
+      .set("x-test", "x-test")
+      .status(204)
+      .json({ data: "Hello World" });
   }
 }
 
@@ -47,6 +48,7 @@ async function test() {
 
 const config: Config = {
   controllers: [TestController2],
+  port: 3000,
 };
 
 Serve(config);
