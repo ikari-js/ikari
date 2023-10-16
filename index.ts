@@ -105,7 +105,7 @@ export function Serve(config: Config) {
     return ctx.res;
   };
 
-  (config.bunServeOptions as any as ServeOptions).port = config.port || 3001;
+  (config.bunServeOptions as any as ServeOptions).port = config.port || 3000;
   (config.bunServeOptions as any as ServeOptions).hostname =
     config.hostname || "0.0.0.0";
 
