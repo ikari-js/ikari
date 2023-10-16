@@ -27,10 +27,10 @@ export interface Group {
   controllers: Controller[];
 }
 
-export type Handler = (ctx: Context) => Response | Promise<Response>;
+export type Handler = (ctx: Context) => Context | Response | Promise<Response>;
 
 export interface Middleware {
-  use: (ctx: Context, next: () => void) => void;
+  use: Handler;
   ignoreOn?: string[];
 }
 
