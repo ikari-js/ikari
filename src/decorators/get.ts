@@ -20,8 +20,7 @@ export default function Get(path?: string) {
 
     const returnType = Reflect.getMetadata("design:returntype", target, key);
 
-    // We have to recheck PromiseResponse.
-    const validReturnTypes = [Context, Response, Promise<Response>];
+    const validReturnTypes = [Context, Response, Promise];
 
     if (returnType && !validReturnTypes.includes(returnType))
       throw new Error(
