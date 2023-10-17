@@ -28,7 +28,6 @@ export default function Get(path?: string) {
         "Get decorator can only be used on functions with return type of string"
       );
 
-    console.log(Reflect.getMetadata("design:returntype", target, key));
     const routePath = path ? createPath(path) : createPath(key);
     Reflect.defineMetadata("path", routePath, target, key);
     Reflect.defineMetadata("method", "get", target, key);
