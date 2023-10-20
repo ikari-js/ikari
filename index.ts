@@ -120,9 +120,11 @@ export function Serve(config: Config) {
 
     if (handleResult instanceof Response) {
       return handleResult;
+    } else if (handleResult instanceof Context) {
+      return ctx.res;
+    } else {
+      throw new Error("Invalid return type");
     }
-    // TODO
-    return ctx.res;
   };
 
   (config.bunServeOptions as any as ServeOptions).port = config.port || 3000;
