@@ -1,15 +1,16 @@
 import { Config } from "./src/type";
-import Controller from "./src/decorators/controller";
-import Get from "./src/decorators/get";
-import Middleware from "./src/decorators/middleware";
-import Post from "./src/decorators/post";
 import { Serve } from ".";
 import { Context } from "./context";
+import { Before, Controller, Get, Post,After } from "./src/decorators";
+function testMiddlewareBefore(ctx: Context): void {
+  console.log("testMiddleware before");
+}
 
-function testMiddleware(ctx: Context): Context {
-  console.log("testMiddleware");
+function testMiddlewareAfter(ctx: Context): Context {
+  console.log("testMiddleware after");
+  console.log(ctx.getResHeader("x-test"));
 
-  return ctx;
+  return ctx.status(200).json({ data: "Hello World After" });
 }
 
 @Controller("/test")
@@ -24,16 +25,17 @@ class TestController2 {
   }
 
   @Get("/test2")
-  public async test2(ctx: any): Promise<Response> {
+  public async test2(ctx: Context): Promise<Response> {
     return new Response("Hello World Post");
   }
 
+  @Before(testMiddlewareBefore)
+  @After(testMiddlewareAfter)
   @Get("/redirect")
   public test3(ctx: Context): Context {
-    return ctx
-      .set("x-test", "x-test")
-      .status(204)
-      .json({ data: "Hello World" });
+    ctx.set("x-test", "x-test");
+    console.log("hit test3");
+    return ctx.status(204).json({ data: "Hello World" });
   }
 }
 
