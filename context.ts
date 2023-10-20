@@ -238,15 +238,16 @@ export class Context {
 
   /**
    * Sets the specified header with the specified value to the Response object.
+   * @param key
+   * @param value
    * @example
    * ```ts
    * ctx.set("x-request-id", "123");
    * ```
    */
-  public set(key: string, value: string): Context {
+  public set(key: string, value: string): void {
     if (!key || !value) throw new Error("Invalid key or value");
     this._headers[key] = value;
-    return this;
   }
 
   /**
@@ -260,6 +261,20 @@ export class Context {
   public get(key: string): string | null {
     return this.req.headers.get(key);
   }
+
+  /**
+   * Returns the value of the specified header from the Response object.
+   * @param key
+   * @example
+   * ```ts
+   * const xCorrelationId = ctx.getResHeader("x-correlation-id");
+   * console.log(xCorrelationId);
+   */
+  public getResHeader(key: string): string | null {
+    return this.res.headers.get(key);
+  }
+
+
 
   // save file
 }
