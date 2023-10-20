@@ -1,6 +1,6 @@
 import { createPath } from "../utils";
 
-export default function Post(path?: string) {
+export function Post(path?: string) {
   return function (target: any, key: string) {
     if (!target) return;
     if (!target[key]) return;
