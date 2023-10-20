@@ -93,9 +93,29 @@ export function Serve(config: Config) {
 
     let handleResult;
     try {
+      if (route.before) {
+        for (const handler of route.before) {
+          // TODO may need to return response and stop execution rate-limiting, auth, etc
+          const result = await handler(ctx);
+          if (result instanceof Response) {
+            return result;
+          }
+        }
+      }
+
       handleResult = await route.target.prototype[route.fnName](ctx);
     } catch (err) {
       return config.errorHandler!(ctx, err as Error);
+    }
+
+    if (route.after) {
+      for (const handler of route.after) {
+        // TODO may need to return response and stop execution
+        const result = await handler(ctx);
+        if (result instanceof Response) {
+          return result;
+        }
+      }
     }
 
     if (handleResult instanceof Response) {
