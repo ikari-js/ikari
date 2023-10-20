@@ -19,6 +19,8 @@ export type Route = {
   method: string;
   target: Controller;
   pathHasParams: boolean;
+  before?: Handler[];
+  after?: Handler[];
 };
 
 export interface Group {
@@ -27,7 +29,10 @@ export interface Group {
   controllers: Controller[];
 }
 
-export type Handler = (ctx: Context) => Context | Response | Promise<Response>;
+export type Handler = (
+  ctx: Context
+) => Context | Promise<Context> | Response | Promise<Response> | void;
+export type MiddlewareHandler = (ctx: Context) => void | Promise<void>;
 
 export interface Middleware {
   use: Handler;
