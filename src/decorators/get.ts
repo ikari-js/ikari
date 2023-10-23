@@ -8,8 +8,8 @@ export function Get(path?: string) {
     if (typeof target[key] !== "function")
       throw new Error("Get decorator can only be used on functions");
     const paramTypes = Reflect.getMetadata("design:paramtypes", target, key);
-
-    if (paramTypes.length > 1)
+    // TODO fix this now we have context and next in the params
+    if (paramTypes.length > 2)
       throw new Error(
         "Get decorator can only be used on functions with one parameter"
       );
