@@ -12,8 +12,9 @@ export function Controller(prefix: string) {
       Reflect.defineMetadata("routes", routes, target.prototype);
       if (path) {
         const pathHasParams = routePath.includes(":");
+        
         routes.push({
-          path: routePath,
+          path: routePath.startsWith("//") ? routePath.replace("//", "/") : routePath,
           fnName: value,
           method,
           target,
