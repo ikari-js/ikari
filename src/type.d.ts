@@ -29,9 +29,8 @@ export interface Group {
   controllers: Controller[];
 }
 
-export type Handler = (
-  ctx: Context
-) => Context | Promise<Context> | Response | Promise<Response> | void;
+export type Next = () => void;
+export type Handler = (ctx: Context, next: Next) => void | Promise<void>;
 export type MiddlewareHandler = (ctx: Context) => void | Promise<void>;
 
 export interface Middleware {
