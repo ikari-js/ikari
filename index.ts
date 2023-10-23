@@ -60,13 +60,14 @@ export function Serve(config: Config) {
     this: Server,
     request: Request,
     server: Server
-  ): Promise<Response> {
+  ) {
     const url = new URL(request.url);
     let ctx = new Context(server, request);
 
     let route = routesMap.get(
       url.pathname + ":" + request.method.toLowerCase()
     );
+
 
     if (!route) {
       for (const [path, r] of routesWithParamsMap) {
@@ -91,48 +92,61 @@ export function Serve(config: Config) {
       return new Response("Not Found", { status: 404 });
     }
 
-    let handleResult;
     try {
       if (route.before) {
-        for (const handler of route.before) {
-          // TODO may need to return response and stop execution rate-limiting, auth, etc
-          const result = await handler(ctx);
-          if (result instanceof Response) {
-            return result;
+        for (const beforeHandler of route.before) {
+          let nextCalled = false;
+          const thisNext = () => {
+            nextCalled = true;
+          };
+
+          await beforeHandler(ctx, thisNext);
+          if (!nextCalled) {
+            return ctx.res;
           }
         }
       }
 
-      handleResult = await route.target.prototype[route.fnName](ctx);
+      let routeNextCalled = false;
+      const routeNext = () => {
+        routeNextCalled = true;
+      };
+      await route.target.prototype[route.fnName](ctx, routeNext);
+      if (!routeNextCalled) {
+        return ctx.res;
+      }
+
+      if (route.after) {
+        for (const afterHandler of route.after) {
+          let nextCalled = false;
+          const thisNext = () => {
+            nextCalled = true;
+          };
+
+          await afterHandler(ctx, thisNext);
+          if (!nextCalled) {
+            return ctx.res;
+          }
+        }
+      }
     } catch (err) {
       return config.errorHandler!(ctx, err as Error);
     }
 
-    if (route.after) {
-      for (const handler of route.after) {
-        // TODO may need to return response and stop execution
-        const result = await handler(ctx);
-        if (result instanceof Response) {
-          return result;
-        }
-      }
-    }
-
-    if (handleResult instanceof Response) {
-      return handleResult;
-    } else if (handleResult instanceof Context) {
-      return ctx.res;
-    } else {
-      throw new Error("Invalid return type");
-    }
+    // TODO do we need tihs anymore?
+    // if (handleResult instanceof Response) {
+    //   return handleResult;
+    // } else if (handleResult instanceof Context) {
+    //   return ctx.res;
+    // } else {
+    //   throw new Error("Invalid return type");
+    // }
   };
 
   (config.bunServeOptions as any as ServeOptions).port = config.port || 3000;
   (config.bunServeOptions as any as ServeOptions).hostname =
     config.hostname || "0.0.0.0";
 
-  // TODO use return value of bun.serve to close server and stuff
-  //
   const bunServe = Bun.serve(config.bunServeOptions as any as BunServe);
 
   return new Proxy(bunServe, {
