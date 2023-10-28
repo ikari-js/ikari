@@ -62,12 +62,11 @@ export function Serve(config: Config) {
     server: Server
   ) {
     const url = new URL(request.url);
-    let ctx = new Context(server, request);
 
+    let ctx: Context | undefined;
     let route = routesMap.get(
       url.pathname + ":" + request.method.toLowerCase()
     );
-
 
     if (!route) {
       for (const [path, r] of routesWithParamsMap) {
@@ -79,13 +78,15 @@ export function Serve(config: Config) {
 
         if (match && methodFromPath === request.method.toLowerCase()) {
           const params = match.groups;
-          if (params)
-            // TODO: maybe we can do it without reassigning ctx
-            ctx = new Context(server, request, params);
+          if (params) ctx = new Context(server, request, params);
           route = r;
           break;
         }
       }
+    }
+
+    if (!ctx) {
+      ctx = new Context(server, request);
     }
 
     if (!route) {
