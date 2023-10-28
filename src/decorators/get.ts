@@ -1,7 +1,18 @@
 import { Context } from "../../context";
 import { createPath } from "../utils";
 
+/**
+ * @description
+ * Decorator for defining a route that handles GET requests
+ *
+ * @param path - The path to the route
+ *
+ * **/
+
 export function Get(path?: string) {
+  if (path && typeof path !== "string")
+    throw new Error("Get decorator can only be used on a class");
+
   return function (target: any, key: string) {
     if (!target) return;
     if (!target[key]) return;
