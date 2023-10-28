@@ -3,6 +3,17 @@ import { Handler } from "../type";
 /**
  * Before decorator, used to add middleware before a route handler. Middleware will be executed in order.
  * @param handlers
+ *
+ * @example
+ * ```ts
+ * --@Before((ctx) => {
+ *    console.log("Before middleware");
+ *   })
+ * --@Get()
+ *   public test(ctx: Context): Context {
+ *    return ctx.json({ data: "Hello World" });
+ *   }
+ * ```
  */
 export function Before(...handlers: Handler[]) {
   return function (target: any, key: string) {
