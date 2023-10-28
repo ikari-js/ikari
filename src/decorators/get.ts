@@ -7,6 +7,14 @@ import { createPath } from "../utils";
  *
  * @param path - The path to the route
  *
+ * @example
+ * ``` ts
+ * --@Get()
+ *   public test(ctx: Context): Context {
+ *     return ctx.json({ data: "Hello World" });
+ *   }
+ * ```
+ *
  * **/
 
 export function Get(path?: string) {
