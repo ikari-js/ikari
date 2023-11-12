@@ -3,7 +3,7 @@ import "reflect-metadata";
 import { Server, ServeOptions, Serve as BunServe } from "bun";
 import { Config, Controller, KyteServer, Route } from "./src/type";
 import { ServeValidator } from "./src/serve-validator";
-import { Context } from "./context";
+import { Context, Routes } from "./context";
 
 function defaultErrorHandler(_: Context, err: Error) {
   const errorRes = {
@@ -78,58 +78,57 @@ export function Serve(config: Config) {
 
         if (match && methodFromPath === request.method.toLowerCase()) {
           const params = match.groups;
-          if (params) ctx = new Context(server, request, params);
+          if (params) {
+            ctx = new Context(
+              server,
+              request,
+              new Routes([
+                ...r.before,
+                r.target.prototype[r.fnName],
+                ...r.after,
+              ]),
+              params
+            );
+          }
           route = r;
           break;
         }
       }
     }
 
-    if (!ctx) {
-      ctx = new Context(server, request);
+    if (!route) {
+      return new Context(server, request, new Routes([]))
+        .status(404)
+        .json({ message: "Not Found" }).res;
     }
 
-    if (!route) {
-      return new Response("Not Found", { status: 404 });
+    if (!ctx) {
+      ctx = new Context(
+        server,
+        request,
+        new Routes([
+          ...route.before,
+          route.target.prototype[route.fnName],
+          ...route.after,
+        ])
+      );
     }
 
     try {
-      if (route.before) {
-        for (const beforeHandler of route.before) {
-          let nextCalled = false;
-          const thisNext = () => {
-            nextCalled = true;
-          };
-
-          await beforeHandler(ctx, thisNext);
-          if (!nextCalled) {
-            return ctx.res;
-          }
+      // TODO maybe there is a bug in here
+       do {
+        const fnIndex = ctx.routes.currentIndex;
+        const fn = ctx.routes.currentHandler();
+        if (!fn) {
+          break;
         }
-      }
+        
+        await fn(ctx);
 
-      let routeNextCalled = false;
-      const routeNext = () => {
-        routeNextCalled = true;
-      };
-      await route.target.prototype[route.fnName](ctx, routeNext);
-      if (!routeNextCalled) {
-        return ctx.res;
-      }
+        if (fnIndex === ctx.routes.currentIndex) return ctx.res;
+      } while (ctx.routes.hasNext())
 
-      if (route.after) {
-        for (const afterHandler of route.after) {
-          let nextCalled = false;
-          const thisNext = () => {
-            nextCalled = true;
-          };
-
-          await afterHandler(ctx, thisNext);
-          if (!nextCalled) {
-            return ctx.res;
-          }
-        }
-      }
+      return ctx.res;
     } catch (err) {
       return config.errorHandler!(ctx, err as Error);
     }
