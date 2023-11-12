@@ -1,4 +1,5 @@
 import { Server } from "bun";
+import { Handler } from "./src/type";
 
 export class Context {
   private parsedUrl: URL;
@@ -13,11 +14,20 @@ export class Context {
   constructor(
     private server: Server,
     public req: Request,
+    public routes: Routes,
     private params: { [key: string]: string } = {},
     public res: Response = new Response()
   ) {
     this.parsedUrl = new URL(req.url);
     this.locals = new Local();
+  }
+
+  /**
+   * Calls the next handler in the chain.
+   * 
+   */
+  public next(): void {
+    this.routes.next();
   }
 
   /**
@@ -333,5 +343,36 @@ class Local {
    */
   public has(key: string): boolean {
     return this.locals.has(key);
+  }
+}
+
+export class Routes {
+  constructor(
+    public handlers: Handler[],
+    public handlerIndex: number = 0,
+  ) {}
+
+  public next(): void {
+    this.handlerIndex++;
+  }
+
+  public hasNext(): boolean {
+    return this.handlerIndex < this.length;
+  }
+
+  public currentHandler(): Handler {
+    return this.handlers[this.handlerIndex];
+  }
+
+  public reset(): void {
+    this.handlerIndex = 0;
+  }
+
+  public get length(): number {
+    return this.handlers.length;
+  }
+
+  public get currentIndex(): number {
+    return this.handlerIndex;
   }
 }
