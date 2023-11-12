@@ -22,7 +22,7 @@ export class Context {
 
   /**
    * Returns the value of the specified query parameter.
-   * 
+   *
    * @example
    * ```ts
    *  // route: /test?id=1
@@ -36,7 +36,7 @@ export class Context {
 
   /**
    * Returns the all query parameters.
-   * 
+   *
    * @example
    * ```ts
    * // route: /test?id=1&name=test
@@ -51,7 +51,7 @@ export class Context {
 
   /**
    * Returns the client's IP address. By default it will return remote-addr, if ipHeader is specified it will return the value of the specified header.
-   * 
+   *
    * @example
    * ```ts
    *  const remoteAddr = ctx.ip();
@@ -101,7 +101,7 @@ export class Context {
 
   /**
    * Returns the value of the specified path parameter.
-   * 
+   *
    * @example
    * ```ts
    * // route: /test/:id => /test/1
@@ -115,7 +115,7 @@ export class Context {
 
   /**
    * Returns the parsed body of the request. If the Content-Type is application/json it will return a JSON object, if the Content-Type is application/x-www-form-urlencoded it will return a URLSearchParams object, if the Content-Type is multipart/form-data it will return a FormData object, otherwise it will return a string.
-   * 
+   *
    * @example
    * ```ts
    * const body = await ctx.body();
@@ -159,10 +159,9 @@ export class Context {
     return Promise.resolve(this._body);
   }
 
-
   /**
    * Redirects to the specified URL with the specified status code. If the status code is not specified it will default to 302.
-   * 
+   *
    * @example
    * ```ts
    * ctx.redirect("/test-route");
@@ -191,7 +190,7 @@ export class Context {
 
   /**
    * Sets the status code of the Response object.
-   * 
+   *
    * @example
    * ```ts
    * ctx.status(204);
@@ -211,8 +210,21 @@ export class Context {
   }
 
   /**
+   * Returns the status code of the Response object.
+   *
+   * @example
+   * ```ts
+   * const status = ctx.getStatus();
+   * console.log(status);
+   * ```
+   */
+  public getStatus(): number {
+    return this.res.status;
+  }
+
+  /**
    * Sets the JSON data to the Response object.
-   * 
+   *
    * @example
    * ```ts
    * ctx.json({ data: "Hello World" });
@@ -240,7 +252,7 @@ export class Context {
 
   /**
    * Sets the specified header with the specified value to the Response object.
-   * 
+   *
    * @example
    * ```ts
    * ctx.set("x-request-id", "123");
@@ -253,7 +265,7 @@ export class Context {
 
   /**
    * Returns the value of the specified header from the Request object.
-   * 
+   *
    * @example
    * ```ts
    * const xRequestId = ctx.get("x-request-id");
@@ -266,7 +278,7 @@ export class Context {
 
   /**
    * Returns the value of the specified header from the Response object.
-   * 
+   *
    * @example
    * ```ts
    * const xCorrelationId = ctx.getResHeader("x-correlation-id");
