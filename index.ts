@@ -4,6 +4,7 @@ import { Server, ServeOptions, Serve as BunServe } from "bun";
 import { Config, Controller, KyteServer, Route } from "./src/type";
 import { ServeValidator } from "./src/serve-validator";
 import { Context, Routes } from "./context";
+import DefaultLogger from "./src/logger";
 
 function defaultErrorHandler(_: Context, err: Error) {
   const errorRes = {
@@ -31,6 +32,10 @@ export function Serve(config: Config) {
 
   if (!config.errorHandler) {
     config.errorHandler = defaultErrorHandler;
+  }
+
+  if (!config.logger) {
+    config.logger = new DefaultLogger();
   }
 
   if (!config.bunServeOptions) {
@@ -63,7 +68,7 @@ export function Serve(config: Config) {
   ) {
     const url = new URL(request.url);
 
-    let ctx: Context | undefined;
+    let ctx = new Context(server, request);
     let route = routesMap.get(
       url.pathname + ":" + request.method.toLowerCase()
     );
@@ -79,16 +84,12 @@ export function Serve(config: Config) {
         if (match && methodFromPath === request.method.toLowerCase()) {
           const params = match.groups;
           if (params) {
-            ctx = new Context(
-              server,
-              request,
-              new Routes([
-                ...r.before,
-                r.target.prototype[r.fnName],
-                ...r.after,
-              ]),
-              params
-            );
+            ctx.params = params;
+            ctx.routes = new Routes([
+              ...r.before,
+              r.target.prototype[r.fnName],
+              ...r.after,
+            ]);
           }
           route = r;
           break;
@@ -96,51 +97,38 @@ export function Serve(config: Config) {
       }
     }
 
-    if (!route) {
-      return new Context(server, request, new Routes([]))
-        .status(404)
-        .json({ message: "Not Found" }).res;
-    }
+    try {
+      if (!route) {
+        return ctx.status(404).json({ message: "Not Found" }).res;
+      }
 
-    if (!ctx) {
-      ctx = new Context(
-        server,
-        request,
-        new Routes([
+      if (!ctx.routes) {
+        ctx.routes = new Routes([
           ...route.before,
           route.target.prototype[route.fnName],
           ...route.after,
-        ])
-      );
-    }
+        ]);
+      }
 
-    try {
       // TODO maybe there is a bug in here
-       do {
+      do {
         const fnIndex = ctx.routes.currentIndex;
         const fn = ctx.routes.currentHandler();
         if (!fn) {
           break;
         }
-        
+
         await fn(ctx);
 
         if (fnIndex === ctx.routes.currentIndex) return ctx.res;
-      } while (ctx.routes.hasNext())
+      } while (ctx.routes.hasNext());
 
       return ctx.res;
     } catch (err) {
-      return config.errorHandler!(ctx, err as Error);
+      return config.errorHandler!(ctx as Context, err as Error);
+    } finally {
+      config.logger?.logger!(ctx as Context);
     }
-
-    // TODO do we need tihs anymore?
-    // if (handleResult instanceof Response) {
-    //   return handleResult;
-    // } else if (handleResult instanceof Context) {
-    //   return ctx.res;
-    // } else {
-    //   throw new Error("Invalid return type");
-    // }
   };
 
   (config.bunServeOptions as any as ServeOptions).port = config.port || 3000;
