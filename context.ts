@@ -14,8 +14,8 @@ export class Context {
   constructor(
     private server: Server,
     public req: Request,
-    public routes: Routes,
-    private params: { [key: string]: string } = {},
+    public routes: Routes = new Routes([]),
+    public params: { [key: string]: string } = {},
     public res: Response = new Response()
   ) {
     this.parsedUrl = new URL(req.url);
