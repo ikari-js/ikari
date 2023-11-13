@@ -7,9 +7,10 @@ import {
   UnixTLSServeOptions,
   UnixTLSWebSocketServeOptions,
   UnixWebSocketServeOptions,
-  WebSocketServeOptions,
-  Serve as BunServe,
+  WebSocketServeOptions
 } from "bun";
+
+import { Context } from "../context";
 
 export type Controller = {} & { prototype: any };
 
@@ -19,8 +20,8 @@ export type Route = {
   method: string;
   target: Controller;
   pathHasParams: boolean;
-  before?: Handler[];
-  after?: Handler[];
+  before: Handler[];
+  after: Handler[];
 };
 
 export interface Group {
@@ -30,18 +31,23 @@ export interface Group {
 }
 
 export type Next = () => void;
-export type Handler = (ctx: Context, next: Next) => void | Promise<void>;
-export type MiddlewareHandler = (ctx: Context) => void | Promise<void>;
+export type Handler = (ctx: Context) => void | Promise<void>; // Context , Responses
 
 export interface Middleware {
   use: Handler;
   ignoreOn?: string[];
 }
 
+export type LoggerFormats = "json" | "text" | "custom";
+
 export interface Logger {
-  log: (msg: string) => void;
-  error: (msg: string) => void;
+  // TODO: add more
+  format?: LoggerFormats;
+  logger: LoggerFunction;
+  skip?: Handler;
 }
+
+export type LoggerFunction = (ctx: Context) => void;
 
 export type ErrorHandler = (
   ctx: Context,
