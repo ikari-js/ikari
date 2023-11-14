@@ -7,7 +7,7 @@ import {
   UnixTLSServeOptions,
   UnixTLSWebSocketServeOptions,
   UnixWebSocketServeOptions,
-  WebSocketServeOptions
+  WebSocketServeOptions,
 } from "bun";
 
 import { Context } from "../context";
@@ -31,7 +31,7 @@ export interface Group {
 }
 
 export type Next = () => void;
-export type Handler = (ctx: Context) => void | Promise<void>; // Context , Responses
+export type Handler = (ctx: Context) => Context | void | Promise<void>;
 
 export interface Middleware {
   use: Handler;
