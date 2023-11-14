@@ -1,7 +1,6 @@
 import { createPath } from "../utils";
 
 /**
- * @description
  * Decorator for defining a route that handles POST requests
  *
  * @param path - The path to the route (optional). By default it will use the name of the function.
@@ -10,7 +9,7 @@ import { createPath } from "../utils";
 
 export function Post(path?: string) {
   if (path && typeof path !== "string")
-    throw new Error("Post decorator can only be used on a class");
+    throw new Error("Path must be a string");
 
   return function (target: any, key: string) {
     if (!target) return;
