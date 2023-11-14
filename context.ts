@@ -24,7 +24,7 @@ export class Context {
 
   /**
    * Calls the next handler in the chain.
-   * 
+   *
    */
   public next(): void {
     this.routes!.next();
@@ -298,6 +298,13 @@ export class Context {
     return this.res.headers.get(key);
   }
 
+  public getResWithoutBody(): Response {
+    return new Response(null, {
+      status: this.res.status,
+      headers: this.res.headers,
+    });
+  }
+
   // save file
   // TODO
   // params ??
@@ -347,10 +354,7 @@ class Local {
 }
 
 export class Routes {
-  constructor(
-    public handlers: Handler[],
-    public handlerIndex: number = 0,
-  ) {}
+  constructor(public handlers: Handler[], public handlerIndex: number = 0) {}
 
   public next(): void {
     this.handlerIndex++;

@@ -71,11 +71,10 @@ export function Serve(config: Config) {
     server: Server
   ) {
     const url = new URL(request.url);
+    const reqMethod = request.method.toLowerCase();
 
     let ctx = new Context(server, request);
-    let route = routesMap.get(
-      url.pathname + ":" + request.method.toLowerCase()
-    );
+    let route = routesMap.get(url.pathname + ":" + reqMethod);
 
     if (!route) {
       for (const [path, r] of routesWithParamsMap) {
@@ -85,7 +84,7 @@ export function Serve(config: Config) {
 
         const match = url.pathname.match(pathWithoutMethod);
 
-        if (match && methodFromPath === request.method.toLowerCase()) {
+        if (match && methodFromPath === reqMethod) {
           const params = match.groups;
           if (params) {
             ctx.params = params;
@@ -103,6 +102,10 @@ export function Serve(config: Config) {
 
     try {
       if (!route) {
+        // TODO can all methods handler head or options requests?
+        if (reqMethod === "head" || reqMethod === "options") {
+          return ctx.status(404).res;
+        }
         return ctx.status(404).json({ message: "Not Found" }).res;
       }
 
@@ -115,7 +118,7 @@ export function Serve(config: Config) {
       }
 
       // TODO maybe there is a bug in here
-      do {
+      while (ctx.routes.hasNext()) {
         const fnIndex = ctx.routes.currentIndex;
         const fn = ctx.routes.currentHandler();
         if (!fn) {
@@ -124,8 +127,14 @@ export function Serve(config: Config) {
 
         await fn(ctx);
 
-        if (fnIndex === ctx.routes.currentIndex) return ctx.res;
-      } while (ctx.routes.hasNext());
+        if (fnIndex === ctx.routes.currentIndex) {
+          break;
+        }
+      }
+      // TODO can all methods handler head or options requests?
+      if (reqMethod === "head" || reqMethod === "options") {
+        return ctx.getResWithoutBody();
+      }
 
       return ctx.res;
     } catch (err) {
