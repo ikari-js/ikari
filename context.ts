@@ -14,7 +14,7 @@ export class Context {
   constructor(
     private server: Server,
     public req: Request,
-    public routes: Routes = new Routes([]),
+    public routes: Routes | null = null,
     public params: { [key: string]: string } = {},
     public res: Response = new Response()
   ) {
@@ -27,7 +27,7 @@ export class Context {
    * 
    */
   public next(): void {
-    this.routes.next();
+    this.routes!.next();
   }
 
   /**
