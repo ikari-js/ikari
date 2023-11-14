@@ -38,6 +38,7 @@ export interface Middleware {
   ignoreOn?: string[];
 }
 
+// TODO: add more formats
 export type LoggerFormats = "json" | "text" | "custom";
 
 export interface Logger {
