@@ -28,6 +28,10 @@ const bannedProps = [
 ];
 
 export function Serve(config: Config) {
+  if (!Bun) {
+    throw new Error("Please install bun first");
+  }
+
   new ServeValidator(config).validate();
 
   if (!config.errorHandler) {
