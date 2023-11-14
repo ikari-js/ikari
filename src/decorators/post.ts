@@ -4,17 +4,9 @@ import { createPath } from "../utils";
  * @description
  * Decorator for defining a route that handles POST requests
  *
- * @param path - The path to the route
+ * @param path - The path to the route (optional). By default it will use the name of the function.
  *
- * @example
- * ``` ts
- * --@Post()
- *    public test(ctx: Context): Context {
- *     return ctx.json({ data: "Hello World" });
- *    }
- * ```
- *
- * **/
+ **/
 
 export function Post(path?: string) {
   if (path && typeof path !== "string")
