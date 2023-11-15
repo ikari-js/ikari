@@ -9,12 +9,14 @@ export class Context {
    */
   public locals: Local;
   private _body: any | FormData | string | null = null;
-  private _headers: Record<string, string> = {};
 
   constructor(
     private server: Server,
     public req: Request,
     public routes: Routes | null = null,
+    /**
+     * The all path parameters of the request.
+     */
     public params: { [key: string]: string } = {},
     public res: Response = new Response()
   ) {
@@ -213,7 +215,9 @@ export class Context {
 
     this.res = new Response(null, {
       status: status,
-      headers: this._headers,
+      headers: {
+        ...this.res.headers.toJSON(),
+      },
     });
 
     return this;
@@ -252,7 +256,7 @@ export class Context {
     this.res = new Response(jsonData, {
       status: status || this.res.status,
       headers: {
-        ...this._headers,
+        ...this.res.headers.toJSON(),
         "Content-Type": "application/json",
       },
     });
@@ -269,8 +273,8 @@ export class Context {
    * ```
    */
   public set(key: string, value: string): void {
-    if (!key || !value) throw new Error("Invalid key or value");
-    this._headers[key] = value;
+    if (!key || !value) return;
+    this.res.headers.set(key, value);
   }
 
   /**
