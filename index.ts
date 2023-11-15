@@ -5,6 +5,7 @@ import { Config, Controller, KyteServer, Route } from "./src/type";
 import { ServeValidator } from "./src/serve-validator";
 import { Context, Routes } from "./context";
 import DefaultLogger from "./src/logger";
+import { HttpMethod } from "./src/methods";
 
 function defaultErrorHandler(_: Context, err: Error) {
   const errorRes = {
@@ -50,18 +51,33 @@ export function Serve(config: Config) {
     return Reflect.getMetadata("routes", controller.prototype) as Route[];
   });
 
-  const routesMap = new Map<string, Route>();
-  const routesWithParamsMap = new Map<string, Route>();
+  const routesMap = new Map<string, Map<string, Route>>();
+  const routesWithParamsMap = new Map<string, Map<string, Route>>();
 
   routes.flat().forEach((route) => {
     if (!route.pathHasParams) {
-      // TODO: may need to change method separator
-      routesMap.set(route.path + ":" + route.method, route);
+      const r = routesMap.get(route.path);
+      if (r) {
+        r.set(route.method, route);
+      } else {
+        const newMap = new Map<string, Route>();
+        routesMap.set(route.path, newMap.set(route.method, route));
+      }
     } else {
-      route.path = route.path.replace(/:([^\/]+)/g, (_, paramName) => {
-        return `(?<${paramName}>[^\/]+)`;
-      });
-      routesWithParamsMap.set(route.path + ":" + route.method, route);
+      // TODO: need to improve this with more path param separators
+      // /example/:id/:name
+      route.path =
+        route.path.replace(/:([^\/]+)/g, (_, paramName) => {
+          return `(?<${paramName}>[^\/]+)`;
+        }) + "$";
+
+      const r = routesWithParamsMap.get(route.path);
+      if (r) {
+        r.set(route.method, route);
+      } else {
+        const newMap = new Map<string, Route>();
+        routesWithParamsMap.set(route.path, newMap.set(route.method, route));
+      }
     }
   });
 
@@ -70,52 +86,47 @@ export function Serve(config: Config) {
     request: Request,
     server: Server
   ) {
-    const url = new URL(request.url);
+    // TODO delete last / from url MAKE THIS OPTIONAL
+    const url = new URL(request.url.replace(/\/$/, ""));
     const reqMethod = request.method.toLowerCase();
-
     let ctx = new Context(server, request);
-    let route = routesMap.get(url.pathname + ":" + reqMethod);
-
-    if (!route) {
-      for (const [path, r] of routesWithParamsMap) {
-        // TODO: need to improve this with more path param separators
-        const methodFromPath = path.slice(path.lastIndexOf(":") + 1);
-        const pathWithoutMethod = path.slice(0, path.lastIndexOf(":"));
-
-        const match = url.pathname.match(pathWithoutMethod);
-
-        if (match && methodFromPath === reqMethod) {
-          const params = match.groups;
-          if (params) {
-            ctx.params = params;
-            ctx.routes = new Routes([
-              ...r.before,
-              r.target.prototype[r.fnName],
-              ...r.after,
-            ]);
-          }
-          route = r;
-          break;
-        }
-      }
-    }
-
+    let params: { [key: string]: string } = {};
     try {
-      if (!route) {
-        // TODO can all methods handler head or options requests?
-        if (reqMethod === "head" || reqMethod === "options") {
-          return ctx.status(404).res;
+      let possibleRoutes = routesMap.get(url.pathname);
+      if (!possibleRoutes) {
+        for (const [path, r] of routesWithParamsMap.entries()) {
+          const match = url.pathname.match(path);
+          if (match) {
+            params = match.groups ? match.groups : {};
+            possibleRoutes = r;
+            break;
+          }
         }
-        return ctx.status(404).json({ message: "Not Found" }).res;
       }
 
-      if (!ctx.routes) {
-        ctx.routes = new Routes([
-          ...route.before,
-          route.target.prototype[route.fnName],
-          ...route.after,
-        ]);
+      // TODO maybe there is a bug in here
+      if (!possibleRoutes) {
+        return NotFound(ctx);
       }
+
+      // TODO maybe there is a bug in here
+      const route = possibleRoutes?.get(reqMethod);
+      if (!route && reqMethod === HttpMethod.OPTIONS) {
+        ctx.set("Allow", [...possibleRoutes.keys()].join(", ").toUpperCase());
+        return NotAllowed(ctx);
+      }
+
+      // TODO maybe there is a bug in here
+      if (!route) {
+        return NotAllowed(ctx);
+      }
+
+      ctx.params = params;
+      ctx.routes = new Routes([
+        ...route.before,
+        route.target.prototype[route.fnName],
+        ...route.after,
+      ]);
 
       // TODO maybe there is a bug in here
       while (ctx.routes.hasNext()) {
@@ -166,4 +177,20 @@ export function Serve(config: Config) {
       return Reflect.set(target, prop, value, receiver);
     },
   }) as KyteServer;
+}
+
+function NotFound(ctx: Context) {
+  const method = ctx.req.method.toLowerCase();
+  if (method === HttpMethod.HEAD) {
+    return ctx.status(404).res;
+  }
+  return ctx.status(404).json({ message: "Not Found" }).res;
+}
+
+function NotAllowed(ctx: Context) {
+  const method = ctx.req.method.toLowerCase();
+  if (method === HttpMethod.HEAD) {
+    return ctx.status(405).res;
+  }
+  return ctx.status(405).json({ message: "Method Not Allowed" }).res;
 }
