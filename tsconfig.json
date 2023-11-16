@@ -17,6 +17,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "allowJs": true,
+    "noImplicitAny": true,
     "types": [
       "bun-types" // add Bun global
     ]
