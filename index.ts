@@ -67,8 +67,8 @@ export function Serve(config: Config) {
       // TODO: need to improve this with more path param separators
       // /example/:id/:name
       route.path =
-        route.path.replace(/:([^\/]+)/g, (_, paramName) => {
-          return `(?<${paramName}>[^\/]+)`;
+        route.path.replace(/:([^\\/]+)/g, (_, paramName) => {
+          return `(?<${paramName}>[^\\/]+)`;
         }) + "$";
 
       const r = routesWithParamsMap.get(route.path);
@@ -81,6 +81,7 @@ export function Serve(config: Config) {
     }
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (config.bunServeOptions as any as BunServe).fetch = async function (
     this: Server,
     request: Request,
@@ -89,7 +90,7 @@ export function Serve(config: Config) {
     // TODO delete last / from url MAKE THIS OPTIONAL
     const url = new URL(request.url.replace(/\/$/, ""));
     const reqMethod = request.method.toLowerCase();
-    let ctx = new Context(server, request);
+    const ctx = new Context(server, request);
     let params: { [key: string]: string } = {};
     try {
       let possibleRoutes = routesMap.get(url.pathname);
@@ -155,10 +156,13 @@ export function Serve(config: Config) {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (config.bunServeOptions as any as ServeOptions).port = config.port || 3000;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (config.bunServeOptions as any as ServeOptions).hostname =
     config.hostname || "0.0.0.0";
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bunServe = Bun.serve(config.bunServeOptions as any as BunServe);
 
   return new Proxy(bunServe, {

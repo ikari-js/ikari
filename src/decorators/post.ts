@@ -11,6 +11,7 @@ export function Post(path?: string) {
   if (path && typeof path !== "string")
     throw new Error("Path must be a string");
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function (target: any, key: string) {
     if (!target) return;
     if (!target[key]) return;

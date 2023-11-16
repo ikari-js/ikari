@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect, test, describe } from "bun:test";
 import { createPath } from "./utils";
 import { ServeValidator } from "./serve-validator";
@@ -82,12 +83,12 @@ describe("ServeValidator", () => {
     }).toThrow("Hostname must be a string");
   });
 
-    test("checkBunServeOptionsIsObject", () => {
-        expect(() => {
-        new ServeValidator({
-            controllers: [{ prototype: {} }],
-            bunServeOptions: "null" as any,
-        }).validate();
-        }).toThrow("BunServeOptions must be an object");
-    });
+  test("checkBunServeOptionsIsObject", () => {
+    expect(() => {
+      new ServeValidator({
+        controllers: [{ prototype: {} }],
+        bunServeOptions: "null" as any,
+      }).validate();
+    }).toThrow("BunServeOptions must be an object");
+  });
 });

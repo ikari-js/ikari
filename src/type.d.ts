@@ -12,6 +12,7 @@ import {
 
 import { Context } from "../context";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types
 export type Controller = {} & { prototype: any };
 
 export type Route = {
@@ -26,7 +27,7 @@ export type Route = {
 
 export interface Group {
   prefix: string;
-  middlewares?: any[];
+  middlewares?: Handler[];
   controllers: Controller[];
 }
 

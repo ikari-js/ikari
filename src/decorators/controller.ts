@@ -9,6 +9,7 @@ export function Controller(prefix: string) {
   if (typeof prefix !== "string")
     throw new Error("Controller decorator can only be used on a class");
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function (target: any) {
     for (const value of Object.getOwnPropertyNames(target.prototype)) {
       const path = Reflect.getMetadata("path", target.prototype, value);

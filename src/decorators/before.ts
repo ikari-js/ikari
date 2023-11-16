@@ -6,6 +6,7 @@ import { Handler } from "../type";
  *
  */
 export function Before(...handlers: Handler[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function (target: any, key: string) {
     if (!target) return;
     if (!target[key]) return;

@@ -8,6 +8,7 @@ export class Context {
    * and therefore available to all following routes that match the request.
    */
   public locals: Local;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _body: any | FormData | string | null = null;
 
   constructor(
@@ -134,7 +135,8 @@ export class Context {
    * console.log(body);
    * ```
    */
-  public async body(): Promise<any | FormData | string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public async body(): Promise<any | FormData | string | ArrayBuffer> {
     if (this.req.method === "GET" || this.req.method === "HEAD")
       return Promise.resolve(null);
 
@@ -244,6 +246,7 @@ export class Context {
    * ctx.json({ data: "Hello World" });
    * ```
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public json(data: any, status?: number): Context {
     // TODO adition control for data
     let jsonData;
@@ -320,6 +323,7 @@ class Local {
    * Creates a new Local object.
    */
   // TODO: weakmap
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(private locals = new Map<string, any>()) {}
 
   /**
