@@ -1,4 +1,4 @@
-import { Context } from "../context";
+import { Context } from "./context";
 import { Logger, LoggerFormats, LoggerFunction } from "./type";
 
 export default class DefaultLogger implements Logger {

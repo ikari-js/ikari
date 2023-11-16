@@ -1,5 +1,5 @@
 import { Server } from "bun";
-import { Handler } from "./src/type";
+import { Handler } from "./type";
 
 export class Context {
   private parsedUrl: URL;

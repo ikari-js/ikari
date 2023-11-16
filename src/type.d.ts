@@ -10,7 +10,7 @@ import {
   WebSocketServeOptions,
 } from "bun";
 
-import { Context } from "../context";
+import { Context } from "./context";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types
 export type Controller = {} & { prototype: any };

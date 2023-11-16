@@ -1,11 +1,11 @@
 import "reflect-metadata";
 
 import { Server, ServeOptions, Serve as BunServe } from "bun";
-import { Config, Controller, KyteServer, Route } from "./src/type";
-import { ServeValidator } from "./src/serve-validator";
+import { Config, Controller, KyteServer, Route } from "./type";
+import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
-import DefaultLogger from "./src/logger";
-import { HttpMethod } from "./src/methods";
+import DefaultLogger from "./logger";
+import { HttpMethod } from "./methods";
 
 function defaultErrorHandler(_: Context, err: Error) {
   const errorRes = {
