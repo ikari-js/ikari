@@ -37,6 +37,7 @@ export default class DefaultLogger implements Logger {
 
   public logger = (ctx: Context) => {
     // TODO add color
+    // eslint-disable-next-line no-console
     console.log(this.loggerFunctions.get(this.format)?.(ctx));
   };
 }
