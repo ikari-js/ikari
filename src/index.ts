@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
 import { Server, ServeOptions, Serve as BunServe } from "bun";
-import { Config, Controller, Handler, IkariServer, Route } from "./type";
+import { Config, Controller, Handler, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
 import DefaultLogger from "./logger";
@@ -49,12 +49,12 @@ export function Serve(config: Config) {
 
   const routes = config.controllers.map((controller: Controller) => {
     const routes: Route[] = Reflect.getMetadata("routes", controller.prototype);
-    if(config.middlewares) {
+    if (config.middlewares) {
       routes.forEach((route) => {
-        route.before = [...(config.middlewares) as Handler[] , ...route.before];
+        route.before = [...(config.middlewares as Handler[]), ...route.before];
       });
     }
-    return routes
+    return routes;
   });
 
   const routesMap = new Map<string, Map<string, Route>>();
@@ -133,7 +133,6 @@ export function Serve(config: Config) {
         return NotAllowed(ctx);
       }
 
-      console.log(route);
       ctx.params = params;
       ctx.routes = new Routes([
         ...route.before,
@@ -210,3 +209,6 @@ function NotAllowed(ctx: Context) {
   }
   return ctx.status(405).json({ message: "Method Not Allowed" }).res;
 }
+
+export { Context };
+export * from "./types";

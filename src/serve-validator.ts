@@ -1,4 +1,4 @@
-import { Config } from "./type";
+import { Config } from "./types";
 
 export class ServeValidator {
   constructor(private config: Config) {}

@@ -1,4 +1,4 @@
-import { Handler } from "../type";
+import { Handler } from "../types";
 
 /**
  * Before decorator, used to add middleware before a route handler. Middleware will be executed in order.

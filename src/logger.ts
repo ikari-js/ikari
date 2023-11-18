@@ -1,5 +1,5 @@
 import { Context } from "./context";
-import { Logger, LoggerFormats, LoggerFunction } from "./type";
+import { Logger, LoggerFormats, LoggerFunction } from "./types";
 
 export default class DefaultLogger implements Logger {
   private loggerFunctions: Map<LoggerFormats, LoggerFunction>;
