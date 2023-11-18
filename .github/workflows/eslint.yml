@@ -1,4 +1,4 @@
-name: Build
+name: Eslint
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build and test code
+    name: Run eslint on code
     runs-on: ubuntu-latest
 
     steps:
@@ -20,8 +20,5 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Install packages
-        run: bun install
-
-      - name: Test
-        run: bun test
+      - name: Eslint
+        run: bun eslint . --ext .js,.jsx,.ts,.tsx
