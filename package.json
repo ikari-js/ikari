@@ -21,6 +21,14 @@
     "web",
     "server"
   ],
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    },
+    "./decorators": {
+      "import": "./src/decorators/index.ts"
+    }
+  },
   "license": "MIT",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.11.0",
