@@ -20,5 +20,8 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Eslint
+      - name: Install eslint
+        run: bun add eslint
+
+      - name: Run eslint
         run: bun eslint . --ext .js,.jsx,.ts,.tsx
