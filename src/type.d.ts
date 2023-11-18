@@ -34,11 +34,6 @@ export interface Group {
 export type Next = () => void;
 export type Handler = (ctx: Context) => Context | void | Promise<void>;
 
-export interface Middleware {
-  use: Handler;
-  ignoreOn?: string[];
-}
-
 // TODO: add more formats
 export type LoggerFormats = "json" | "text" | "custom";
 
@@ -80,14 +75,14 @@ export type Config<WebSocketDataType = undefined> = {
   controllers: Controller[];
   groups?: Group[];
   errorHandler?: ErrorHandler;
-  middlewares?: Middleware[];
+  middlewares?: Handler[];
   logger?: Logger;
   port?: number;
   hostname?: string;
   bunServeOptions?: BunServeOptions<Serve<WebSocketDataType>>;
 };
 
-export type KyteServer = Omit<
+export type IkariServer = Omit<
   Server,
   "fetch" | "publish" | "reload" | "upgrade" | "requestIP" | "pendingWebSockets"
 >;

@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
 import { Server, ServeOptions, Serve as BunServe } from "bun";
-import { Config, Controller, KyteServer, Route } from "./type";
+import { Config, Controller, Handler, IkariServer, Route } from "./type";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
 import DefaultLogger from "./logger";
@@ -48,7 +48,13 @@ export function Serve(config: Config) {
   }
 
   const routes = config.controllers.map((controller: Controller) => {
-    return Reflect.getMetadata("routes", controller.prototype) as Route[];
+    const routes: Route[] = Reflect.getMetadata("routes", controller.prototype);
+    if(config.middlewares) {
+      routes.forEach((route) => {
+        route.before = [...(config.middlewares) as Handler[] , ...route.before];
+      });
+    }
+    return routes
   });
 
   const routesMap = new Map<string, Map<string, Route>>();
@@ -105,23 +111,29 @@ export function Serve(config: Config) {
         }
       }
 
-      // TODO maybe there is a bug in here
       if (!possibleRoutes) {
         return NotFound(ctx);
       }
 
-      // TODO maybe there is a bug in here
-      const route = possibleRoutes?.get(reqMethod);
+      const route = possibleRoutes!.get(reqMethod);
       if (!route && reqMethod === HttpMethod.OPTIONS) {
         ctx.set("Allow", [...possibleRoutes.keys()].join(", ").toUpperCase());
         return NotAllowed(ctx);
       }
 
-      // TODO maybe there is a bug in here
+      if (
+        !route &&
+        reqMethod === HttpMethod.HEAD &&
+        possibleRoutes.has("get")
+      ) {
+        // TODO implement this
+      }
+
       if (!route) {
         return NotAllowed(ctx);
       }
 
+      console.log(route);
       ctx.params = params;
       ctx.routes = new Routes([
         ...route.before,
@@ -180,7 +192,7 @@ export function Serve(config: Config) {
 
       return Reflect.set(target, prop, value, receiver);
     },
-  }) as KyteServer;
+  }) as IkariServer;
 }
 
 function NotFound(ctx: Context) {
