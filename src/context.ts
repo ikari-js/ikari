@@ -10,6 +10,7 @@ export class Context {
   public locals: Local;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _body: any | FormData | string | null = null;
+  private _cookies: Map<string, string>;
 
   constructor(
     private server: Server,
@@ -23,6 +24,17 @@ export class Context {
   ) {
     this.parsedUrl = new URL(req.url);
     this.locals = new Local();
+
+    // TODO maybe better way to do this for performance
+    const cookies = new Map<string, string>();
+    this.req.headers
+      .get("Cookie")
+      ?.split(";")
+      .forEach((c) => {
+        const [key, value] = c.split("=");
+        cookies.set(key.trim(), value.trim());
+      });
+    this._cookies = cookies;
   }
 
   /**
@@ -90,14 +102,7 @@ export class Context {
    * ```
    */
   public cookie(name: string): string | null {
-    return (
-      // TODO maybe we can set cookies in init and then use this.req.cookies.get(name) for better performance
-      this.req.headers
-        .get("Cookie")
-        ?.split(";")
-        .find((c) => c.startsWith(name))
-        ?.split("=")[1] || null
-    );
+    return this._cookies.get(name) || null;
   }
 
   /**
