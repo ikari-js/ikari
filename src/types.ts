@@ -1,14 +1,5 @@
-import {
-  Server,
-  ServeOptions,
-  TLSServeOptions,
-  TLSWebSocketServeOptions,
-  UnixServeOptions,
-  UnixTLSServeOptions,
-  UnixTLSWebSocketServeOptions,
-  UnixWebSocketServeOptions,
-  WebSocketServeOptions,
-} from "bun";
+/* eslint-disable @typescript-eslint/ban-types */
+import { Server, ServeOptions, TLSServeOptions } from "bun";
 
 import { Context } from "./context";
 
@@ -51,35 +42,17 @@ export type ErrorHandler = (
   err: Error
 ) => Response | Promise<Response>;
 
-type BunServeOptions<T> = T extends {
-  fetch(
-    this: Server,
-    request: Request,
-    server: Server
-  ): Response | Promise<Response>;
-}
-  ? Omit<T, "fetch">
-  : T;
+export type IkariServeOptions =
+  | Omit<ServeOptions, "error" | "fetch">
+  | Omit<TLSServeOptions, "error" | "fetch">;
 
-export type Serve<WebSocketDataType = undefined> =
-  | BunServeOptions<ServeOptions>
-  | TLSServeOptions
-  | UnixServeOptions
-  | UnixTLSServeOptions
-  | WebSocketServeOptions<WebSocketDataType>
-  | TLSWebSocketServeOptions<WebSocketDataType>
-  | UnixWebSocketServeOptions<WebSocketDataType>
-  | UnixTLSWebSocketServeOptions<WebSocketDataType>;
-
-export type Config<WebSocketDataType = undefined> = {
+export type Config = {
   controllers: Controller[];
   groups?: Group[];
   errorHandler?: ErrorHandler;
   middlewares?: Handler[];
   logger?: Logger;
-  port?: number;
-  hostname?: string;
-  bunServeOptions?: BunServeOptions<Serve<WebSocketDataType>>;
+  serveOptions?: IkariServeOptions;
 };
 
 export type IkariServer = Omit<
