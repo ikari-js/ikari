@@ -5,7 +5,7 @@ import { Config, Controller, Handler, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
 import DefaultLogger from "./logger";
-import { HttpMethod } from "./methods";
+import { HttpMethod } from "./utils";
 
 function defaultErrorHandler(err: Errorlike) {
   return new Response(
@@ -115,14 +115,18 @@ export function Serve(config: Config) {
       return NotFound(ctx);
     }
 
-    const route = possibleRoutes!.get(reqMethod);
+    let route = possibleRoutes!.get(reqMethod);
+    if (possibleRoutes.has(HttpMethod.ALL)) {
+      route = possibleRoutes.get(HttpMethod.ALL);
+    }
+
     if (!route && reqMethod === HttpMethod.OPTIONS) {
       ctx.set("Allow", [...possibleRoutes.keys()].join(", ").toUpperCase());
-      return NotAllowed(ctx);
+      return ctx.status(200).getResWithoutBody();
     }
 
     if (!route && reqMethod === HttpMethod.HEAD && possibleRoutes.has("get")) {
-      // TODO implement this
+      route = possibleRoutes.get("get");
     }
 
     if (!route) {
@@ -150,7 +154,7 @@ export function Serve(config: Config) {
         break;
       }
     }
-    
+
     try {
       // TODO can all methods handler head or options requests?
       if (reqMethod === HttpMethod.HEAD || reqMethod === HttpMethod.OPTIONS) {
@@ -168,7 +172,7 @@ export function Serve(config: Config) {
   ) {
     return config.errorHandler!(err);
   };
-  
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bunServe = Bun.serve(config.serveOptions as any as BunServe);
 
