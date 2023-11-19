@@ -317,10 +317,14 @@ export class Context {
     });
   }
 
-  // save file
-  // TODO
-  // params ??
-  // baseUrl ?? => req.url
+  /**
+   * Return the URL string of the request. 
+   */ 
+  public url(): string {
+    return this.req.url;
+  }
+
+  // TODO sendFile, sendString, sendBuffer, sendStream
 }
 
 class Local {
