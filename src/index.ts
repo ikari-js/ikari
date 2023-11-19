@@ -1,22 +1,24 @@
 import "reflect-metadata";
 
-import { Server, ServeOptions, Serve as BunServe } from "bun";
+import { Server, Serve as BunServe, Errorlike } from "bun";
 import { Config, Controller, Handler, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
 import DefaultLogger from "./logger";
 import { HttpMethod } from "./methods";
 
-function defaultErrorHandler(_: Context, err: Error) {
-  const errorRes = {
-    message: err?.message,
-    stack: err?.stack,
-    cause: err?.cause,
-  };
-  return new Response(JSON.stringify(errorRes), {
-    status: 500,
-    headers: { "Content-Type": "application/json" },
-  });
+function defaultErrorHandler(err: Errorlike) {
+  return new Response(
+    JSON.stringify({
+      message: err?.message,
+      stack: err?.stack,
+      cause: err?.cause,
+    }),
+    {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }
 
 const bannedProps = [
@@ -43,8 +45,8 @@ export function Serve(config: Config) {
     config.logger = new DefaultLogger();
   }
 
-  if (!config.bunServeOptions) {
-    config.bunServeOptions = {};
+  if (!config.serveOptions) {
+    config.serveOptions = {};
   }
 
   const routes = config.controllers.map((controller: Controller) => {
@@ -87,8 +89,7 @@ export function Serve(config: Config) {
     }
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (config.bunServeOptions as any as BunServe).fetch = async function (
+  (config.serveOptions as BunServe).fetch = async function (
     this: Server,
     request: Request,
     server: Server
@@ -98,83 +99,78 @@ export function Serve(config: Config) {
     const reqMethod = request.method.toLowerCase();
     const ctx = new Context(server, request);
     let params: { [key: string]: string } = {};
+
+    let possibleRoutes = routesMap.get(url.pathname);
+    if (!possibleRoutes) {
+      for (const [path, r] of routesWithParamsMap.entries()) {
+        const match = url.pathname.match(path);
+        if (match) {
+          params = match.groups ? match.groups : {};
+          possibleRoutes = r;
+          break;
+        }
+      }
+    }
+    if (!possibleRoutes) {
+      return NotFound(ctx);
+    }
+
+    const route = possibleRoutes!.get(reqMethod);
+    if (!route && reqMethod === HttpMethod.OPTIONS) {
+      ctx.set("Allow", [...possibleRoutes.keys()].join(", ").toUpperCase());
+      return NotAllowed(ctx);
+    }
+
+    if (!route && reqMethod === HttpMethod.HEAD && possibleRoutes.has("get")) {
+      // TODO implement this
+    }
+
+    if (!route) {
+      return NotAllowed(ctx);
+    }
+
+    ctx.params = params;
+    ctx.routes = new Routes([
+      ...route.before,
+      route.target.prototype[route.fnName],
+      ...route.after,
+    ]);
+
+    // TODO maybe there is a bug in here
+    while (ctx.routes.hasNext()) {
+      const fnIndex = ctx.routes.currentIndex;
+      const fn = ctx.routes.currentHandler();
+      if (!fn) {
+        break;
+      }
+
+      await fn(ctx);
+
+      if (fnIndex === ctx.routes.currentIndex) {
+        break;
+      }
+    }
+    
     try {
-      let possibleRoutes = routesMap.get(url.pathname);
-      if (!possibleRoutes) {
-        for (const [path, r] of routesWithParamsMap.entries()) {
-          const match = url.pathname.match(path);
-          if (match) {
-            params = match.groups ? match.groups : {};
-            possibleRoutes = r;
-            break;
-          }
-        }
-      }
-
-      if (!possibleRoutes) {
-        return NotFound(ctx);
-      }
-
-      const route = possibleRoutes!.get(reqMethod);
-      if (!route && reqMethod === HttpMethod.OPTIONS) {
-        ctx.set("Allow", [...possibleRoutes.keys()].join(", ").toUpperCase());
-        return NotAllowed(ctx);
-      }
-
-      if (
-        !route &&
-        reqMethod === HttpMethod.HEAD &&
-        possibleRoutes.has("get")
-      ) {
-        // TODO implement this
-      }
-
-      if (!route) {
-        return NotAllowed(ctx);
-      }
-
-      ctx.params = params;
-      ctx.routes = new Routes([
-        ...route.before,
-        route.target.prototype[route.fnName],
-        ...route.after,
-      ]);
-
-      // TODO maybe there is a bug in here
-      while (ctx.routes.hasNext()) {
-        const fnIndex = ctx.routes.currentIndex;
-        const fn = ctx.routes.currentHandler();
-        if (!fn) {
-          break;
-        }
-
-        await fn(ctx);
-
-        if (fnIndex === ctx.routes.currentIndex) {
-          break;
-        }
-      }
       // TODO can all methods handler head or options requests?
-      if (reqMethod === "head" || reqMethod === "options") {
+      if (reqMethod === HttpMethod.HEAD || reqMethod === HttpMethod.OPTIONS) {
         return ctx.getResWithoutBody();
       }
-
       return ctx.res;
-    } catch (err) {
-      return config.errorHandler!(ctx as Context, err as Error);
     } finally {
       config.logger?.logger!(ctx as Context);
     }
   };
 
+  (config.serveOptions as BunServe).error = function (
+    this: Server,
+    err: Errorlike
+  ) {
+    return config.errorHandler!(err);
+  };
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (config.bunServeOptions as any as ServeOptions).port = config.port || 3000;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (config.bunServeOptions as any as ServeOptions).hostname =
-    config.hostname || "0.0.0.0";
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bunServe = Bun.serve(config.bunServeOptions as any as BunServe);
+  const bunServe = Bun.serve(config.serveOptions as any as BunServe);
 
   return new Proxy(bunServe, {
     get(target, prop, receiver) {
