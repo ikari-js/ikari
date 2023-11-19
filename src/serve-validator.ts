@@ -12,7 +12,7 @@ export class ServeValidator {
       .checkErrorHandlerIsFunction()
       .checkPortIsNumber()
       .checkHostnameIsString()
-      .checkBunServeOptionsIsObject();
+      .checkServeOptionsIsObject();
   }
 
   private checkConfigIsObject() {
@@ -80,7 +80,7 @@ export class ServeValidator {
   }
 
   private checkPortIsNumber() {
-    if (this.config.port && isNaN(Number(this.config.port))) {
+    if (this.config.serveOptions?.port && isNaN(Number(this.config.serveOptions?.port))) {
       throw new Error("Port must be a number");
     }
 
@@ -88,17 +88,17 @@ export class ServeValidator {
   }
 
   private checkHostnameIsString() {
-    if (this.config.hostname && typeof this.config.hostname !== "string") {
+    if (this.config.serveOptions?.hostname && typeof this.config.serveOptions?.hostname !== "string") {
       throw new Error("Hostname must be a string");
     }
 
     return this;
   }
 
-  private checkBunServeOptionsIsObject() {
+  private checkServeOptionsIsObject() {
     if (
-      this.config.bunServeOptions &&
-      typeof this.config.bunServeOptions !== "object"
+      this.config.serveOptions &&
+      typeof this.config.serveOptions !== "object"
     ) {
       throw new Error("BunServeOptions must be an object");
     }

@@ -69,7 +69,7 @@ describe("ServeValidator", () => {
     expect(() => {
       new ServeValidator({
         controllers: [{ prototype: {} }],
-        port: "null" as any,
+        serveOptions: { port: "null" },
       }).validate();
     }).toThrow("Port must be a number");
   });
@@ -78,7 +78,7 @@ describe("ServeValidator", () => {
     expect(() => {
       new ServeValidator({
         controllers: [{ prototype: {} }],
-        hostname: 1 as any,
+        serveOptions: { hostname: 1 as any },
       }).validate();
     }).toThrow("Hostname must be a string");
   });
@@ -87,7 +87,7 @@ describe("ServeValidator", () => {
     expect(() => {
       new ServeValidator({
         controllers: [{ prototype: {} }],
-        bunServeOptions: "null" as any,
+        serveOptions: "null" as any,
       }).validate();
     }).toThrow("BunServeOptions must be an object");
   });
