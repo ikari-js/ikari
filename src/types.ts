@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { Server, ServeOptions, TLSServeOptions } from "bun";
+import { Server, ServeOptions, TLSServeOptions, Errorlike } from "bun";
 
 import { Context } from "./context";
 
@@ -37,10 +37,7 @@ export interface Logger {
 
 export type LoggerFunction = (ctx: Context) => void;
 
-export type ErrorHandler = (
-  ctx: Context,
-  err: Error
-) => Response | Promise<Response>;
+export type ErrorHandler = (err: Errorlike) => Response | Promise<Response>;
 
 export type IkariServeOptions =
   | Omit<ServeOptions, "error" | "fetch">
