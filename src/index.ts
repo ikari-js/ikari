@@ -5,7 +5,7 @@ import { Config, Controller, Handler, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
 import DefaultLogger from "./logger";
-import { HttpMethod } from "./utils";
+import { HttpMethod, startupMessage } from "./utils";
 
 function defaultErrorHandler(err: Errorlike) {
   return new Response(
@@ -174,7 +174,12 @@ export function Serve(config: Config) {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bunServe = Bun.serve(config.serveOptions as any as BunServe);
+  const bunServe = Bun.serve(config.serveOptions as BunServe);
+
+  if (bunServe && !config.disableStartupMessage) {
+    // eslint-disable-next-line no-console
+    console.log(startupMessage(config, bunServe, routes.flat()));
+  }
 
   return new Proxy(bunServe, {
     get(target, prop, receiver) {

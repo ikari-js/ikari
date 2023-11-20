@@ -50,6 +50,7 @@ export type Config = {
   middlewares?: Handler[];
   logger?: Logger;
   serveOptions?: IkariServeOptions;
+  disableStartupMessage?: boolean;
 };
 
 export type IkariServer = Omit<
