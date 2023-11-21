@@ -5,7 +5,7 @@ import { Config, Controller, Handler, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
 import DefaultLogger from "./logger";
-import { HttpMethod, startupMessage } from "./utils";
+import { HttpMethod, createPath, startupMessage } from "./utils";
 
 function defaultErrorHandler(err: Errorlike) {
   return new Response(
@@ -37,6 +37,10 @@ export function Serve(config: Config) {
 
   new ServeValidator(config).validate();
 
+  if (config.prefix) {
+    config.prefix = createPath(config.prefix).replace(/\/+$/, "");
+  }
+
   if (!config.errorHandler) {
     config.errorHandler = defaultErrorHandler;
   }
@@ -51,11 +55,13 @@ export function Serve(config: Config) {
 
   const routes = config.controllers.map((controller: Controller) => {
     const routes: Route[] = Reflect.getMetadata("routes", controller.prototype);
-    if (config.middlewares) {
-      routes.forEach((route) => {
+    routes.forEach((route) => {
+      if (config.prefix) route.path = config.prefix + route.path;
+      if (config.middlewares) {
         route.before = [...(config.middlewares as Handler[]), ...route.before];
-      });
-    }
+      }
+    });
+
     return routes;
   });
 
@@ -98,6 +104,11 @@ export function Serve(config: Config) {
     const url = new URL(request.url.replace(/\/$/, ""));
     const reqMethod = request.method.toLowerCase();
     const ctx = new Context(server, request);
+
+    if (!config.disableServerHeader) {
+      ctx.set("Server", "ikari");
+    }
+
     let params: { [key: string]: string } = {};
 
     let possibleRoutes = routesMap.get(url.pathname);

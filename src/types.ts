@@ -44,6 +44,7 @@ export type IkariServeOptions =
   | Omit<TLSServeOptions, "error" | "fetch">;
 
 export type Config = {
+  prefix?: string;
   controllers: Controller[];
   groups?: Group[];
   errorHandler?: ErrorHandler;
@@ -51,6 +52,7 @@ export type Config = {
   logger?: Logger;
   serveOptions?: IkariServeOptions;
   disableStartupMessage?: boolean;
+  disableServerHeader?: boolean;
 };
 
 export type IkariServer = Omit<

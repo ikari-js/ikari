@@ -7,6 +7,7 @@ export function createPath(str: string) {
   }
   return str;
 }
+
 export const representationHeaders = [
   "Content-Type",
   "Content-Encoding",
