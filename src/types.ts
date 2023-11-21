@@ -17,7 +17,7 @@ export type Route = {
 };
 
 export interface Group {
-  prefix: string;
+  prefix?: string;
   middlewares?: Handler[];
   controllers: Controller[];
 }
@@ -45,7 +45,7 @@ export type IkariServeOptions =
 
 export type Config = {
   prefix?: string;
-  controllers: Controller[];
+  controllers?: Controller[];
   groups?: Group[];
   errorHandler?: ErrorHandler;
   middlewares?: Handler[];
