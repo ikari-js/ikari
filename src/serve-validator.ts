@@ -13,7 +13,8 @@ export class ServeValidator {
       .checkPortIsNumber()
       .checkHostnameIsString()
       .checkServeOptionsIsObject()
-      .checkPrefixIsString();
+      .checkPrefixIsString()
+      .checkGroupsOrControllersIsNotEmpty();
   }
 
   private checkConfigIsObject() {
@@ -26,7 +27,7 @@ export class ServeValidator {
 
   private checkControllersIsArray() {
     // TODO: check if all controllers are valid Controller type
-    if (!Array.isArray(this.config.controllers)) {
+    if (this.config.controllers && !Array.isArray(this.config.controllers)) {
       throw new Error("Controllers must be an array");
     }
 
@@ -34,7 +35,7 @@ export class ServeValidator {
   }
 
   private checkControllersIsNotEmpty() {
-    if (this.config.controllers.length === 0) {
+    if (this.config.controllers && this.config.controllers.length === 0) {
       throw new Error("Controllers must not be empty");
     }
 
@@ -45,6 +46,21 @@ export class ServeValidator {
     // TODO: check if all groups are valid Group type
     if (this.config.groups && !Array.isArray(this.config.groups)) {
       throw new Error("Groups must be an array");
+    }
+
+    return this;
+  }
+
+  private checkGroupsOrControllersIsNotEmpty() {
+    if (!this.config.controllers && !this.config.groups) {
+      throw new Error("Either groups or controllers must be provided");
+    }
+
+    if (
+      (this.config.controllers?.length ?? 0) === 0 &&
+      (this.config.groups?.length ?? 0) === 0
+    ) {
+      throw new Error("Either groups or controllers must be provided");
     }
 
     return this;
@@ -120,5 +136,4 @@ export class ServeValidator {
 
     return this;
   }
-
 }
