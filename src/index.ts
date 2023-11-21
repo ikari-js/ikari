@@ -1,7 +1,14 @@
 import "reflect-metadata";
 
 import { Server, Serve as BunServe, Errorlike } from "bun";
-import { Config, Controller, Handler, IkariServer, Route } from "./types";
+import {
+  Config,
+  Controller,
+  Group,
+  Handler,
+  IkariServer,
+  Route,
+} from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
 import DefaultLogger from "./logger";
@@ -53,22 +60,27 @@ export function Serve(config: Config) {
     config.serveOptions = {};
   }
 
-  const routes = config.controllers.map((controller: Controller) => {
-    const routes: Route[] = Reflect.getMetadata("routes", controller.prototype);
-    routes.forEach((route) => {
-      if (config.prefix) route.path = config.prefix + route.path;
-      if (config.middlewares) {
-        route.before = [...(config.middlewares as Handler[]), ...route.before];
-      }
-    });
+  let routes: Route[] = [];
 
-    return routes;
-  });
+  if (config.controllers) {
+    routes = [
+      ...routes,
+      ...getRoutesFromControllers(config, config.controllers),
+    ];
+  }
 
+  if (config.groups) {
+    routes = [...routes, ...getRoutesFromGroups(config, config.groups)];
+  }
+
+  if(routes.length === 0) {
+    throw new Error("No routes found");
+  }
+  
   const routesMap = new Map<string, Map<string, Route>>();
   const routesWithParamsMap = new Map<string, Map<string, Route>>();
 
-  routes.flat().forEach((route) => {
+  routes.forEach((route) => {
     if (!route.pathHasParams) {
       const r = routesMap.get(route.path);
       if (r) {
@@ -224,6 +236,80 @@ function NotAllowed(ctx: Context) {
     return ctx.status(405).res;
   }
   return ctx.status(405).json({ message: "Method Not Allowed" }).res;
+}
+
+function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
+  if(groups.length === 0) {
+    return [];
+  }
+
+  const routes = groups
+    .map(({ prefix, controllers, middlewares }: Group) => {
+      if (prefix) {
+        prefix = createPath(prefix).replace(/\/+$/, "");
+      }
+
+      return controllers
+        .map((controller: Controller) => {
+          const routes: Route[] = Reflect.getMetadata(
+            "routes",
+            controller.prototype
+          );
+
+          return routes.map((route) => {
+            let routeBefore = route.before;
+            let routePath = route.path;
+            if (prefix) routePath = prefix + routePath;
+            if (config.prefix) routePath = config.prefix + routePath;
+            if (middlewares) {
+              routeBefore = [...(middlewares as Handler[]), ...route.before];
+            }
+            if (config.middlewares) {
+              routeBefore = [
+                ...(config.middlewares as Handler[]),
+                ...routeBefore,
+              ];
+            }
+
+            return { ...route, path: routePath, before: routeBefore } as Route;
+          });
+        })
+        .flat();
+    })
+    .flat();
+
+  return routes;
+}
+
+function getRoutesFromControllers(
+  config: Config,
+  controllers: Controller[]
+): Route[] {
+  if(controllers.length === 0) {
+    return [];
+  }
+
+  const routes = controllers
+    .map((controller: Controller) => {
+      const routes: Route[] = Reflect.getMetadata(
+        "routes",
+        controller.prototype
+      );
+
+      return routes.map((route) => {
+        let routeBefore = route.before;
+        let routePath = route.path;
+        if (config.prefix) routePath = config.prefix + routePath;
+        if (config.middlewares) {
+          routeBefore = [...(config.middlewares as Handler[]), ...route.before];
+        }
+
+        return { ...route, path: routePath, before: routeBefore } as Route;
+      });
+    })
+    .flat();
+
+  return routes;
 }
 
 export { Context };
