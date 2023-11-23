@@ -376,6 +376,32 @@ export class Context {
     return this;
   }
 
+  /**
+   * Sets the specified stream to the Response object.
+   * @example
+   * ```ts
+   * ctx.stream(fs.createReadStream("test.txt"));
+   * ```
+   * @param data
+   * @param status Default: 200
+   * @param contentType Default: application/octet-stream
+   **/
+  public stream(
+    data: ReadableStream,
+    status?: number,
+    contentType: string = "application/octet-stream"
+  ): Context {
+    this.res = new Response(data, {
+      status: status || this.res.status,
+      headers: {
+        ...this.res.headers.toJSON(),
+        "Content-Type": contentType,
+      },
+    });
+
+    return this;
+  }
+  
   // TODO sendFile,  sendStream
 }
 
