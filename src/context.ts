@@ -318,13 +318,39 @@ export class Context {
   }
 
   /**
-   * Return the URL string of the request. 
-   */ 
+   * Return the URL string of the request.
+   */
   public url(): string {
     return this.req.url;
   }
 
-  // TODO sendFile, sendString, sendBuffer, sendStream
+  /**
+   * Sets the specified string to the Response object.
+   * @example
+   * ```ts
+   * ctx.string("Hello World");
+   * ```
+   * @param data
+   * @param status Default: 200
+   * @param contentType Default: text/plain
+   **/
+  public string(
+    data: string,
+    status?: number,
+    contentType: string = "text/plain"
+  ): Context {
+    this.res = new Response(data, {
+      status: status || this.res.status,
+      headers: {
+        ...this.res.headers.toJSON(),
+        "Content-Type": contentType,
+      },
+    });
+
+    return this;
+  }
+
+  // TODO sendFile,  sendStream
 }
 
 class Local {
