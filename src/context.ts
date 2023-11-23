@@ -402,6 +402,19 @@ export class Context {
 
     return this;
   }
+
+  /**
+   * Sets the specified Response object to the Context response.
+   * @example
+   * ```ts
+   * ctx.raw(new Response("Hello World"));
+   * ```
+   * @param data
+   **/
+  public raw(data: Response): Context {
+    this.res = data;
+    return this;
+  }
 }
 
 class Local {
