@@ -41,8 +41,9 @@ export class Context {
    * Calls the next handler in the chain.
    *
    */
-  public next(): void {
+  public next(): Context {
     this.routes!.next();
+    return this;
   }
 
   /**
@@ -401,8 +402,6 @@ export class Context {
 
     return this;
   }
-  
-  // TODO sendFile,  sendStream
 }
 
 class Local {
@@ -442,6 +441,7 @@ class Local {
    * ```ts
    * const hasLocalValue = ctx.locals.has("local_value");
    * console.log(hasLocalValue);
+   * ```
    */
   public has(key: string): boolean {
     return this.locals.has(key);
