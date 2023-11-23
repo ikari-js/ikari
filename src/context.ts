@@ -350,6 +350,32 @@ export class Context {
     return this;
   }
 
+  /**
+   * Sets the specified buffer to the Response object.
+   * @example
+   * ```ts
+   * ctx.buffer(Buffer.from("Hello World"));
+   * ```
+   * @param data
+   * @param status Default: 200
+   * @param contentType Default: application/octet-stream
+   **/
+  public buffer(
+    data: Buffer,
+    status?: number,
+    contentType: string = "application/octet-stream"
+  ): Context {
+    this.res = new Response(data, {
+      status: status || this.res.status,
+      headers: {
+        ...this.res.headers.toJSON(),
+        "Content-Type": contentType,
+      },
+    });
+
+    return this;
+  }
+
   // TODO sendFile,  sendStream
 }
 
