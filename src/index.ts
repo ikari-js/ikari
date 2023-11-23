@@ -73,10 +73,10 @@ export function Serve(config: Config) {
     routes = [...routes, ...getRoutesFromGroups(config, config.groups)];
   }
 
-  if(routes.length === 0) {
+  if (routes.length === 0) {
     throw new Error("No routes found");
   }
-  
+
   const routesMap = new Map<string, Map<string, Route>>();
   const routesWithParamsMap = new Map<string, Map<string, Route>>();
 
@@ -239,7 +239,7 @@ function NotAllowed(ctx: Context) {
 }
 
 function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
-  if(groups.length === 0) {
+  if (groups.length === 0) {
     return [];
   }
 
@@ -285,7 +285,7 @@ function getRoutesFromControllers(
   config: Config,
   controllers: Controller[]
 ): Route[] {
-  if(controllers.length === 0) {
+  if (controllers.length === 0) {
     return [];
   }
 
