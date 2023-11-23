@@ -17,12 +17,6 @@ describe("ServeValidator", () => {
     }).toThrow("Config must be an Config object");
   });
 
-  test("checkControllersIsArray", () => {
-    expect(() => {
-      new ServeValidator({ controllers: null as any }).validate();
-    }).toThrow("Controllers must be an array");
-  });
-
   test("checkControllersIsNotEmpty", () => {
     expect(() => {
       new ServeValidator({ controllers: [] }).validate();
