@@ -283,3 +283,91 @@ test("Post Decorator", () => {
   }
 });
 
+
+test("Put Decorator", () => {
+  @Controller("/")
+  class Test {
+    @Put()
+    public put() {}
+
+    @Put("/test")
+    public put1() {}
+
+    @Put("/test/:id")
+    public put2() {}
+
+    @Put("/test/:id/:name")
+    @Before(() => {})
+    public put3() {}
+
+    @Put("/test/:id/:name")
+    @After(() => {})
+    public put4() {}
+
+    @Put("/test/:id/:name")
+    @Before(() => {})
+    @After(() => {})
+    public put5() {}
+  }
+
+  const test = new Test();
+
+  const expectedValues = [
+    {
+      path: "/put",
+      fnName: "put",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test",
+      fnName: "put1",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id",
+      fnName: "put2",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "put3",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 1,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "put4",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "put5",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 1,
+    },
+  ];
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(expectedValues.length);
+
+  for (let i = 0; i < routes.length; i++) {
+    const expected = expectedValues[i];
+    const route = routes[i];
+    expect(route.after.length).toBe(expected.afterCount);
+    expect(route.before.length).toBe(expected.beforeCount);
+    expect(route.target).toBe(Test);
+    expect(route.path).toBe(expected.path);
+    expect(route.fnName).toBe(expected.fnName);
+    expect(route.pathHasParams).toBe(expected.hasParams);
+  }
+});
