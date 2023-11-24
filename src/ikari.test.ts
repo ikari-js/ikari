@@ -1126,3 +1126,94 @@ test("All Decorator", () => {
     expect(route.method).toBe("all");
   }
 });
+
+test("Controller Decorator with prefix", () => {
+  @Controller("/test")
+  class Test {
+    @Get()
+    public get() {}
+  }
+
+  const test = new Test();
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(1);
+  expect(routes[0].path).toBe("/test/get");
+});
+
+test("Controller Decorator with prefix backslash at the end", () => {
+  @Controller("/test/")
+  class Test {
+    @Get()
+    public get() {}
+  }
+
+  const test = new Test();
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(1);
+  expect(routes[0].path).toBe("/test/get");
+});
+
+test("Controller Decorator with prefix and path", () => {
+  @Controller("/test")
+  class Test {
+    @Get("/get")
+    public get() {}
+  }
+
+  const test = new Test();
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(1);
+  expect(routes[0].path).toBe("/test/get");
+});
+
+test("Before Decorator", () => {
+  function before() {}
+  function before1() {}
+
+  @Controller("/")
+  class Test {
+    @Get("/test/:id")
+    @Before(before, before1)
+    public get3() {}
+  }
+
+  const test = new Test();
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(1);
+
+  const route = routes[0];
+  expect(route.before.length).toBe(2);
+  expect(route.before[0]).toBe(before);
+  expect(route.before[1]).toBe(before1);
+});
+
+test("After Decorator", () => {
+  function after() {}
+  function after1() {}
+
+  @Controller("/")
+  class Test {
+    @Get("/test/:id")
+    @After(after, after1)
+    public get3() {}
+  }
+
+  const test = new Test();
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(1);
+
+  const route = routes[0];
+  expect(route.after.length).toBe(2);
+  expect(route.after[0]).toBe(after);
+  expect(route.after[1]).toBe(after1);
+});
