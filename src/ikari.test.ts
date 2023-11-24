@@ -16,6 +16,7 @@ import {
 } from "./decorators";
 import "reflect-metadata";
 import { Route } from ".";
+import { All } from "./decorators/all";
 
 test("createPath", () => {
   expect(createPath("test")).toBe("/test");
@@ -1034,5 +1035,94 @@ test("Controller Decorator", () => {
       expect(route.pathHasParams).toBe(expected.hasParams[i]);
       expect(route.method).toBe(method);
     }
+  }
+});
+
+test("All Decorator", () => {
+  @Controller("/")
+  class Test {
+    @All()
+    public all() {}
+
+    @All("/test")
+    public all1() {}
+
+    @All("/test/:id")
+    public all2() {}
+
+    @All("/test/:id/:name")
+    @Before(() => {})
+    public all3() {}
+
+    @All("/test/:id/:name")
+    @After(() => {})
+    public all4() {}
+
+    @All("/test/:id/:name")
+    @Before(() => {})
+    @After(() => {})
+    public all5() {}
+  }
+
+  const test = new Test();
+
+  const expectedValues = [
+    {
+      path: "/all",
+      fnName: "all",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test",
+      fnName: "all1",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id",
+      fnName: "all2",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "all3",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 1,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "all4",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "all5",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 1,
+    },
+  ];
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(expectedValues.length);
+
+  for (let i = 0; i < routes.length; i++) {
+    const expected = expectedValues[i];
+    const route = routes[i];
+    expect(route.after.length).toBe(expected.afterCount);
+    expect(route.before.length).toBe(expected.beforeCount);
+    expect(route.target).toBe(Test);
+    expect(route.path).toBe(expected.path);
+    expect(route.fnName).toBe(expected.fnName);
+    expect(route.pathHasParams).toBe(expected.hasParams);
+    expect(route.method).toBe("all");
   }
 });
