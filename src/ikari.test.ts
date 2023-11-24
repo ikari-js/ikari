@@ -12,6 +12,7 @@ import {
   Delete,
   Put,
   Patch,
+  Options,
 } from "./decorators";
 import "reflect-metadata";
 import { Route } from ".";
@@ -646,5 +647,94 @@ test("Patch Decorator", () => {
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
     expect(route.method).toBe("patch");
+  }
+});
+
+test("Options Decorator", () => {
+  @Controller("/")
+  class Test {
+    @Options()
+    public options() {}
+
+    @Options("/test")
+    public options1() {}
+
+    @Options("/test/:id")
+    public options2() {}
+
+    @Options("/test/:id/:name")
+    @Before(() => {})
+    public options3() {}
+
+    @Options("/test/:id/:name")
+    @After(() => {})
+    public options4() {}
+
+    @Options("/test/:id/:name")
+    @Before(() => {})
+    @After(() => {})
+    public options5() {}
+  }
+
+  const test = new Test();
+
+  const expectedValues = [
+    {
+      path: "/options",
+      fnName: "options",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test",
+      fnName: "options1",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id",
+      fnName: "options2",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "options3",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 1,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "options4",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "options5",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 1,
+    },
+  ];
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(expectedValues.length);
+
+  for (let i = 0; i < routes.length; i++) {
+    const expected = expectedValues[i];
+    const route = routes[i];
+    expect(route.after.length).toBe(expected.afterCount);
+    expect(route.before.length).toBe(expected.beforeCount);
+    expect(route.target).toBe(Test);
+    expect(route.path).toBe(expected.path);
+    expect(route.fnName).toBe(expected.fnName);
+    expect(route.pathHasParams).toBe(expected.hasParams);
+    expect(route.method).toBe("options");
   }
 });
