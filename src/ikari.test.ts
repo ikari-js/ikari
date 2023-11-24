@@ -193,3 +193,93 @@ test("Get Decorator", () => {
     expect(route.pathHasParams).toBe(expected.hasParams);
   }
 });
+
+
+test("Post Decorator", () => {
+  @Controller("/")
+  class Test {
+    @Post()
+    public post() {}
+
+    @Post("/test")
+    public post1() {}
+
+    @Post("/test/:id")
+    public post2() {}
+
+    @Post("/test/:id/:name")
+    @Before(() => {})
+    public post3() {}
+
+    @Post("/test/:id/:name")
+    @After(() => {})
+    public post4() {}
+
+    @Post("/test/:id/:name")
+    @Before(() => {})
+    @After(() => {})
+    public post5() {}
+  }
+
+  const test = new Test();
+
+  const expectedValues = [
+    {
+      path: "/post",
+      fnName: "post",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test",
+      fnName: "post1",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id",
+      fnName: "post2",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "post3",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 1,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "post4",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "post5",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 1,
+    },
+  ];
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(expectedValues.length);
+
+  for (let i = 0; i < routes.length; i++) {
+    const expected = expectedValues[i];
+    const route = routes[i];
+    expect(route.after.length).toBe(expected.afterCount);
+    expect(route.before.length).toBe(expected.beforeCount);
+    expect(route.target).toBe(Test);
+    expect(route.path).toBe(expected.path);
+    expect(route.fnName).toBe(expected.fnName);
+    expect(route.pathHasParams).toBe(expected.hasParams);
+  }
+});
+
