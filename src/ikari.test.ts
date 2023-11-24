@@ -2,11 +2,18 @@
 import { expect, test, describe } from "bun:test";
 import { createPath } from "./utils";
 import { ServeValidator } from "./serve-validator";
-import { After, Before, Controller, Get, Post } from "./decorators";
+import {
+  After,
+  Before,
+  Controller,
+  Get,
+  Head,
+  Post,
+  Delete,
+  Put,
+} from "./decorators";
 import "reflect-metadata";
 import { Route } from ".";
-import { Put } from "./decorators/put";
-import { Delete } from "./decorators/delete";
 
 test("createPath", () => {
   expect(createPath("test")).toBe("/test");
@@ -192,9 +199,9 @@ test("Get Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
+    expect(route.method).toBe("get");
   }
 });
-
 
 test("Post Decorator", () => {
   @Controller("/")
@@ -281,9 +288,9 @@ test("Post Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
+    expect(route.method).toBe("post");
   }
 });
-
 
 test("Put Decorator", () => {
   @Controller("/")
@@ -370,6 +377,7 @@ test("Put Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
+    expect(route.method).toBe("put");
   }
 });
 
@@ -458,5 +466,95 @@ test("Delete Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
+    expect(route.method).toBe("delete");
+  }
+});
+
+test("Head Decorator", () => {
+  @Controller("/")
+  class Test {
+    @Head()
+    public head() {}
+
+    @Head("/test")
+    public head1() {}
+
+    @Head("/test/:id")
+    public head2() {}
+
+    @Head("/test/:id/:name")
+    @Before(() => {})
+    public head3() {}
+
+    @Head("/test/:id/:name")
+    @After(() => {})
+    public head4() {}
+
+    @Head("/test/:id/:name")
+    @Before(() => {})
+    @After(() => {})
+    public head5() {}
+  }
+
+  const test = new Test();
+
+  const expectedValues = [
+    {
+      path: "/head",
+      fnName: "head",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test",
+      fnName: "head1",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id",
+      fnName: "head2",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "head3",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 1,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "head4",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "head5",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 1,
+    },
+  ];
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(expectedValues.length);
+
+  for (let i = 0; i < routes.length; i++) {
+    const expected = expectedValues[i];
+    const route = routes[i];
+    expect(route.after.length).toBe(expected.afterCount);
+    expect(route.before.length).toBe(expected.beforeCount);
+    expect(route.target).toBe(Test);
+    expect(route.path).toBe(expected.path);
+    expect(route.fnName).toBe(expected.fnName);
+    expect(route.pathHasParams).toBe(expected.hasParams);
+    expect(route.method).toBe("head");
   }
 });
