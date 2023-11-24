@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import { Server, ServeOptions, TLSServeOptions, Errorlike } from "bun";
 
 import { Context } from "./context";
@@ -22,7 +21,6 @@ export interface Group {
   controllers: Controller[];
 }
 
-export type Next = () => void;
 export type Handler = (ctx: Context) => Context | void | Promise<void>;
 
 // TODO: add more formats
