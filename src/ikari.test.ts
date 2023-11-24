@@ -6,6 +6,7 @@ import { After, Before, Controller, Get, Post } from "./decorators";
 import "reflect-metadata";
 import { Route } from ".";
 import { Put } from "./decorators/put";
+import { Delete } from "./decorators/delete";
 
 test("createPath", () => {
   expect(createPath("test")).toBe("/test");
@@ -351,6 +352,94 @@ test("Put Decorator", () => {
     {
       path: "/test/:id/:name",
       fnName: "put5",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 1,
+    },
+  ];
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(expectedValues.length);
+
+  for (let i = 0; i < routes.length; i++) {
+    const expected = expectedValues[i];
+    const route = routes[i];
+    expect(route.after.length).toBe(expected.afterCount);
+    expect(route.before.length).toBe(expected.beforeCount);
+    expect(route.target).toBe(Test);
+    expect(route.path).toBe(expected.path);
+    expect(route.fnName).toBe(expected.fnName);
+    expect(route.pathHasParams).toBe(expected.hasParams);
+  }
+});
+
+test("Delete Decorator", () => {
+  @Controller("/")
+  class Test {
+    @Delete()
+    public delete() {}
+
+    @Delete("/test")
+    public delete1() {}
+
+    @Delete("/test/:id")
+    public delete2() {}
+
+    @Delete("/test/:id/:name")
+    @Before(() => {})
+    public delete3() {}
+
+    @Delete("/test/:id/:name")
+    @After(() => {})
+    public delete4() {}
+
+    @Delete("/test/:id/:name")
+    @Before(() => {})
+    @After(() => {})
+    public delete5() {}
+  }
+
+  const test = new Test();
+
+  const expectedValues = [
+    {
+      path: "/delete",
+      fnName: "delete",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test",
+      fnName: "delete1",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id",
+      fnName: "delete2",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "delete3",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 1,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "delete4",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "delete5",
       hasParams: true,
       afterCount: 1,
       beforeCount: 1,
