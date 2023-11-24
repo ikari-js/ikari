@@ -738,3 +738,301 @@ test("Options Decorator", () => {
     expect(route.method).toBe("options");
   }
 });
+
+test("Controller Decorator", () => {
+  @Controller("/")
+  class Test {
+    @Get()
+    public get() {}
+
+    @Before(() => {})
+    @After(() => {})
+    @Get("/test-get")
+    public get1() {}
+
+    @Before(() => {})
+    @Get("/test-get-2")
+    public get2() {}
+
+    @After(() => {})
+    @Get("/test-get-3")
+    public get3() {}
+
+    @Get("/test-4/:id")
+    public get4() {}
+
+    @Post()
+    public post() {}
+
+    @Post("/test-post")
+    public post1() {}
+
+    @Post("/test-post-2/:id")
+    public post2() {}
+
+    @Post("/test-post-3")
+    @Before(() => {})
+    public post3() {}
+
+    @Post("/test-post-4")
+    @After(() => {})
+    public post4() {}
+
+    @Post("/test-post-5")
+    @Before(() => {})
+    @After(() => {})
+    public post5() {}
+
+    @Put()
+    public put() {}
+
+    @Put("/test-put")
+    public put1() {}
+
+    @Put("/test-put-2/:id")
+    public put2() {}
+
+    @Put("/test-put-3")
+    @Before(() => {})
+    public put3() {}
+
+    @Put("/test-put-4")
+    @After(() => {})
+    public put4() {}
+
+    @Put("/test-put-5")
+    @Before(() => {})
+    @After(() => {})
+    public put5() {}
+
+    @Delete()
+    public delete() {}
+
+    @Delete("/test-delete")
+    public delete1() {}
+
+    @Delete("/test-delete-2/:id")
+    public delete2() {}
+
+    @Delete("/test-delete-3")
+    @Before(() => {})
+    public delete3() {}
+
+    @Delete("/test-delete-4")
+    @After(() => {})
+    public delete4() {}
+
+    @Delete("/test-delete-5")
+    @Before(() => {})
+    @After(() => {})
+    public delete5() {}
+
+    @Head()
+    public head() {}
+
+    @Head("/test-head")
+    public head1() {}
+
+    @Head("/test-head-2/:id")
+    public head2() {}
+
+    @Head("/test-head-3")
+    @Before(() => {})
+    public head3() {}
+
+    @Head("/test-head-4")
+    @After(() => {})
+    public head4() {}
+
+    @Head("/test-head-5")
+    @Before(() => {})
+    @After(() => {})
+    public head5() {}
+
+    @Patch()
+    public patch() {}
+
+    @Patch("/test-patch")
+    public patch1() {}
+
+    @Patch("/test-patch-2/:id")
+    public patch2() {}
+
+    @Patch("/test-patch-3")
+    @Before(() => {})
+    public patch3() {}
+
+    @Patch("/test-patch-4")
+    @After(() => {})
+    public patch4() {}
+
+    @Patch("/test-patch-5")
+    @Before(() => {})
+    @After(() => {})
+    public patch5() {}
+
+    @Options()
+    public options() {}
+
+    @Options("/test-options")
+    public options1() {}
+
+    @Options("/test-options-2/:id")
+    public options2() {}
+
+    @Options("/test-options-3")
+    @Before(() => {})
+    public options3() {}
+
+    @Options("/test-options-4")
+    @After(() => {})
+    public options4() {}
+
+    @Options("/test-options-5")
+    @Before(() => {})
+    @After(() => {})
+    public options5() {}
+  }
+
+  const test = new Test();
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+
+  const expectedValues = {
+    get: {
+      count: 5,
+      paths: ["/get", "/test-get", "/test-get-2", "/test-get-3", "/test-4/:id"],
+      fnNames: ["get", "get1", "get2", "get3", "get4"],
+      afterCount: [0, 1, 0, 1, 0],
+      beforeCount: [0, 1, 1, 0, 0],
+      hasParams: [false, false, false, false, true],
+    },
+    post: {
+      count: 6,
+      paths: [
+        "/post",
+        "/test-post",
+        "/test-post-2/:id",
+        "/test-post-3",
+        "/test-post-4",
+        "/test-post-5",
+      ],
+      fnNames: ["post", "post1", "post2", "post3", "post4", "post5"],
+      afterCount: [0, 0, 0, 0, 1, 1],
+      beforeCount: [0, 0, 0, 1, 0, 1],
+      hasParams: [false, false, true, false, false, false],
+    },
+    put: {
+      count: 6,
+      paths: [
+        "/put",
+        "/test-put",
+        "/test-put-2/:id",
+        "/test-put-3",
+        "/test-put-4",
+        "/test-put-5",
+      ],
+      fnNames: ["put", "put1", "put2", "put3", "put4", "put5"],
+      afterCount: [0, 0, 0, 0, 1, 1],
+      beforeCount: [0, 0, 0, 1, 0, 1],
+      hasParams: [false, false, true, false, false, false],
+    },
+    delete: {
+      count: 6,
+      paths: [
+        "/delete",
+        "/test-delete",
+        "/test-delete-2/:id",
+        "/test-delete-3",
+        "/test-delete-4",
+        "/test-delete-5",
+      ],
+      fnNames: [
+        "delete",
+        "delete1",
+        "delete2",
+        "delete3",
+        "delete4",
+        "delete5",
+      ],
+      afterCount: [0, 0, 0, 0, 1, 1],
+      beforeCount: [0, 0, 0, 1, 0, 1],
+      hasParams: [false, false, true, false, false, false],
+    },
+    head: {
+      count: 6,
+      paths: [
+        "/head",
+        "/test-head",
+        "/test-head-2/:id",
+        "/test-head-3",
+        "/test-head-4",
+        "/test-head-5",
+      ],
+      fnNames: ["head", "head1", "head2", "head3", "head4", "head5"],
+      afterCount: [0, 0, 0, 0, 1, 1],
+      beforeCount: [0, 0, 0, 1, 0, 1],
+      hasParams: [false, false, true, false, false, false],
+    },
+
+    patch: {
+      count: 6,
+      paths: [
+        "/patch",
+        "/test-patch",
+        "/test-patch-2/:id",
+        "/test-patch-3",
+        "/test-patch-4",
+        "/test-patch-5",
+      ],
+      fnNames: ["patch", "patch1", "patch2", "patch3", "patch4", "patch5"],
+      afterCount: [0, 0, 0, 0, 1, 1],
+      beforeCount: [0, 0, 0, 1, 0, 1],
+      hasParams: [false, false, true, false, false, false],
+    },
+    options: {
+      count: 6,
+      paths: [
+        "/options",
+        "/test-options",
+        "/test-options-2/:id",
+        "/test-options-3",
+        "/test-options-4",
+        "/test-options-5",
+      ],
+      fnNames: [
+        "options",
+        "options1",
+        "options2",
+        "options3",
+        "options4",
+        "options5",
+      ],
+      afterCount: [0, 0, 0, 0, 1, 1],
+      beforeCount: [0, 0, 0, 1, 0, 1],
+      hasParams: [false, false, true, false, false, false],
+    },
+  };
+
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(
+    Object.entries(expectedValues)
+      .map((e) => e[1].count)
+      .reduce((a, b) => a + b, 0)
+  );
+
+  for (const [method, expected] of Object.entries(expectedValues)) {
+    const routesForMethod = routes.filter((e) => e.method === method);
+    expect(routesForMethod.length).toBe(expected.count);
+
+    for (let i = 0; i < routesForMethod.length; i++) {
+      const route = routesForMethod[i];
+      expect(route.after.length).toBe(expected.afterCount[i]);
+      expect(route.before.length).toBe(expected.beforeCount[i]);
+      expect(route.target).toBe(Test);
+      expect(route.path).toBe(expected.paths[i]);
+      expect(route.fnName).toBe(expected.fnNames[i]);
+      expect(route.pathHasParams).toBe(expected.hasParams[i]);
+      expect(route.method).toBe(method);
+    }
+  }
+});
