@@ -11,6 +11,7 @@ import {
   Post,
   Delete,
   Put,
+  Patch,
 } from "./decorators";
 import "reflect-metadata";
 import { Route } from ".";
@@ -556,5 +557,94 @@ test("Head Decorator", () => {
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
     expect(route.method).toBe("head");
+  }
+});
+
+test("Patch Decorator", () => {
+  @Controller("/")
+  class Test {
+    @Patch()
+    public patch() {}
+
+    @Patch("/test")
+    public patch1() {}
+
+    @Patch("/test/:id")
+    public patch2() {}
+
+    @Patch("/test/:id/:name")
+    @Before(() => {})
+    public patch3() {}
+
+    @Patch("/test/:id/:name")
+    @After(() => {})
+    public patch4() {}
+
+    @Patch("/test/:id/:name")
+    @Before(() => {})
+    @After(() => {})
+    public patch5() {}
+  }
+
+  const test = new Test();
+
+  const expectedValues = [
+    {
+      path: "/patch",
+      fnName: "patch",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test",
+      fnName: "patch1",
+      hasParams: false,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id",
+      fnName: "patch2",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "patch3",
+      hasParams: true,
+      afterCount: 0,
+      beforeCount: 1,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "patch4",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 0,
+    },
+    {
+      path: "/test/:id/:name",
+      fnName: "patch5",
+      hasParams: true,
+      afterCount: 1,
+      beforeCount: 1,
+    },
+  ];
+  const routes = Reflect.getMetadata("routes", test) as Route[];
+  expect(typeof routes).toBe("object");
+  expect(routes.length).toBe(expectedValues.length);
+
+  for (let i = 0; i < routes.length; i++) {
+    const expected = expectedValues[i];
+    const route = routes[i];
+    expect(route.after.length).toBe(expected.afterCount);
+    expect(route.before.length).toBe(expected.beforeCount);
+    expect(route.target).toBe(Test);
+    expect(route.path).toBe(expected.path);
+    expect(route.fnName).toBe(expected.fnName);
+    expect(route.pathHasParams).toBe(expected.hasParams);
+    expect(route.method).toBe("patch");
   }
 });
