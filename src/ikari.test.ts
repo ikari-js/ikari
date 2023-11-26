@@ -13,10 +13,10 @@ import {
   Put,
   Patch,
   Options,
+  All
 } from "./decorators";
 import "reflect-metadata";
 import { Config, Context, Route, Serve } from ".";
-import { All } from "./decorators/all";
 import { unlinkSync } from "node:fs";
 
 test("createPath", () => {

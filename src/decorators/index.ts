@@ -8,4 +8,4 @@ export * from "../decorators/put";
 export * from "../decorators/patch";
 export * from "../decorators/delete";
 export * from "../decorators/options";
-
+export * from "../decorators/all";
