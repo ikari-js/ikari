@@ -205,19 +205,23 @@ export function Serve(config: Config) {
   }
 
   return new Proxy(bunServe, {
-    get(target, prop, receiver) {
+    get(target, prop) {
       if (bannedProps.includes(prop as string)) {
         throw new Error(`Cannot access ${prop.toString()}`);
       }
 
-      return Reflect.get(target, prop, receiver);
+      const value = Reflect.get(target, prop);
+      if (typeof value === "function") {
+        return value.bind(target);
+      }
+      return value;
     },
-    set(target, prop, value, receiver) {
+    set(target, prop, value) {
       if (bannedProps.includes(prop as string)) {
         throw new Error(`Cannot set ${prop.toString()}`);
       }
 
-      return Reflect.set(target, prop, value, receiver);
+      return Reflect.set(target, prop, value);
     },
   }) as IkariServer;
 }
