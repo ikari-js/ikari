@@ -1365,6 +1365,7 @@ test("Context ", async () => {
   };
 
   const serve = Serve(config);
+  const localIp = process.platform === "linux" ? "::ffff:127.0.0.1" : "::1";
 
   const expectedValues = [
     {
@@ -1509,7 +1510,7 @@ test("Context ", async () => {
       method: "get",
       bodyType: "json",
       statusCode: StatusCode.OK,
-      body: { ip: "::ffff:127.0.0.1" },
+      body: { ip: localIp },
     },
     {
       path: "/get-authorization",
