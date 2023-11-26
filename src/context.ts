@@ -107,6 +107,53 @@ export class Context {
   }
 
   /**
+   * Sets the specified cookie to the Response object.
+   * @example
+   * ```ts
+   * ctx.setCookie("cookieName", {
+   *  value: "cookieValue",
+   *  expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+   * });
+   * ```
+   */
+  public setCookie(
+    name: string,
+    cookie: {
+      value: string;
+      expires?: Date;
+      maxAge?: number;
+      domain?: string;
+      path?: string;
+      secure?: boolean;
+      httpOnly?: boolean;
+      sameSite?: "Strict" | "Lax" | "None";
+    }
+  ): void {
+    const cookieStr = `${name}=${cookie.value}; ${
+      cookie.expires ? `Expires=${cookie.expires.toUTCString()};` : ""
+    } ${cookie.maxAge ? `Max-Age=${cookie.maxAge};` : ""} ${
+      cookie.domain ? `Domain=${cookie.domain};` : ""
+    } ${cookie.path ? `Path=${cookie.path};` : ""} ${
+      cookie.secure ? `Secure;` : ""
+    } ${cookie.httpOnly ? `HttpOnly;` : ""} ${
+      cookie.sameSite ? `SameSite=${cookie.sameSite};` : ""
+    }`;
+
+    return this.append("Set-Cookie", cookieStr);
+  }
+
+  /**
+   * Appends the specified value to the specified header.
+   * @example
+   * ```ts
+   * ctx.append("X-Request-Id", "123");
+   * ```
+   */
+  public append(name: string, value: string): void {
+    return this.res.headers.append(name, value);
+  }
+
+  /**
    * Returns the value of the Authorization header.
    *
    * @example
@@ -134,6 +181,7 @@ export class Context {
 
   /**
    * Returns the parsed body of the request. If the Content-Type is application/json it will return a JSON object, if the Content-Type is application/x-www-form-urlencoded it will return a URLSearchParams object, if the Content-Type is multipart/form-data it will return a FormData object, otherwise it will return a string.
+   * If the request does not have Content-Type header it will return the body as string.
    *
    * @example
    * ```ts
@@ -172,6 +220,10 @@ export class Context {
         break;
       case "application/octet-stream":
         body = await this.req.arrayBuffer();
+        this._body = body;
+        break;
+      default:
+        body = await this.req.text();
         this._body = body;
         break;
     }
