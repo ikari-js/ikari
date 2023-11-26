@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect, test, describe } from "bun:test";
-import { createPath } from "./utils";
+import { StatusCode, createPath } from "./utils";
 import { ServeValidator } from "./serve-validator";
 import {
   After,
@@ -15,8 +15,9 @@ import {
   Options,
 } from "./decorators";
 import "reflect-metadata";
-import { Route } from ".";
+import { Config, Context, Route, Serve } from ".";
 import { All } from "./decorators/all";
+import { unlinkSync } from "node:fs";
 
 test("createPath", () => {
   expect(createPath("test")).toBe("/test");
@@ -1216,4 +1217,356 @@ test("After Decorator", () => {
   expect(route.after.length).toBe(2);
   expect(route.after[0]).toBe(after);
   expect(route.after[1]).toBe(after1);
+});
+
+test("Context ", async () => {
+  @Controller("/")
+  class Test {
+    @Get("/get")
+    public get(ctx: Context) {
+      return ctx.json({ test: "test" });
+    }
+
+    @Get("/get-withparams/:id/:name")
+    public getWithParams(ctx: Context) {
+      return ctx.json({ id: ctx.param("id"), name: ctx.param("name") });
+    }
+
+    @Get("/get-withquery")
+    public getWithQuery(ctx: Context) {
+      return ctx.json({ id: ctx.query("id"), name: ctx.query("name") });
+    }
+
+    @Get("/get-with-query-and-params/:id/:name")
+    public getWithQueryAndParams(ctx: Context) {
+      return ctx.json({
+        id: ctx.query("id"),
+        name: ctx.query("name"),
+        idParam: ctx.param("id"),
+        nameParam: ctx.param("name"),
+      });
+    }
+
+    @Get("/get-return-string")
+    public getReturnString(ctx: Context) {
+      return ctx.string("test");
+    }
+
+    @Get("/get-return-buffer")
+    public getReturnBuffer(ctx: Context) {
+      return ctx.buffer(Buffer.from("test"));
+    }
+
+    @Get("/get-return-stream")
+    public async getReturnStream(ctx: Context) {
+      // create temporary file
+      const filePath = import.meta.dir + "/test-file";
+      await Bun.write(filePath, "test");
+      const f = Bun.file(filePath);
+      ctx.stream(f.stream());
+      setTimeout(() => {
+        unlinkSync(filePath);
+      }, 0);
+    }
+
+    @Get("/get-return-raw")
+    public getReturnRaw(ctx: Context) {
+      return ctx.raw(new Response("test"));
+    }
+
+    @Get("/get-return-statuscode")
+    public getReturnStatusCode(ctx: Context) {
+      return ctx.status(StatusCode.ACCEPTED).string("test");
+    }
+
+    @Get("/get-return-redirect-in-app")
+    public getReturnRedirect(ctx: Context) {
+      return ctx.redirect("/get");
+    }
+
+    @Get("/get-cookie")
+    public getCookie(ctx: Context) {
+      ctx.setCookie("test", { value: "test" });
+      return ctx.json({});
+    }
+
+    @Get("/get-append")
+    public getAppend(ctx: Context) {
+      ctx.append("test", "test");
+      ctx.append("test", "test2");
+      return ctx.json({});
+    }
+
+    @Get("/get-set")
+    public getSet(ctx: Context) {
+      ctx.set("test", "test");
+      return ctx.json({});
+    }
+
+    @Get("/get-get")
+    public getGet(ctx: Context) {
+      return ctx.json({ test: ctx.get("test") });
+    }
+
+    @Get("/get-locals")
+    @Before((ctx: Context) => {
+      ctx.locals.set("test", "test-local");
+      ctx.next();
+    })
+    public getLocals(ctx: Context) {
+      return ctx.json({
+        value: ctx.locals.get("test"),
+        has: ctx.locals.has("test"),
+      });
+    }
+
+    @Get("/get-get-cookie")
+    public getGetCookie(ctx: Context) {
+      return ctx.json({ test: ctx.cookie("test") });
+    }
+
+    @Get("/get-set-cookie")
+    public getSetCookie(ctx: Context) {
+      ctx.setCookie("test", { value: "test" });
+      return ctx.json({});
+    }
+
+    @Get("/get-ip")
+    public getIp(ctx: Context) {
+      return ctx.json({ ip: ctx.ip() });
+    }
+
+    @Get("/get-authorization")
+    public getAuthorization(ctx: Context) {
+      return ctx.json({ authorization: ctx.authorization() });
+    }
+
+    @Get("/get-url")
+    public getUrl(ctx: Context) {
+      return ctx.json({ url: ctx.url() });
+    }
+
+    @Post("/post-json")
+    public async postJson(ctx: Context) {
+      return ctx.json(await ctx.body());
+    }
+
+    // TODO
+    // body form data
+    // body urlencoded
+    // body raw
+    // body stream
+  }
+
+  const config: Config = {
+    controllers: [Test],
+    disableStartupMessage: true,
+    logger: { logger: () => {} },
+  };
+
+  const serve = Serve(config);
+
+  const expectedValues = [
+    {
+      path: "/get",
+      method: "get",
+      bodyType: "json",
+      body: { test: "test" },
+      statusCode: StatusCode.OK,
+    },
+    {
+      path: "/get-withparams/1/test",
+      method: "get",
+      bodyType: "json",
+      body: { id: "1", name: "test" },
+      statusCode: StatusCode.OK,
+    },
+    {
+      path: "/get-withquery?id=1&name=test",
+      method: "get",
+      bodyType: "json",
+      body: { id: "1", name: "test" },
+      statusCode: StatusCode.OK,
+    },
+    {
+      path: "/get-with-query-and-params/1/test?id=2&name=test2",
+      method: "get",
+      bodyType: "json",
+      body: { id: "2", name: "test2", idParam: "1", nameParam: "test" },
+      statusCode: StatusCode.OK,
+    },
+    {
+      path: "/get-return-string",
+      method: "get",
+      bodyType: "text",
+      body: "test",
+      statusCode: StatusCode.OK,
+    },
+    {
+      path: "/get-return-buffer",
+      method: "get",
+      bodyType: "text",
+      body: "test",
+      statusCode: StatusCode.OK,
+    },
+    {
+      path: "/get-return-stream",
+      method: "get",
+      bodyType: "text",
+      body: "test",
+      statusCode: StatusCode.OK,
+    },
+    {
+      path: "/get-return-raw",
+      method: "get",
+      bodyType: "text",
+      body: "test",
+      statusCode: StatusCode.OK,
+    },
+    {
+      path: "/get-return-statuscode",
+      method: "get",
+      bodyType: "text",
+      body: "test",
+      statusCode: StatusCode.ACCEPTED,
+    },
+    {
+      path: "/get-return-redirect-in-app",
+      method: "get",
+      bodyType: "text",
+      body: '{"test":"test"}',
+      statusCode: StatusCode.OK,
+    },
+    {
+      path: "/get-cookie",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      responseHeaders: {
+        "set-cookie": "test=test;",
+      },
+      body: {},
+    },
+    {
+      path: "/get-append",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      responseHeaders: {
+        test: "test, test2",
+      },
+      body: {},
+    },
+    {
+      path: "/get-set",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      responseHeaders: {
+        test: "test",
+      },
+      body: {},
+    },
+    {
+      path: "/get-get",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      reqHeaders: {
+        test: "test",
+      },
+      body: { test: "test" },
+    },
+    {
+      path: "/get-locals",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      body: { value: "test-local", has: true },
+    },
+    {
+      path: "/get-get-cookie",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      body: { test: "test" },
+      reqHeaders: {
+        cookie: "test=test",
+      },
+    },
+    {
+      path: "/get-set-cookie",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      responseHeaders: {
+        "set-cookie": "test=test;",
+      },
+      body: {},
+    },
+    {
+      path: "/get-ip",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      body: { ip: "::ffff:127.0.0.1" },
+    },
+    {
+      path: "/get-authorization",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      reqHeaders: {
+        Authorization: "Test Authorization",
+      },
+      body: { authorization: "Test Authorization" },
+    },
+    {
+      path: "/get-url",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      body: { url: `http://${serve.hostname}:${serve.port}/get-url` },
+    },
+    {
+      path: "/post-json",
+      method: "post",
+      bodyType: "json",
+      reqBody: { test: "test" },
+      reqHeaders: {
+        "content-type": "application/json",
+      },
+      statusCode: StatusCode.OK,
+      body: { test: "test" },
+    },
+  ];
+
+  for (const expected of expectedValues) {
+    const res = await fetch(serve.hostname + ":" + serve.port + expected.path, {
+      method: expected.method,
+      credentials: "include",
+      headers: expected?.reqHeaders
+        ? JSON.parse(JSON.stringify(expected.reqHeaders))
+        : {},
+      body: expected?.reqBody ? JSON.stringify(expected.reqBody) : undefined,
+    });
+
+    let body = null;
+    if (expected.bodyType === "json") {
+      body = await res.json();
+    } else if (expected.bodyType === "text") {
+      body = await res.text();
+    }
+
+    if (expected.responseHeaders) {
+      for (const [key, value] of Object.entries(expected.responseHeaders)) {
+        expect(res.headers.get(key)).toBe(value);
+      }
+    }
+
+    expect(body).toEqual(expected.body);
+    expect(res.status).toBe(expected.statusCode);
+  }
+
+  serve.stop();
 });
