@@ -1365,7 +1365,7 @@ test("Context ", async () => {
   };
 
   const serve = Serve(config);
-  const localIp = process.platform === "linux" ? "::ffff:127.0.0.1" : "::1";
+  const localIp = (process.platform === "linux" && process.env.WSL_INTEROP) ? "::ffff:127.0.0.1" : "::1";
 
   const expectedValues = [
     {
