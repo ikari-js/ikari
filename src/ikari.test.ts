@@ -13,7 +13,7 @@ import {
   Put,
   Patch,
   Options,
-  All
+  All,
 } from "./decorators";
 import "reflect-metadata";
 import { Config, Context, Route, Serve } from ".";
@@ -1346,16 +1346,87 @@ test("Context ", async () => {
       return ctx.json({ url: ctx.url() });
     }
 
+    @Get("/get-queries")
+    public getQueries(ctx: Context) {
+      return ctx.json(ctx.queries());
+    }
+
+    @Get("/get-res-status")
+    public getResStatus(ctx: Context) {
+      ctx.status(StatusCode.NOT_FOUND);
+      return ctx.json({ status: ctx.getStatus() });
+    }
+
+    @Get("/get-res-headers")
+    public getResHeaders(ctx: Context) {
+      ctx.set("test", "test");
+      return ctx.json({ test: ctx.getResHeader("test") });
+    }
+
+    @Get("/get-res-without-body")
+    public getResWithoutBody(ctx: Context) {
+      ctx.status(StatusCode.NOT_FOUND);
+      ctx.set("test", "test");
+      ctx.setCookie("test", { value: "test" });
+      ctx.append("test", "test2");
+      ctx.set("test2", "test2");
+      return ctx.getResWithoutBody();
+    }
+
     @Post("/post-json")
     public async postJson(ctx: Context) {
       return ctx.json(await ctx.body());
     }
 
-    // TODO
-    // body form data
-    // body urlencoded
-    // body raw
-    // body stream
+    @Get("/get-req-body")
+    public async getReqBody(ctx: Context) {
+      return ctx.json(await ctx.body());
+    }
+
+    @Post("/post-double-body")
+    public async postDoubleBody(ctx: Context) {
+      const body = await ctx.body();
+      return ctx.json({ body: body, body2: await ctx.body() });
+    }
+
+    @Post("/post-body-without-content-type")
+    public async postBodyWithoutContentType(ctx: Context) {
+      return ctx.json(await ctx.body());
+    }
+
+    @Post("/post-body-form-data")
+    public async postBodyFormData(ctx: Context) {
+      const formData = (await ctx.body()) as FormData;
+      const fields: Record<string, string> = {};
+      for (const [key, value] of formData) {
+        fields[key] = value.toString();
+      }
+
+      return ctx.json(fields);
+    }
+
+    @Post("/post-body-urlencoded")
+    public async postBodyUrlencoded(ctx: Context) {
+      const urlencoded = (await ctx.body()) as URLSearchParams;
+      const fields: Record<string, string> = {};
+      for (const [key, value] of urlencoded) {
+        fields[key] = value.toString();
+      }
+
+      return ctx.json(fields);
+    }
+
+    @Post("/post-body-raw")
+    public async postBodyRaw(ctx: Context) {
+      return ctx.json(await ctx.body());
+    }
+
+    @Post("/post-body-stream")
+    public async postBodyStream(ctx: Context) {
+      const stream = (await ctx.body()) as ArrayBuffer;
+      const buffer = Buffer.from(stream);
+      return ctx.json({ test: buffer.toString() });
+    }
   }
 
   const config: Config = {
@@ -1365,7 +1436,10 @@ test("Context ", async () => {
   };
 
   const serve = Serve(config);
-  const localIp = (process.platform === "linux" && process.env.WSL_INTEROP) ? "::ffff:127.0.0.1" : "::1";
+  const localIp =
+    process.platform === "linux" && process.env.WSL_INTEROP
+      ? "::ffff:127.0.0.1"
+      : "::1";
 
   const expectedValues = [
     {
@@ -1540,16 +1614,166 @@ test("Context ", async () => {
       statusCode: StatusCode.OK,
       body: { test: "test" },
     },
+    {
+      path: "/get-queries?id=1&name=test",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      body: { id: "1", name: "test" },
+    },
+    {
+      path: "/get-res-status",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.NOT_FOUND,
+      body: { status: StatusCode.NOT_FOUND },
+    },
+    {
+      path: "/get-res-headers",
+      method: "get",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      body: { test: "test" },
+    },
+    {
+      path: "/get-res-without-body",
+      method: "get",
+      bodyType: "text",
+      statusCode: StatusCode.NOT_FOUND,
+      responseHeaders: {
+        "set-cookie": "test=test;",
+        test: "test, test2",
+      },
+      body: "",
+    },
+    {
+      path: "/get-req-body",
+      method: "get",
+      bodyType: "json",
+      reqHeaders: {
+        "content-type": "application/json",
+      },
+      statusCode: StatusCode.OK,
+      body: null,
+    },
+    {
+      path: "/post-double-body",
+      method: "post",
+      bodyType: "json",
+      reqBody: { test: "test" },
+      reqHeaders: {
+        "content-type": "application/json",
+      },
+      statusCode: StatusCode.OK,
+      body: { body: { test: "test" }, body2: { test: "test" } },
+    },
+    {
+      path: "/post-body-without-content-type",
+      method: "post",
+      bodyType: "text",
+      reqBody: { test: "test" },
+      statusCode: StatusCode.OK,
+      body: '{"test":"test"}',
+    },
+    {
+      path: "/post-body-form-data",
+      method: "post",
+      formData: {
+        test: "test",
+        test2: "test2",
+      },
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      body: {
+        test: "test",
+        test2: "test2",
+      },
+    },
+    {
+      path: "/post-body-urlencoded",
+      method: "post",
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      urlSearch: {
+        test: "test",
+        test2: "test2",
+      },
+      body: {
+        test: "test",
+        test2: "test2",
+      },
+    },
+    {
+      path: "/post-body-raw",
+      method: "post",
+      bodyType: "json",
+      reqBody: "test raw body",
+      reqHeaders: {
+        "content-type": "text/plain",
+      },
+      statusCode: StatusCode.OK,
+      body: "test raw body",
+    },
+    {
+      path: "/post-body-stream",
+      method: "post",
+      bodyType: "json",
+      reqHeaders: {
+        "content-type": "application/octet-stream",
+      },
+      statusCode: StatusCode.OK,
+      body: { test: "test raw body" },
+      streamBody: "test raw body",
+    },
   ];
 
   for (const expected of expectedValues) {
+    let formData: FormData | undefined;
+    if (expected.formData) {
+      formData = new FormData();
+      for (const [key, value] of Object.entries(expected.formData)) {
+        formData.append(key, value);
+      }
+    }
+
+    let urlSearch: URLSearchParams | undefined;
+    if (expected.urlSearch) {
+      urlSearch = new URLSearchParams();
+      for (const [key, value] of Object.entries(expected.urlSearch)) {
+        urlSearch.append(key, value);
+      }
+    }
+
+    let streamBody: ReadableStream<Uint8Array> | undefined;
+    if (expected.streamBody) {
+      const filePath = import.meta.dir + "/test-file";
+      await Bun.write(filePath, expected.streamBody);
+      const f = Bun.file(filePath);
+      streamBody = f.stream();
+      setTimeout(() => {
+        unlinkSync(filePath);
+      }, 0);
+    }
+
+    let reqBody;
+    if (expected.reqBody) {
+      reqBody = JSON.stringify(expected.reqBody);
+    } else if (expected.urlSearch) {
+      reqBody = urlSearch;
+    } else if (expected.formData) {
+      reqBody = formData;
+    } else if (expected.streamBody) {
+      reqBody = streamBody;
+    }
+
     const res = await fetch(serve.hostname + ":" + serve.port + expected.path, {
       method: expected.method,
       credentials: "include",
       headers: expected?.reqHeaders
         ? JSON.parse(JSON.stringify(expected.reqHeaders))
         : {},
-      body: expected?.reqBody ? JSON.stringify(expected.reqBody) : undefined,
+      body: reqBody,
+      redirect: "follow",
     });
 
     let body = null;
