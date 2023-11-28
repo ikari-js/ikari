@@ -16,8 +16,10 @@ import {
   All,
 } from "./decorators";
 import "reflect-metadata";
-import { Config, Context, Route, Serve } from ".";
+import { Config, Context, Route, Serve, defaultErrorHandler } from ".";
 import { unlinkSync } from "node:fs";
+import { Errorlike } from "bun";
+import DefaultLogger from "./logger";
 
 test("createPath", () => {
   expect(createPath("test")).toBe("/test");
@@ -1794,4 +1796,190 @@ test("Context ", async () => {
   }
 
   serve.stop();
+});
+
+describe("Serve", async () => {
+  test("Serve prefix star without backslah", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    const config: Config = {
+      prefix: "api",
+      controllers: [Test],
+      disableStartupMessage: true,
+      logger: { logger: () => {} },
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    expect(config.prefix).toBe("/api");
+    serve.stop();
+  });
+
+  test("Serve prefix endswith backslah", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    const config: Config = {
+      prefix: "api/",
+      controllers: [Test],
+      disableStartupMessage: true,
+      logger: { logger: () => {} },
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    expect(config.prefix).toBe("/api");
+    serve.stop();
+  });
+
+  test("Serve prefix with mutiple backslah", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    const config: Config = {
+      prefix: "api///////",
+      controllers: [Test],
+      disableStartupMessage: true,
+      logger: { logger: () => {} },
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    expect(config.prefix).toBe("/api");
+    serve.stop();
+  });
+
+  test("Serve default error handler", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      logger: { logger: () => {} },
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    expect(config.errorHandler).toBe(defaultErrorHandler);
+    serve.stop();
+  });
+
+  test("Serve custom error handler", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    function customErrorHandler(err: Errorlike) {
+      return new Response(JSON.stringify({ message: err?.message }));
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      logger: { logger: () => {} },
+      serveOptions: {
+        port: 0,
+      },
+      errorHandler: customErrorHandler,
+    };
+
+    const serve = Serve(config);
+    expect(config.errorHandler).toBe(customErrorHandler);
+    serve.stop();
+  });
+
+  test("Serve default logger", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    expect(config.logger).toMatchObject(new DefaultLogger());
+    serve.stop();
+  });
+
+  test("Serve custom logger", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    const customLogger = {
+      logger: () => {},
+    };
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+      logger: customLogger,
+    };
+
+    const serve = Serve(config);
+    expect(config.logger).toMatchObject(customLogger);
+    expect(config.logger).toBe(customLogger);
+    serve.stop();
+  });
+
+  test("Serve custom server option", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 9696,
+        hostname: "127.0.0.1",
+        maxRequestBodySize: 1024
+      },
+      logger: { logger: () => {} },
+    };
+
+    const serve = Serve(config);
+    expect(config.serveOptions?.hostname).toBe("127.0.0.1");
+    expect(config.serveOptions?.maxRequestBodySize).toBe(1024);
+    expect(config.serveOptions?.port).toBe(9696);
+    serve.stop();
+  });
+
 });

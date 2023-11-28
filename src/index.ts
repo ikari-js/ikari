@@ -14,7 +14,7 @@ import { Context, Routes } from "./context";
 import DefaultLogger from "./logger";
 import { HttpMethod, createPath, startupMessage } from "./utils";
 
-function defaultErrorHandler(err: Errorlike) {
+export function defaultErrorHandler(err: Errorlike) {
   return new Response(
     JSON.stringify({
       message: err?.message,
