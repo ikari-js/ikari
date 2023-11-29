@@ -11,7 +11,6 @@ import {
 } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
-import DefaultLogger from "./logger";
 import { HttpMethod, createPath, startupMessage } from "./utils";
 
 export function defaultErrorHandler(err: Errorlike) {
@@ -52,10 +51,6 @@ export function Serve(config: Config) {
     config.errorHandler = defaultErrorHandler;
   }
 
-  if (!config.logger) {
-    config.logger = new DefaultLogger();
-  }
-
   if (!config.serveOptions) {
     config.serveOptions = {};
   }
@@ -77,33 +72,22 @@ export function Serve(config: Config) {
     throw new Error("No routes found");
   }
 
-  const routesMap = new Map<string, Map<string, Route>>();
-  const routesWithParamsMap = new Map<string, Map<string, Route>>();
+  const routesMap = new Map<string, Route>();
+  const routesWithParamsMap = new Map<string, Route>();
 
   routes.forEach((route) => {
     if (!route.pathHasParams) {
-      const r = routesMap.get(route.path);
-      if (r) {
-        r.set(route.method, route);
-      } else {
-        const newMap = new Map<string, Route>();
-        routesMap.set(route.path, newMap.set(route.method, route));
-      }
+      routesMap.set(route.path + "|method|" + route.method, route);
     } else {
       // TODO: need to improve this with more path param separators
       // /example/:id/:name
       route.path =
+        "^" +
         route.path.replace(/:([^\\/]+)/g, (_, paramName) => {
           return `(?<${paramName}>[^\\/]+)`;
-        }) + "$";
-
-      const r = routesWithParamsMap.get(route.path);
-      if (r) {
-        r.set(route.method, route);
-      } else {
-        const newMap = new Map<string, Route>();
-        routesWithParamsMap.set(route.path, newMap.set(route.method, route));
-      }
+        }) +
+        "$";
+      routesWithParamsMap.set(route.path + "|method|" + route.method, route);
     }
   });
 
@@ -117,45 +101,64 @@ export function Serve(config: Config) {
     const reqMethod = request.method.toLowerCase();
     const ctx = new Context(server, request);
 
-    if (!config.disableServerHeader) {
-      ctx.set("Server", "ikari");
+    let routeKey = url.pathname + "|method|" + reqMethod;
+    if (reqMethod === HttpMethod.HEAD) {
+      routeKey = url.pathname + "|method|" + HttpMethod.GET;
     }
 
     let params: { [key: string]: string } = {};
-
-    let possibleRoutes = routesMap.get(url.pathname);
-    if (!possibleRoutes) {
+    let route = routesMap.get(routeKey);
+    if (!route) {
       for (const [path, r] of routesWithParamsMap.entries()) {
-        const match = url.pathname.match(path);
-        if (match) {
+        const match = url.pathname.match(path.split("|method|")[0]);
+        if (match && r.method === reqMethod) {
           params = match.groups ? match.groups : {};
-          possibleRoutes = r;
+          route = r;
           break;
         }
       }
     }
-    if (!possibleRoutes) {
-      return NotFound(ctx);
-    }
 
-    let route = possibleRoutes!.get(reqMethod);
-    if (possibleRoutes.has(HttpMethod.ALL)) {
-      route = possibleRoutes.get(HttpMethod.ALL);
+    if (!route) {
+      route = routesMap.get(routeKey + "|method|" + HttpMethod.ALL);
+      if (!route) {
+        for (const [path, r] of routesWithParamsMap.entries()) {
+          const match = url.pathname.match(path.split("|method|")[0]);
+          if (match && r.method === HttpMethod.ALL) {
+            params = match.groups ? match.groups : {};
+            route = r;
+            break;
+          }
+        }
+      }
     }
 
     if (!route && reqMethod === HttpMethod.OPTIONS) {
-      ctx.set("Allow", [...possibleRoutes.keys()].join(", ").toUpperCase());
-      return ctx.status(200).getResWithoutBody();
-    }
+      const allowedMethods = new Set<string>();
+      for (const [path, r] of routesMap.entries()) {
+        const match = url.pathname.match(path.split("|method|")[0]);
+        if (match) {
+          allowedMethods.add(r.method.toLocaleUpperCase());
+        }
+      }
+      for (const [path, r] of routesWithParamsMap.entries()) {
+        const match = url.pathname.match(path.split("|method|")[0]);
+        if (match) {
+          allowedMethods.add(r.method.toLocaleUpperCase());
+        }
+      }
 
-    if (!route && reqMethod === HttpMethod.HEAD && possibleRoutes.has("get")) {
-      route = possibleRoutes.get("get");
+      if (allowedMethods.size > 0) {
+        ctx.res.headers.set("Allow", [...allowedMethods].join(", "));
+        return ctx.status(204).res;
+      }
     }
 
     if (!route) {
-      return NotAllowed(ctx);
+      return ctx.status(404).json({ message: "Not Found" }).res;
     }
 
+    // TODO performance
     ctx.params = params;
     ctx.routes = new Routes([
       ...route.before,
@@ -163,30 +166,13 @@ export function Serve(config: Config) {
       ...route.after,
     ]);
 
+    // TODO performance
     // TODO maybe there is a bug in here
-    while (ctx.routes.hasNext()) {
-      const fnIndex = ctx.routes.currentIndex;
-      const fn = ctx.routes.currentHandler();
-      if (!fn) {
-        break;
-      }
-
-      await fn(ctx);
-
-      if (fnIndex === ctx.routes.currentIndex) {
-        break;
-      }
+    for (const route of ctx.routes.handlers) {
+      await route(ctx);
     }
 
-    try {
-      // TODO can all methods handler head or options requests?
-      if (reqMethod === HttpMethod.HEAD || reqMethod === HttpMethod.OPTIONS) {
-        return ctx.getResWithoutBody();
-      }
-      return ctx.res;
-    } finally {
-      config.logger?.logger!(ctx as Context);
-    }
+    return ctx.res;
   };
 
   (config.serveOptions as BunServe).error = function (
@@ -226,21 +212,6 @@ export function Serve(config: Config) {
   }) as IkariServer;
 }
 
-function NotFound(ctx: Context) {
-  const method = ctx.req.method.toLowerCase();
-  if (method === HttpMethod.HEAD) {
-    return ctx.status(404).res;
-  }
-  return ctx.status(404).json({ message: "Not Found" }).res;
-}
-
-function NotAllowed(ctx: Context) {
-  const method = ctx.req.method.toLowerCase();
-  if (method === HttpMethod.HEAD) {
-    return ctx.status(405).res;
-  }
-  return ctx.status(405).json({ message: "Method Not Allowed" }).res;
-}
 
 function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
   if (groups.length === 0) {

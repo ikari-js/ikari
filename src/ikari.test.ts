@@ -19,7 +19,6 @@ import "reflect-metadata";
 import { Config, Context, Route, Serve, defaultErrorHandler } from ".";
 import { unlinkSync } from "node:fs";
 import { Errorlike } from "bun";
-import DefaultLogger from "./logger";
 
 test("createPath", () => {
   expect(createPath("test")).toBe("/test");
@@ -57,15 +56,6 @@ describe("ServeValidator", () => {
         middlewares: "null" as any,
       }).validate();
     }).toThrow("Middlewares must be an array");
-  });
-
-  test("checkLoggerIsObject", () => {
-    expect(() => {
-      new ServeValidator({
-        controllers: [{ prototype: {} }],
-        logger: "null" as any,
-      }).validate();
-    }).toThrow("Logger must be an object");
   });
 
   test("checkErrorHandlerIsFunction", () => {
@@ -1434,7 +1424,6 @@ test("Context ", async () => {
   const config: Config = {
     controllers: [Test],
     disableStartupMessage: true,
-    logger: { logger: () => {} },
   };
 
   const serve = Serve(config);
@@ -1810,7 +1799,7 @@ describe("Serve", async () => {
       prefix: "api",
       controllers: [Test],
       disableStartupMessage: true,
-      logger: { logger: () => {} },
+
       serveOptions: {
         port: 0,
       },
@@ -1832,7 +1821,7 @@ describe("Serve", async () => {
       prefix: "api/",
       controllers: [Test],
       disableStartupMessage: true,
-      logger: { logger: () => {} },
+
       serveOptions: {
         port: 0,
       },
@@ -1854,7 +1843,7 @@ describe("Serve", async () => {
       prefix: "api///////",
       controllers: [Test],
       disableStartupMessage: true,
-      logger: { logger: () => {} },
+
       serveOptions: {
         port: 0,
       },
@@ -1875,7 +1864,7 @@ describe("Serve", async () => {
     const config: Config = {
       controllers: [Test],
       disableStartupMessage: true,
-      logger: { logger: () => {} },
+
       serveOptions: {
         port: 0,
       },
@@ -1900,7 +1889,7 @@ describe("Serve", async () => {
     const config: Config = {
       controllers: [Test],
       disableStartupMessage: true,
-      logger: { logger: () => {} },
+
       serveOptions: {
         port: 0,
       },
@@ -1909,51 +1898,6 @@ describe("Serve", async () => {
 
     const serve = Serve(config);
     expect(config.errorHandler).toBe(customErrorHandler);
-    serve.stop();
-  });
-
-  test("Serve default logger", async () => {
-    @Controller("/test")
-    class Test {
-      @Get("/get")
-      public get() {}
-    }
-
-    const config: Config = {
-      controllers: [Test],
-      disableStartupMessage: true,
-      serveOptions: {
-        port: 0,
-      },
-    };
-
-    const serve = Serve(config);
-    expect(config.logger).toMatchObject(new DefaultLogger());
-    serve.stop();
-  });
-
-  test("Serve custom logger", async () => {
-    @Controller("/test")
-    class Test {
-      @Get("/get")
-      public get() {}
-    }
-
-    const customLogger = {
-      logger: () => {},
-    };
-    const config: Config = {
-      controllers: [Test],
-      disableStartupMessage: true,
-      serveOptions: {
-        port: 0,
-      },
-      logger: customLogger,
-    };
-
-    const serve = Serve(config);
-    expect(config.logger).toMatchObject(customLogger);
-    expect(config.logger).toBe(customLogger);
     serve.stop();
   });
 
@@ -1970,9 +1914,8 @@ describe("Serve", async () => {
       serveOptions: {
         port: 9696,
         hostname: "127.0.0.1",
-        maxRequestBodySize: 1024
+        maxRequestBodySize: 1024,
       },
-      logger: { logger: () => {} },
     };
 
     const serve = Serve(config);
@@ -1981,5 +1924,4 @@ describe("Serve", async () => {
     expect(config.serveOptions?.port).toBe(9696);
     serve.stop();
   });
-
 });

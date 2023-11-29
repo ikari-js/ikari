@@ -26,15 +26,6 @@ export type Handler = (ctx: Context) => Context | void | Promise<void>;
 // TODO: add more formats
 export type LoggerFormats = "json" | "text" | "custom";
 
-export interface Logger {
-  // TODO: add more
-  format?: LoggerFormats;
-  logger: LoggerFunction;
-  skip?: Handler;
-}
-
-export type LoggerFunction = (ctx: Context) => void;
-
 export type ErrorHandler = (err: Errorlike) => Response | Promise<Response>;
 
 export type IkariServeOptions =
@@ -47,10 +38,8 @@ export type Config = {
   groups?: Group[];
   errorHandler?: ErrorHandler;
   middlewares?: Handler[];
-  logger?: Logger;
   serveOptions?: IkariServeOptions;
   disableStartupMessage?: boolean;
-  disableServerHeader?: boolean;
 };
 
 export type IkariServer = Omit<
