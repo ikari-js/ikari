@@ -23,9 +23,6 @@ export interface Group {
 
 export type Handler = (ctx: Context) => Context | void | Promise<void>;
 
-// TODO: add more formats
-export type LoggerFormats = "json" | "text" | "custom";
-
 export type ErrorHandler = (err: Errorlike) => Response | Promise<Response>;
 
 export type IkariServeOptions =
