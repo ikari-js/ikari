@@ -11,7 +11,7 @@ export class Context {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _body: any | FormData | string | null = null;
   private _cookies: Map<string, string> | null = null;
-  
+
   constructor(
     private server: Server,
     public req: Request,
@@ -92,7 +92,7 @@ export class Context {
    * ```
    */
   public cookie(name: string): string | null {
-    if(this._cookies) return this._cookies.get(name) || null;
+    if (this._cookies) return this._cookies.get(name) || null;
     const cookies = new Map<string, string>();
     this.req.headers
       .get("Cookie")
@@ -102,7 +102,6 @@ export class Context {
         cookies.set(key.trim(), value.trim());
       });
     this._cookies = cookies;
-
 
     return this._cookies.get(name) || null;
   }
@@ -334,9 +333,11 @@ export class Context {
    * ctx.set("x-request-id", "123");
    * ```
    */
-  public set(key: string, value: string): void {
-    if (!key || !value) return;
+  public set(key: string, value: string): Context {
+    if (!key || !value) return this;
     this.res.headers.set(key, value);
+
+    return this;
   }
 
   /**
@@ -468,6 +469,18 @@ export class Context {
     this.res = data;
     return this;
   }
+
+  /**
+   * Returns the method of the request.
+   * @example
+   * ```ts
+   * const method = ctx.method;
+   * console.log(method);
+   * ```
+   */
+  public get method(): string {
+    return this.req.method;
+  }
 }
 
 class Local {
@@ -518,7 +531,9 @@ export class Routes {
   constructor(public handlers: Handler[], public handlerIndex: number = 0) {}
 
   public next(): void {
-    this.handlerIndex++;
+    if (this.hasNext()) {
+      this.handlerIndex++;
+    }
   }
 
   public hasNext(): boolean {
