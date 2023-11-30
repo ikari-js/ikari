@@ -11,7 +11,7 @@ import {
 } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
-import { HttpMethod, createPath, startupMessage } from "./utils";
+import { HttpMethod, StatusCode, createPath, startupMessage } from "./utils";
 
 export function defaultErrorHandler(err: Errorlike) {
   return new Response(
@@ -101,18 +101,19 @@ export function Serve(config: Config) {
     const reqMethod = request.method.toLowerCase();
     const ctx = new Context(server, request);
 
-    let routeKey = url.pathname + "|method|" + reqMethod;
-    if (reqMethod === HttpMethod.HEAD) {
-      routeKey = url.pathname + "|method|" + HttpMethod.GET;
-    }
-
+    const routeKey = url.pathname + "|method|" + reqMethod;
     let params: { [key: string]: string } = {};
     let route = routesMap.get(routeKey);
+
     if (!route) {
       for (const [path, r] of routesWithParamsMap.entries()) {
         const match = url.pathname.match(path.split("|method|")[0]);
         if (match && r.method === reqMethod) {
-          params = match.groups ? match.groups : {};
+          if (match.groups) {
+            for (const [key, value] of Object.entries(match.groups)) {  
+                params[key] = decodeURIComponent(value);
+            }
+          }
           route = r;
           break;
         }
@@ -120,7 +121,7 @@ export function Serve(config: Config) {
     }
 
     if (!route) {
-      route = routesMap.get(routeKey + "|method|" + HttpMethod.ALL);
+      route = routesMap.get(url.pathname + "|method|" + HttpMethod.ALL);
       if (!route) {
         for (const [path, r] of routesWithParamsMap.entries()) {
           const match = url.pathname.match(path.split("|method|")[0]);
@@ -150,12 +151,36 @@ export function Serve(config: Config) {
 
       if (allowedMethods.size > 0) {
         ctx.res.headers.set("Allow", [...allowedMethods].join(", "));
-        return ctx.status(204).res;
+        return ctx.status(StatusCode.NO_CONTENT).res;
+      }
+    }
+
+    if (!route && reqMethod === HttpMethod.HEAD) {
+      for (const [path, r] of routesMap.entries()) {
+        const match = url.pathname.match(path.split("|method|")[0]);
+        if (match && r.method === HttpMethod.GET) {
+          route = r;
+          break;
+        }
+      }
+
+      if (!route) {
+        for (const [path, r] of routesWithParamsMap.entries()) {
+          const match = url.pathname.match(path.split("|method|")[0]);
+          if (match && r.method === HttpMethod.GET) {
+            route = r;
+            break;
+          }
+        }
       }
     }
 
     if (!route) {
-      return ctx.status(404).json({ message: "Not Found" }).res;
+      if (reqMethod === HttpMethod.HEAD || reqMethod === HttpMethod.OPTIONS) {
+        return ctx.status(StatusCode.NOT_FOUND).res;
+      }
+      return ctx.status(StatusCode.NOT_FOUND).json({ message: "Not Found" })
+        .res;
     }
 
     // TODO performance
@@ -168,8 +193,17 @@ export function Serve(config: Config) {
 
     // TODO performance
     // TODO maybe there is a bug in here
-    for (const route of ctx.routes.handlers) {
-      await route(ctx);
+    while (ctx.routes.hasNext()) {
+      const fnIndex = ctx.routes.currentIndex;
+      const fn = ctx.routes.currentHandler();
+      if (!fn) {
+        break;
+      }
+
+      await fn(ctx);
+      if (fnIndex === ctx.routes.currentIndex) {
+        break;
+      }
     }
 
     return ctx.res;
@@ -211,7 +245,6 @@ export function Serve(config: Config) {
     },
   }) as IkariServer;
 }
-
 
 function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
   if (groups.length === 0) {
