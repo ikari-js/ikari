@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect, test, describe } from "bun:test";
-import { StatusCode, createPath } from "./utils";
-import { ServeValidator } from "./serve-validator";
+import { StatusCode, createPath } from "../src/utils";
+import { ServeValidator } from "../src/serve-validator";
 import {
   After,
   Before,
@@ -14,9 +14,9 @@ import {
   Patch,
   Options,
   All,
-} from "./decorators";
+} from "../src/decorators";
 import "reflect-metadata";
-import { Config, Context, Route, Serve, defaultErrorHandler } from ".";
+import { Config, Context, Route, Serve, defaultErrorHandler } from "../src";
 import { unlinkSync } from "node:fs";
 import { Errorlike } from "bun";
 
@@ -1923,5 +1923,849 @@ describe("Serve", async () => {
     expect(config.serveOptions?.maxRequestBodySize).toBe(1024);
     expect(config.serveOptions?.port).toBe(9696);
     serve.stop();
+  });
+});
+
+describe("Route", async () => {
+  test("Simple Routes", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: "get" });
+      }
+
+      @Post("/post")
+      public post(ctx: Context) {
+        return ctx.json({ fn: "post", method: "post" });
+      }
+
+      @Put("/put")
+      public put(ctx: Context) {
+        return ctx.json({ fn: "put", method: "put" });
+      }
+
+      @Delete("/delete")
+      public delete(ctx: Context) {
+        return ctx.json({ fn: "delete", method: "delete" });
+      }
+
+      @Head("/head")
+      public head(ctx: Context) {
+        return ctx.status(StatusCode.NO_CONTENT);
+      }
+
+      @Patch("/patch")
+      public patch(ctx: Context) {
+        return ctx.json({ fn: "patch", method: "patch" });
+      }
+
+      @Options("/options")
+      public options(ctx: Context) {
+        return ctx.status(StatusCode.NO_CONTENT);
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/get",
+        method: "get",
+        bodyType: "json",
+        body: { fn: "get", method: "get" },
+        statusCode: StatusCode.OK,
+      },
+      {
+        path: "/test/post",
+        method: "post",
+        bodyType: "json",
+        body: { fn: "post", method: "post" },
+        statusCode: StatusCode.OK,
+      },
+      {
+        path: "/test/put",
+        method: "put",
+        bodyType: "json",
+        body: { fn: "put", method: "put" },
+        statusCode: StatusCode.OK,
+      },
+      {
+        path: "/test/delete",
+        method: "delete",
+        bodyType: "json",
+        body: { fn: "delete", method: "delete" },
+        statusCode: StatusCode.OK,
+      },
+      {
+        path: "/test/head",
+        method: "head",
+        statusCode: StatusCode.NO_CONTENT,
+        body: null,
+      },
+      {
+        path: "/test/patch",
+        method: "patch",
+        bodyType: "json",
+        body: { fn: "patch", method: "patch" },
+        statusCode: StatusCode.OK,
+      },
+      {
+        path: "/test/options",
+        method: "options",
+        bodyType: "json",
+        body: null,
+        statusCode: StatusCode.NO_CONTENT,
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+    }
+
+    serve.stop();
+  });
+
+  test("Routes for only headers method", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        return ctx
+          .set("fn", "get")
+          .set("method", "get")
+          .status(StatusCode.OK)
+          .json({ fn: "get", method: "get" });
+      }
+
+      @Post("/test")
+      public post(ctx: Context) {
+        return ctx
+          .status(StatusCode.OK)
+          .set("fn", "post")
+          .set("method", "post")
+          .json({ fn: "post", method: "post" });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: "get",
+        bodyType: "json",
+        body: { fn: "get", method: "get" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "get",
+          method: "get",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "post",
+        bodyType: "json",
+        body: { fn: "post", method: "post" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "post",
+          method: "post",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "options",
+        bodyType: "json",
+        body: null,
+        statusCode: StatusCode.NO_CONTENT,
+        headers: {
+          allow: "GET, POST",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "head",
+        bodyType: "json",
+        body: null,
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "get",
+          method: "get",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+    }
+
+    serve.stop();
+  });
+
+  test("Routes All", async () => {
+    @Controller("/test")
+    class Test {
+      @All("/test")
+      public all(ctx: Context) {
+        return ctx
+          .set("fn", "all")
+          .set("method", ctx.method)
+          .status(StatusCode.OK)
+          .json({ fn: "all", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: "get",
+        bodyType: "json",
+        body: { fn: "all", method: "GET" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "GET",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "post",
+        bodyType: "json",
+        body: { fn: "all", method: "POST" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "POST",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "options",
+        bodyType: "json",
+        body: null,
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "OPTIONS",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "head",
+        bodyType: "json",
+        body: null,
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "HEAD",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "put",
+        bodyType: "json",
+        body: { fn: "all", method: "PUT" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "PUT",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "delete",
+        bodyType: "json",
+        body: { fn: "all", method: "DELETE" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "DELETE",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "patch",
+        bodyType: "json",
+        body: { fn: "all", method: "PATCH" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "PATCH",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+      expect(res.headers.get("fn")).toBe(expected.headers.fn);
+      expect(res.headers.get("method")).toBe(expected.headers.method);
+    }
+
+    serve.stop();
+  });
+
+  test("Routes All with some methods", async () => {
+    @Controller("/test")
+    class Test {
+      @All("/test")
+      public all(ctx: Context) {
+        return ctx
+          .set("fn", "all")
+          .set("method", ctx.method)
+          .status(StatusCode.OK)
+          .json({ fn: "all", method: ctx.method });
+      }
+
+      @Get("/test")
+      public get(ctx: Context) {
+        return ctx
+          .set("fn", "get")
+          .set("method", ctx.method)
+          .set("custom", "custom get")
+          .status(StatusCode.OK)
+          .json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: "get",
+        bodyType: "json",
+        body: { fn: "get", method: "GET" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "get",
+          method: "GET",
+          custom: "custom get",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "post",
+        bodyType: "json",
+        body: { fn: "all", method: "POST" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "POST",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "options",
+        bodyType: "json",
+        body: null,
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "OPTIONS",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "head",
+        bodyType: "json",
+        body: null,
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "HEAD",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "put",
+        bodyType: "json",
+        body: { fn: "all", method: "PUT" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "PUT",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "delete",
+        bodyType: "json",
+        body: { fn: "all", method: "DELETE" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "DELETE",
+        },
+      },
+      {
+        path: "/test/test",
+        method: "patch",
+        bodyType: "json",
+        body: { fn: "all", method: "PATCH" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "all",
+          method: "PATCH",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+      expect(res.headers.get("fn")).toBe(expected.headers.fn);
+      expect(res.headers.get("method")).toBe(expected.headers.method);
+    }
+  });
+
+  test("Routes with Befores And Afters", async () => {
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+      ctx.next();
+    }
+
+    function after(ctx: Context) {
+      ctx.set("after", "after");
+      ctx.next();
+    }
+
+    function before1(ctx: Context) {
+      ctx.set("before1", "before1");
+      ctx.next();
+    }
+
+    function after1(ctx: Context) {
+      ctx.set("after1", "after1");
+      ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      @Before(before, before1)
+      @After(after, after1)
+      public get(ctx: Context) {
+        return ctx
+          .set("fn", "get")
+          .set("method", ctx.method)
+          .status(StatusCode.OK)
+          .json({ fn: "get", method: ctx.method })
+          .next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: "get",
+        bodyType: "json",
+        body: { fn: "get", method: "GET" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "get",
+          method: "GET",
+          before: "before",
+          before1: "before1",
+          after: "after",
+          after1: "after1",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+      expect(res.headers.get("fn")).toBe(expected.headers.fn);
+      expect(res.headers.get("method")).toBe(expected.headers.method);
+      expect(res.headers.get("before")).toBe(expected.headers.before);
+      expect(res.headers.get("before1")).toBe(expected.headers.before1);
+      expect(res.headers.get("after")).toBe(expected.headers.after);
+      expect(res.headers.get("after1")).toBe(expected.headers.after1);
+    }
+  });
+
+  test("Routes with Befores And Afters with some methods", async () => {
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+      ctx.next();
+    }
+
+    function after(ctx: Context) {
+      ctx.set("after", "after");
+      ctx.next();
+    }
+
+    function before1(ctx: Context) {
+      ctx.set("before1", "before1");
+      ctx.next();
+    }
+
+    function after1(ctx: Context) {
+      ctx.set("after1", "after1");
+      ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      @Before(before, before1)
+      @After(after, after1)
+      public get(ctx: Context) {
+        return ctx
+          .set("fn", "get")
+          .set("method", ctx.method)
+          .status(StatusCode.OK)
+          .json({ fn: "get", method: ctx.method });
+      }
+
+      @Post("/test")
+      public post(ctx: Context) {
+        return ctx
+          .set("fn", "post")
+          .set("method", ctx.method)
+          .status(StatusCode.OK)
+          .json({ fn: "post", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: "get",
+        bodyType: "json",
+        body: { fn: "get", method: "GET" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "get",
+          method: "GET",
+          before: "before",
+          before1: "before1",
+          after: null,
+          after1: null,
+        },
+      },
+      {
+        path: "/test/test",
+        method: "post",
+        bodyType: "json",
+        body: { fn: "post", method: "POST" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "post",
+          method: "POST",
+          before: null,
+          before1: null,
+          after: null,
+          after1: null,
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+      expect(res.headers.get("fn")).toBe(expected.headers.fn);
+      expect(res.headers.get("method")).toBe(expected.headers.method);
+      expect(res.headers.get("before")).toBe(expected.headers.before);
+      expect(res.headers.get("before1")).toBe(expected.headers.before1);
+      expect(res.headers.get("after")).toBe(expected.headers.after);
+      expect(res.headers.get("after1")).toBe(expected.headers.after1);
+    }
+  });
+
+  test("Routes with Befores without next", async () => {
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      @Before(before)
+      public get(ctx: Context) {
+        return ctx
+          .set("fn", "get")
+          .set("method", ctx.method)
+          .status(StatusCode.OK)
+          .json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: "get",
+        body: null,
+        statusCode: StatusCode.OK,
+        headers: {
+          before: "before",
+          fn: null,
+          method: null,
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      expect(res.status).toBe(expected.statusCode);
+      expect(res.headers.get("before")).toBe(expected.headers.before);
+      expect(res.headers.get("fn")).toBe(expected.headers.fn);
+      expect(res.headers.get("method")).toBe(expected.headers.method);
+    }
+  });
+
+  test("Routes with Middlewares", async () => {
+    function middleware(ctx: Context) {
+      ctx.set("middleware", "middleware");
+      ctx.next();
+    }
+
+    function middleware1(ctx: Context) {
+      ctx.set("middleware1", "middleware1");
+      ctx.next();
+    }
+
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+      ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Before(before)
+      @Get("/test")
+      public get(ctx: Context) {
+        return ctx
+          .set("fn", "get")
+          .set("method", ctx.method)
+          .status(StatusCode.OK)
+          .json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+      middlewares: [middleware, middleware1],
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: "get",
+        bodyType: "json",
+        body: { fn: "get", method: "GET" },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "get",
+          method: "GET",
+          middleware: "middleware",
+          middleware1: "middleware1",
+          before: "before",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+      expect(res.headers.get("fn")).toBe(expected.headers.fn);
+      expect(res.headers.get("method")).toBe(expected.headers.method);
+      expect(res.headers.get("middleware")).toBe(expected.headers.middleware);
+      expect(res.headers.get("middleware1")).toBe(expected.headers.middleware1);
+    }
   });
 });
