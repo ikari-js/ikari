@@ -19,7 +19,7 @@ export class Context {
     /**
      * The all path parameters of the request.
      */
-    public params: { [key: string]: string } = {},
+    public params: Record<string, string> = {},
     public res: Response = new Response()
   ) {
     this.parsedUrl = new URL(req.url);

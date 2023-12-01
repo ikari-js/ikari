@@ -102,7 +102,7 @@ export function Serve(config: Config) {
     const ctx = new Context(server, request);
 
     const routeKey = url.pathname + "|method|" + reqMethod;
-    let params: { [key: string]: string } = {};
+    const params: Record<string, string> = {};
     let route = routesMap.get(routeKey);
 
     if (!route) {
@@ -110,8 +110,8 @@ export function Serve(config: Config) {
         const match = url.pathname.match(path.split("|method|")[0]);
         if (match && r.method === reqMethod) {
           if (match.groups) {
-            for (const [key, value] of Object.entries(match.groups)) {  
-                params[key] = decodeURIComponent(value);
+            for (const [key, value] of Object.entries(match.groups)) {
+              params[key] = decodeURIComponent(value);
             }
           }
           route = r;
@@ -126,7 +126,11 @@ export function Serve(config: Config) {
         for (const [path, r] of routesWithParamsMap.entries()) {
           const match = url.pathname.match(path.split("|method|")[0]);
           if (match && r.method === HttpMethod.ALL) {
-            params = match.groups ? match.groups : {};
+            if (match.groups) {
+              for (const [key, value] of Object.entries(match.groups)) {
+                params[key] = decodeURIComponent(value);
+              }
+            }
             route = r;
             break;
           }
