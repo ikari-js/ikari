@@ -99,8 +99,6 @@ export function Serve(config: Config) {
     // TODO delete last / from url MAKE THIS OPTIONAL
     const url = new URL(request.url.replace(/\/$/, ""));
     const reqMethod = request.method.toLowerCase();
-    const ctx = new Context(server, request);
-
     const routeKey = url.pathname + "|method|" + reqMethod;
     const params: Record<string, string> = {};
     let route = routesMap.get(routeKey);
@@ -154,8 +152,12 @@ export function Serve(config: Config) {
       }
 
       if (allowedMethods.size > 0) {
-        ctx.res.headers.set("Allow", [...allowedMethods].join(", "));
-        return ctx.status(StatusCode.NO_CONTENT).res;
+        return new Response(null, {
+          status: StatusCode.NO_CONTENT,
+          headers: {
+            Allow: [...allowedMethods].join(", "),
+          },
+        });
       }
     }
 
@@ -181,19 +183,28 @@ export function Serve(config: Config) {
 
     if (!route) {
       if (reqMethod === HttpMethod.HEAD || reqMethod === HttpMethod.OPTIONS) {
-        return ctx.status(StatusCode.NOT_FOUND).res;
+        return new Response(null, {
+          status: StatusCode.NOT_FOUND,
+        });
       }
-      return ctx.status(StatusCode.NOT_FOUND).json({ message: "Not Found" })
-        .res;
+      return new Response(JSON.stringify({ message: "Not Found" }), {
+        status: StatusCode.NOT_FOUND,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     }
 
-    // TODO performance
-    ctx.params = params;
-    ctx.routes = new Routes([
-      ...route.before,
-      route.target.prototype[route.fnName],
-      ...route.after,
-    ]);
+    const ctx = new Context(
+      server,
+      request,
+      new Routes([
+        ...route.before,
+        route.target.prototype[route.fnName],
+        ...route.after,
+      ]),
+      params
+    );
 
     // TODO performance
     // TODO maybe there is a bug in here

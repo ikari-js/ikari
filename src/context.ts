@@ -15,11 +15,11 @@ export class Context {
   constructor(
     private server: Server,
     public req: Request,
-    public routes: Routes | null = null,
+    public routes: Routes,
     /**
      * The all path parameters of the request.
      */
-    public params: Record<string, string> = {},
+    public params: Record<string, string>,
     public res: Response = new Response()
   ) {
     this.parsedUrl = new URL(req.url);
@@ -31,7 +31,7 @@ export class Context {
    *
    */
   public next(): Context {
-    this.routes!.next();
+    this.routes.next();
     return this;
   }
 
