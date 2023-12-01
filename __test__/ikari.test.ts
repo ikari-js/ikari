@@ -1424,6 +1424,9 @@ test("Context ", async () => {
   const config: Config = {
     controllers: [Test],
     disableStartupMessage: true,
+    serveOptions: {
+      port: 0,
+    },
   };
 
   const serve = Serve(config);
@@ -2769,3 +2772,5 @@ describe("Route", async () => {
     }
   });
 });
+
+// TODO locals test
