@@ -61,7 +61,7 @@ jobs:
           bun-version: latest
 
       - name: "Install Dependencies"
-        run: bun install
+        run: npm install
 
       - name: "Publish"
         env:
