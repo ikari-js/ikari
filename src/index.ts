@@ -26,7 +26,7 @@ export function defaultErrorHandler(err: Errorlike) {
     }
   );
 }
-
+// TODO tsc --emitDeclarationOnly --outDir dist --project tsconfig.build.json
 const bannedProps = [
   "fetch",
   "publish",

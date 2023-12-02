@@ -14,5 +14,5 @@
     "no-console": "error",
     "no-unused-expressions": "error"
   },
-  "ignorePatterns": ["**/types/**/*.ts"]
+  "ignorePatterns": ["**/dist/*"]
 }

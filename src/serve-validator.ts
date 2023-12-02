@@ -8,7 +8,6 @@ export class ServeValidator {
       .checkControllersIsNotEmpty()
       .checkGroupsIsArray()
       .checkMiddlewaresIsArray()
-      .checkLoggerIsObject()
       .checkErrorHandlerIsFunction()
       .checkPortIsNumber()
       .checkHostnameIsString()
@@ -70,16 +69,6 @@ export class ServeValidator {
     // TODO: check if all controllers are valid Middleware type
     if (this.config.middlewares && !Array.isArray(this.config.middlewares)) {
       throw new Error("Middlewares must be an array");
-    }
-
-    return this;
-  }
-
-  private checkLoggerIsObject() {
-    // TODO: check if logger is valid Logger type
-    // TODO: default logger
-    if (this.config.logger && typeof this.config.logger !== "object") {
-      throw new Error("Logger must be an object");
     }
 
     return this;
