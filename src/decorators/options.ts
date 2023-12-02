@@ -1,4 +1,4 @@
-import { createPath } from "../utils";
+import { HttpMethod, createPath } from "../utils";
 
 /**
  * Decorator for defining a route that handles OPTIONS requests
@@ -19,6 +19,6 @@ export function Options(path?: string) {
 
     const routePath = path ? createPath(path) : createPath(key);
     Reflect.defineMetadata("path", routePath, target, key);
-    Reflect.defineMetadata("method", "options", target, key);
+    Reflect.defineMetadata("method", HttpMethod.OPTIONS, target, key);
   };
 }

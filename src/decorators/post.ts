@@ -1,4 +1,4 @@
-import { createPath } from "../utils";
+import { HttpMethod, createPath } from "../utils";
 
 /**
  * Decorator for defining a route that handles POST requests
@@ -19,6 +19,6 @@ export function Post(path?: string) {
       throw new Error("Post decorator can only be used on functions");
     const routePath = path ? createPath(path) : createPath(key);
     Reflect.defineMetadata("path", routePath, target, key);
-    Reflect.defineMetadata("method", "post", target, key);
+    Reflect.defineMetadata("method", HttpMethod.POST, target, key);
   };
 }

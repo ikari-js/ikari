@@ -26,7 +26,7 @@ export function defaultErrorHandler(err: Errorlike) {
     }
   );
 }
-// TODO tsc --emitDeclarationOnly --outDir dist --project tsconfig.build.json
+
 const bannedProps = [
   "fetch",
   "publish",
@@ -98,15 +98,14 @@ export function Serve(config: Config) {
   ) {
     // TODO delete last / from url MAKE THIS OPTIONAL
     const url = new URL(request.url.replace(/\/$/, ""));
-    const reqMethod = request.method.toLowerCase();
-    const routeKey = url.pathname + "|method|" + reqMethod;
+    const routeKey = url.pathname + "|method|" + request.method;
     const params: Record<string, string> = {};
     let route = routesMap.get(routeKey);
 
     if (!route) {
       for (const [path, r] of routesWithParamsMap.entries()) {
         const match = url.pathname.match(path.split("|method|")[0]);
-        if (match && r.method === reqMethod) {
+        if (match && r.method === request.method) {
           if (match.groups) {
             for (const [key, value] of Object.entries(match.groups)) {
               params[key] = decodeURIComponent(value);
@@ -136,7 +135,7 @@ export function Serve(config: Config) {
       }
     }
 
-    if (!route && reqMethod === HttpMethod.OPTIONS) {
+    if (!route && request.method === HttpMethod.OPTIONS) {
       const allowedMethods = new Set<string>();
       for (const [path, r] of routesMap.entries()) {
         const match = url.pathname.match(path.split("|method|")[0]);
@@ -161,7 +160,7 @@ export function Serve(config: Config) {
       }
     }
 
-    if (!route && reqMethod === HttpMethod.HEAD) {
+    if (!route && request.method === HttpMethod.HEAD) {
       for (const [path, r] of routesMap.entries()) {
         const match = url.pathname.match(path.split("|method|")[0]);
         if (match && r.method === HttpMethod.GET) {
@@ -182,7 +181,7 @@ export function Serve(config: Config) {
     }
 
     if (!route) {
-      if (reqMethod === HttpMethod.HEAD || reqMethod === HttpMethod.OPTIONS) {
+      if (request.method === HttpMethod.HEAD || request.method === HttpMethod.OPTIONS) {
         return new Response(null, {
           status: StatusCode.NOT_FOUND,
         });

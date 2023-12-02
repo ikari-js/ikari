@@ -17,14 +17,14 @@ export const representationHeaders = [
 ];
 
 export enum HttpMethod {
-  GET = "get",
-  POST = "post",
-  PUT = "put",
-  DELETE = "delete",
-  PATCH = "patch",
-  OPTIONS = "options",
-  HEAD = "head",
-  ALL = "all",
+  GET = "GET",
+  POST = "POST",
+  PUT = "PUT",
+  DELETE = "DELETE",
+  PATCH = "PATCH",
+  OPTIONS = "OPTIONS",
+  HEAD = "HEAD",
+  ALL = "ALL",
 }
 
 export enum StatusCode {
