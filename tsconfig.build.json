@@ -1,0 +1,23 @@
+{
+  "exclude": [
+    "__test__/**/*.spec.ts",
+    "__test__/**/*.test.ts",
+    "node_modules",
+    "dist"
+  ],
+  "include": ["src/**/*.ts"],
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "ES2020",
+    "rootDir": "./src/",
+    "noUnusedLocals": true,
+    "noEmit": false,
+    "noUnusedParameters": true,
+    "moduleResolution": "Bundler",
+    "target": "ES2020",
+    "declaration": true,
+    "types": [
+      "bun-types" // add Bun global
+    ]
+  }
+}

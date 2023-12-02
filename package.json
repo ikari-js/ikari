@@ -13,7 +13,7 @@
     "name": "Abdurrahman Aydın",
     "url": "https://github.com/aaydin-tr"
   },
-  "version": "0.2.0",
+  "version": "0.2.0-alpha.10",
   "keywords": [
     "bun",
     "bunjs",
@@ -23,11 +23,19 @@
   ],
   "exports": {
     ".": {
-      "import": "./src/index.ts"
+      "import": "./dist/index.js"
     },
     "./decorators": {
-      "import": "./src/decorators/index.ts"
+      "import": "./dist/decorators/index.js"
     }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build:bun": "bun build.ts",
+    "lint": "bun eslint . --ext .js,.jsx,.ts,.tsx",
+    "test:bun": "bun test"
   },
   "license": "MIT",
   "devDependencies": {
