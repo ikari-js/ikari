@@ -76,7 +76,9 @@ export function startupMessage(config: Config, bunServe: Server, routes: Route[]
   const handlersMsg = `Handlers ...... ${routes.length}`;
   const pidMsg = `PID ...... ${process.pid}`;
   const handlerMsgAndPidMsg = `${handlersMsg}  ${pidMsg}`;
-  const successMsg = `ikari v${version}`;
+  let successMsg = `ikari v${version}`;
+  if(!version) 
+    successMsg = `ikari`;
 
   const maxLength = Math.max(
     hostMsg.length,
