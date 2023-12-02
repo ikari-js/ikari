@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   changelog:
     name: "Generate Changelog"
@@ -21,7 +24,7 @@ jobs:
 
       - name: Generate Changelog
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASER_TOKEN }}
         run: bunx changelogithub --no-group
         continue-on-error: true
 
