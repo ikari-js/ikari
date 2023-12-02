@@ -16,8 +16,24 @@ export type Route = {
 };
 
 export interface Group {
+  /**
+   * Prefix for all routes in the group
+   * @default null
+   * @example
+   * prefix: "/api"
+   * // => GET /api/users
+   */
   prefix?: string;
+  /**
+   * Middlewares to be used in the group
+   * @default []
+   * @example
+   * middlewares: [AuthMiddleware()]
+   */
   middlewares?: Handler[];
+  /**
+   * Controller classes to be used in the group
+   */
   controllers: Controller[];
 }
 
@@ -30,12 +46,43 @@ export type IkariServeOptions =
   | Omit<TLSServeOptions, "error" | "fetch">;
 
 export type Config = {
+  /**
+   * Prefix for all routes in the server
+   * @default null
+   * @example
+   * prefix: "/api"
+   * // => GET /api/users
+   */
   prefix?: string;
+  /**
+   * Controller classes to be used in the server
+   */
   controllers?: Controller[];
+  /**
+   * Group of controllers to be used in the server
+   */
   groups?: Group[];
+  /**
+   * Error handler for the server
+   * @default defaultErrorHandler
+   */
   errorHandler?: ErrorHandler;
+  /**
+   * Middlewares to be used in the server
+   * @default []
+   * @example
+   * middlewares: [CORSMiddleware()]
+   */
   middlewares?: Handler[];
+  /**
+   * Serve options for the server. See Bun ServeOptions for more information.
+   * @default ServeOptions
+   */
   serveOptions?: IkariServeOptions;
+  /**
+   * Disable startup message
+   * @default false
+   */
   disableStartupMessage?: boolean;
 };
 
