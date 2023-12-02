@@ -26,7 +26,6 @@ export interface Group {
   prefix?: string;
   /**
    * Middlewares to be used in the group
-   * @default []
    * @example
    * middlewares: [AuthMiddleware()]
    */
@@ -69,7 +68,6 @@ export type Config = {
   errorHandler?: ErrorHandler;
   /**
    * Middlewares to be used in the server
-   * @default []
    * @example
    * middlewares: [CORSMiddleware()]
    */
