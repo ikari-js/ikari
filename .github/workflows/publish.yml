@@ -65,6 +65,6 @@ jobs:
 
       - name: "Publish"
         env:
-          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm publish --access=public --registry=https://registry.npmjs.org --no-git-checks

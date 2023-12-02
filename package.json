@@ -5,7 +5,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ikari-js/ikari"
+    "url": "git+https://github.com/ikari-js/ikari.git"
   },
   "bugs": "https://github.com/ikari-js/ikari/issues",
   "homepage": "https://github.com/ikari-js/ikari",
