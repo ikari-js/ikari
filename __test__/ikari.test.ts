@@ -2110,7 +2110,7 @@ describe("Route", async () => {
       },
       {
         path: "/test/test",
-        method: "options",
+        method: HttpMethod.OPTIONS,
         bodyType: "json",
         body: null,
         statusCode: StatusCode.NO_CONTENT,
