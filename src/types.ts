@@ -3,7 +3,7 @@ import { Server, ServeOptions, TLSServeOptions, Errorlike } from "bun";
 import { Context } from "./context";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types
-export type Controller = {} & { prototype: any };
+export type Controller = {} & { prototype: any; name: string; length: number, new(...args: any[]): any };
 
 export type Route = {
   path: string;
@@ -36,7 +36,9 @@ export interface Group {
   controllers: Controller[];
 }
 
-export type Handler = (ctx: Context) => Context | void | Promise<void>;
+export type Handler = (
+  ctx: Context
+) => Context | Promise<Context> | void | Promise<void>;
 
 export type ErrorHandler = (err: Errorlike) => Response | Promise<Response>;
 

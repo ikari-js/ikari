@@ -26,11 +26,21 @@ export class ServeValidator {
   }
 
   private checkControllersIsArray() {
-    // TODO: check if all controllers are valid Controller type
     if (this.config.controllers && !Array.isArray(this.config.controllers)) {
       throw new Error("Controllers must be an array");
     }
 
+    if (this.config.controllers) {
+      for (const controller of this.config.controllers) {
+        if (!controller.prototype)
+          throw new Error("Controller must be a class");
+
+        if (!Reflect.getMetadata("routes", controller.prototype))
+          throw new Error(
+            `Controller must be decorated with @Controller decorator in ${controller?.name}`
+          );
+      }
+    }
     return this;
   }
 
@@ -43,11 +53,27 @@ export class ServeValidator {
   }
 
   private checkGroupsIsArray() {
-    // TODO: check if all groups are valid Group type
     if (this.config.groups && !Array.isArray(this.config.groups)) {
       throw new Error("Groups must be an array");
     }
 
+    if (this.config.groups) {
+      for (const { controllers } of this.config.groups) {
+        if (!controllers || !Array.isArray(controllers)) {
+          throw new Error("Group Controllers must be an array");
+        }
+
+        for (const controller of controllers) {
+          if (!controller.prototype)
+            throw new Error("Controller must be a class");
+
+          if (!Reflect.getMetadata("routes", controller.prototype))
+            throw new Error(
+              `Controller must be decorated with @Controller decorator in ${controller?.name}`
+              );
+        }
+      }
+    }
     return this;
   }
 
