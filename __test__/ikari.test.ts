@@ -2782,6 +2782,506 @@ describe("Route", async () => {
   });
 });
 
-// TODO locals test
-// TODO controller middlewares test and group middlewares test
-// TODO strict routing test
+describe("Context Locals", async () => {
+  test("Locals value set", async () => {
+    function setLocalValue(ctx: Context) {
+      ctx.locals.set("value", "test-local");
+      ctx.next();
+    }
+
+    function setLocalValueJson(ctx: Context) {
+      ctx.locals.set("json", { test: "test-local" });
+      ctx.next();
+    }
+
+    function setLocaBoolean(ctx: Context) {
+      ctx.locals.set("has", true);
+      ctx.next();
+    }
+
+    function setLocalNumber(ctx: Context) {
+      ctx.locals.set("number", 1);
+      ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        return ctx.json({
+          value: ctx.locals.get("value"),
+          has: ctx.locals.has("has"),
+          json: ctx.locals.get("json"),
+          number: ctx.locals.get("number"),
+          hasValue: ctx.locals.has("value"),
+          hasJson: ctx.locals.has("json"),
+          hasNumber: ctx.locals.has("number"),
+          hasOther: ctx.locals.has("other"),
+        });
+      }
+    }
+
+    const config: Config = {
+      middlewares: [
+        setLocalValue,
+        setLocaBoolean,
+        setLocalValueJson,
+        setLocalNumber,
+      ],
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: {
+          value: "test-local",
+          has: true,
+          json: { test: "test-local" },
+          number: 1,
+          hasValue: true,
+          hasJson: true,
+          hasNumber: true,
+          hasOther: false,
+        },
+        statusCode: StatusCode.OK,
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+    }
+
+    serve.stop();
+  });
+});
+
+describe("Strict routing", async () => {
+  test("Strict routing", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      strict: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { fn: "get", method: HttpMethod.GET },
+        statusCode: StatusCode.OK,
+      },
+      {
+        path: "/test/test/",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { message: "Not Found" },
+        statusCode: StatusCode.NOT_FOUND,
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+    }
+
+    serve.stop();
+  });
+
+  test("Strict without routing", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      strict: false,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { fn: "get", method: HttpMethod.GET },
+        statusCode: StatusCode.OK,
+      },
+      {
+        path: "/test/test/",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { fn: "get", method: HttpMethod.GET },
+        statusCode: StatusCode.OK,
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+    }
+
+    serve.stop();
+  });
+});
+
+describe("Group", async () => {
+  test("Only group", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      groups: [
+        {
+          controllers: [Test],
+          prefix: "/group",
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/group/test/get",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { fn: "get", method: HttpMethod.GET },
+        statusCode: StatusCode.OK,
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+    }
+
+    serve.stop();
+  });
+
+  test("Only Group without prefix", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      groups: [
+        {
+          controllers: [Test],
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/test/get",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { fn: "get", method: HttpMethod.GET },
+        statusCode: StatusCode.OK,
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        { method: expected.method, credentials: "include", redirect: "follow" }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+    }
+
+    serve.stop();
+  });
+
+  test("Group with middlewares", async () => {
+    function middleware(ctx: Context) {
+      ctx.set("middleware", "middleware");
+      ctx.next();
+    }
+
+    function middleware1(ctx: Context) {
+      ctx.set("middleware1", "middleware1");
+      ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      groups: [
+        {
+          controllers: [Test],
+          prefix: "/group",
+          middlewares: [middleware, middleware1],
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/group/test/get",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { fn: "get", method: HttpMethod.GET },
+        statusCode: StatusCode.OK,
+        headers: {
+          middleware: "middleware",
+          middleware1: "middleware1",
+          before: "before",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+      expect(res.headers.get("middleware")).toBe(expected.headers.middleware);
+      expect(res.headers.get("middleware1")).toBe(expected.headers.middleware1);
+    }
+
+    serve.stop();
+  });
+
+  test("Group with middlewares, controllers and  middlewares", async () => {
+    function middleware(ctx: Context) {
+      ctx.set("middleware", "middleware");
+      ctx.next();
+    }
+
+    function middleware1(ctx: Context) {
+      ctx.set("middleware1", "middleware1");
+      ctx.next();
+    }
+
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+      ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public Controllerget(ctx: Context) {
+        return ctx.json({ fn: "Controllerget", method: ctx.method });
+      }
+    }
+
+    @Controller("/test")
+    class Group {
+      @Get("/get")
+      public Groupget(ctx: Context) {
+        return ctx.json({ fn: "Groupget", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      prefix: "/api",
+      middlewares: [before],
+      controllers: [Test],
+      groups: [
+        {
+          controllers: [Group],
+          prefix: "/group1",
+          middlewares: [middleware, middleware1],
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/api/group1/test/get",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { fn: "Groupget", method: HttpMethod.GET },
+        statusCode: StatusCode.OK,
+        headers: {
+          middleware: "middleware",
+          middleware1: "middleware1",
+          before: "before",
+        },
+      },
+      {
+        path: "/api/test/get",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { fn: "Controllerget", method: HttpMethod.GET },
+        statusCode: StatusCode.OK,
+        headers: {
+          before: "before",
+          middleware: null,
+          middleware1: null,
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        { method: expected.method, credentials: "include", redirect: "follow" }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+      expect(res.headers.get("middleware")).toBe(expected.headers.middleware);
+      expect(res.headers.get("middleware1")).toBe(expected.headers.middleware1);
+      expect(res.headers.get("before")).toBe(expected.headers.before);
+    }
+
+    serve.stop();
+  });
+});
