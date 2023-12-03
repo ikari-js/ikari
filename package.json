@@ -49,6 +49,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "fast-querystring": "^1.1.2",
+    "radix3": "^1.1.0",
     "reflect-metadata": "^0.1.13"
   }
 }

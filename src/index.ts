@@ -12,6 +12,7 @@ import {
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
 import { HttpMethod, StatusCode, createPath, startupMessage } from "./utils";
+import { createRouter } from "radix3";
 
 export function defaultErrorHandler(err: Errorlike) {
   return new Response(
@@ -72,23 +73,11 @@ export function Serve(config: Config) {
     throw new Error("No routes found");
   }
 
-  const routesMap = new Map<string, Route>();
-  const routesWithParamsMap = new Map<string, Route>();
+  // TODO delete last / from url MAKE THIS OPTIONAL
+  const router = createRouter<Route>();
 
   routes.forEach((route) => {
-    if (!route.pathHasParams) {
-      routesMap.set(route.path + "|method|" + route.method, route);
-    } else {
-      // TODO: need to improve this with more path param separators
-      // /example/:id/:name
-      route.path =
-        "^" +
-        route.path.replace(/:([^\\/]+)/g, (_, paramName) => {
-          return `(?<${paramName}>[^\\/]+)`;
-        }) +
-        "$";
-      routesWithParamsMap.set(route.path + "|method|" + route.method, route);
-    }
+    router.insert(route.method + "|" + route.path, route);
   });
 
   (config.serveOptions as BunServe).fetch = async function (
@@ -98,90 +87,38 @@ export function Serve(config: Config) {
   ) {
     // TODO delete last / from url MAKE THIS OPTIONAL
     const url = new URL(request.url.replace(/\/$/, ""));
-    const routeKey = url.pathname + "|method|" + request.method;
-    const params: Record<string, string> = {};
-    let route = routesMap.get(routeKey);
-
+    const routeKey = request.method + "|" + url.pathname;
+    let route = router.lookup(routeKey);
     if (!route) {
-      for (const [path, r] of routesWithParamsMap.entries()) {
-        const match = url.pathname.match(path.split("|method|")[0]);
-        if (match && r.method === request.method) {
-          if (match.groups) {
-            for (const [key, value] of Object.entries(match.groups)) {
-              params[key] = decodeURIComponent(value);
-            }
-          }
-          route = r;
-          break;
-        }
-      }
-    }
-
-    if (!route) {
-      route = routesMap.get(url.pathname + "|method|" + HttpMethod.ALL);
-      if (!route) {
-        for (const [path, r] of routesWithParamsMap.entries()) {
-          const match = url.pathname.match(path.split("|method|")[0]);
-          if (match && r.method === HttpMethod.ALL) {
-            if (match.groups) {
-              for (const [key, value] of Object.entries(match.groups)) {
-                params[key] = decodeURIComponent(value);
-              }
-            }
-            route = r;
-            break;
-          }
-        }
-      }
+      route = router.lookup(HttpMethod.ALL + "|" + url.pathname);
     }
 
     if (!route && request.method === HttpMethod.OPTIONS) {
       const allowedMethods = new Set<string>();
-      for (const [path, r] of routesMap.entries()) {
-        const match = url.pathname.match(path.split("|method|")[0]);
-        if (match) {
-          allowedMethods.add(r.method.toLocaleUpperCase());
-        }
-      }
-      for (const [path, r] of routesWithParamsMap.entries()) {
-        const match = url.pathname.match(path.split("|method|")[0]);
-        if (match) {
-          allowedMethods.add(r.method.toLocaleUpperCase());
+      for (const methods of Object.keys(HttpMethod)) {
+        const r = router.lookup(methods + "|" + url.pathname);
+        if (r) {
+          allowedMethods.add(r.method);
         }
       }
 
-      if (allowedMethods.size > 0) {
-        return new Response(null, {
-          status: StatusCode.NO_CONTENT,
-          headers: {
-            Allow: [...allowedMethods].join(", "),
-          },
-        });
-      }
+      return new Response(null, {
+        status: StatusCode.NO_CONTENT,
+        headers: {
+          Allow: [...allowedMethods].join(", "),
+        },
+      });
     }
 
     if (!route && request.method === HttpMethod.HEAD) {
-      for (const [path, r] of routesMap.entries()) {
-        const match = url.pathname.match(path.split("|method|")[0]);
-        if (match && r.method === HttpMethod.GET) {
-          route = r;
-          break;
-        }
-      }
-
-      if (!route) {
-        for (const [path, r] of routesWithParamsMap.entries()) {
-          const match = url.pathname.match(path.split("|method|")[0]);
-          if (match && r.method === HttpMethod.GET) {
-            route = r;
-            break;
-          }
-        }
-      }
+      route = router.lookup(HttpMethod.GET + "|" + url.pathname);
     }
 
     if (!route) {
-      if (request.method === HttpMethod.HEAD || request.method === HttpMethod.OPTIONS) {
+      if (
+        request.method === HttpMethod.HEAD ||
+        request.method === HttpMethod.OPTIONS
+      ) {
         return new Response(null, {
           status: StatusCode.NOT_FOUND,
         });
@@ -202,7 +139,7 @@ export function Serve(config: Config) {
         route.target.prototype[route.fnName],
         ...route.after,
       ]),
-      params
+      route?.params || {}
     );
 
     // TODO performance

@@ -1,13 +1,11 @@
 import { Server } from "bun";
 import { Handler } from "./types";
+import { HttpMethod } from "./utils";
+import { parse } from "fast-querystring";
 
 export class Context {
-  private parsedUrl: URL;
-  /**
-   * Locals makes it possible to pass any values under keys scoped to the request
-   * and therefore available to all following routes that match the request.
-   */
-  public locals: Local;
+  private _queries: Record<string, string> | null = null;
+  private _locals: Local | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _body: any | FormData | string | null = null;
   private _cookies: Map<string, string> | null = null;
@@ -21,9 +19,17 @@ export class Context {
      */
     public params: Record<string, string>,
     public res: Response = new Response()
-  ) {
-    this.parsedUrl = new URL(req.url);
-    this.locals = new Local();
+  ) {}
+
+  /**
+   * Locals makes it possible to pass any values under keys scoped to the request
+   * and therefore available to all following routes that match the request.
+   */
+  public get locals(): Local {
+    if (!this._locals) {
+      this._locals = new Local();
+    }
+    return this._locals;
   }
 
   /**
@@ -46,7 +52,10 @@ export class Context {
    * ```
    */
   public query(query: string): string | null {
-    return this.parsedUrl.searchParams.get(query);
+    if (!this._queries) {
+      this._queries = parse(this.req.url.split("?")[1]);
+    }
+    return this._queries[query] || null;
   }
 
   /**
@@ -60,8 +69,11 @@ export class Context {
    * // URLSearchParams { 'id' => '1', 'name' => 'test' }
    * ```
    */
-  public queries(): URLSearchParams {
-    return this.parsedUrl.searchParams;
+  public queries(): Record<string, string> | null {
+    if (!this._queries) {
+      this._queries = parse(this.req.url.split("?")[1]);
+    }
+    return this._queries;
   }
 
   /**
@@ -191,44 +203,34 @@ export class Context {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async body(): Promise<any | FormData | string | ArrayBuffer> {
-    if (this.req.method === "GET" || this.req.method === "HEAD")
-      return Promise.resolve(null);
+    if (this.method === HttpMethod.GET || this.method === HttpMethod.HEAD)
+      return null;
+    if (this.req.bodyUsed) return this._body;
 
-    if (!this.req.body) return Promise.resolve(null);
-    if (this._body) return Promise.resolve(this._body);
-    let body = null;
-
-    const contentType =
-      this.req.headers.get("Content-Type")?.split(";")[0] || "";
+    const contentType = this.get("Content-Type")?.split(";")[0] || "";
 
     switch (contentType) {
       case "application/json":
-        body = await this.req.json();
-        this._body = body;
+        this._body = this.req.json();
         break;
       case "application/x-www-form-urlencoded":
-        body = await this.req.formData();
-        this._body = body;
+        this._body = this.req.formData();
         break;
       case "multipart/form-data":
-        body = await this.req.formData();
-        this._body = body;
+        this._body = this.req.formData();
         break;
       case "text/plain":
-        body = await this.req.text();
-        this._body = body;
+        this._body = this.req.text();
         break;
       case "application/octet-stream":
-        body = await this.req.arrayBuffer();
-        this._body = body;
+        this._body = this.req.arrayBuffer();
         break;
       default:
-        body = await this.req.text();
-        this._body = body;
+        this._body = this.req.text();
         break;
     }
 
-    return Promise.resolve(this._body);
+    return this._body;
   }
 
   /**
@@ -334,7 +336,6 @@ export class Context {
    * ```
    */
   public set(key: string, value: string): Context {
-    if (!key || !value) return this;
     this.res.headers.set(key, value);
 
     return this;
@@ -489,7 +490,8 @@ class Local {
    */
   // TODO: weakmap
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(private locals = new Map<string, any>()) {}
+  private locals: Map<string, any> = new Map<string, any>();
+  constructor() {}
 
   /**
    * Returns the value of the specified local variable.
