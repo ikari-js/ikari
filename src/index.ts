@@ -56,6 +56,10 @@ export function Serve(config: Config) {
     config.serveOptions = {};
   }
 
+  if (!config.strict) {
+    config.strict = false;
+  }
+
   let routes: Route[] = [];
 
   if (config.controllers) {
@@ -73,8 +77,7 @@ export function Serve(config: Config) {
     throw new Error("No routes found");
   }
 
-  // TODO delete last / from url MAKE THIS OPTIONAL
-  const router = createRouter<Route>();
+  const router = createRouter<Route>({ strictTrailingSlash: config.strict });
 
   routes.forEach((route) => {
     router.insert(route.method + "|" + route.path, route);
@@ -85,8 +88,7 @@ export function Serve(config: Config) {
     request: Request,
     server: Server
   ) {
-    // TODO delete last / from url MAKE THIS OPTIONAL
-    const url = new URL(request.url.replace(/\/$/, ""));
+    const url = new URL(request.url);
     const routeKey = request.method + "|" + url.pathname;
     let route = router.lookup(routeKey);
     if (!route) {

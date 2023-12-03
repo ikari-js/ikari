@@ -108,6 +108,15 @@ describe("ServeValidator", () => {
       new ServeValidator({}).validate();
     }).toThrow("Either groups or controllers must be provided");
   });
+
+  test("checkStrictIsBoolean", () => {
+    expect(() => {
+      new ServeValidator({
+        controllers: [{ prototype: {} }],
+        strict: "null" as any,
+      }).validate();
+    }).toThrow("Strict must be a boolean");
+  });
 });
 
 test("Get Decorator", () => {
@@ -2775,3 +2784,4 @@ describe("Route", async () => {
 
 // TODO locals test
 // TODO controller middlewares test and group middlewares test
+// TODO strict routing test
