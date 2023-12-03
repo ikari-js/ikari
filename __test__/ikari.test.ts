@@ -3376,3 +3376,5 @@ describe("Controller Type", async () => {
     expect(() => Serve(config)).not.toThrow();
   });
 });
+
+// TODO middleware type check

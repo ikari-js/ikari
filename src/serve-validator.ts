@@ -14,7 +14,8 @@ export class ServeValidator {
       .checkServeOptionsIsObject()
       .checkPrefixIsString()
       .checkGroupsOrControllersIsNotEmpty()
-      .checkStrictMode();
+      .checkStrictMode()
+      .checkGroupMiddlewaresIsArray();
   }
 
   private checkConfigIsObject() {
@@ -70,7 +71,7 @@ export class ServeValidator {
           if (!Reflect.getMetadata("routes", controller.prototype))
             throw new Error(
               `Controller must be decorated with @Controller decorator in ${controller?.name}`
-              );
+            );
         }
       }
     }
@@ -93,9 +94,20 @@ export class ServeValidator {
   }
 
   private checkMiddlewaresIsArray() {
-    // TODO: check if all controllers are valid Middleware type
     if (this.config.middlewares && !Array.isArray(this.config.middlewares)) {
       throw new Error("Middlewares must be an array");
+    }
+
+    if (this.config.middlewares) {
+      for (const middleware of this.config.middlewares) {
+        if (typeof middleware !== "function") {
+          throw new Error("Middleware must be a function");
+        }
+
+        if (middleware.length !== 1) {
+          throw new Error(`Middleware must have Context as parameter in ${middleware.name}`);
+        }
+      }
     }
 
     return this;
@@ -156,6 +168,30 @@ export class ServeValidator {
   private checkStrictMode() {
     if (this.config.strict && typeof this.config.strict !== "boolean") {
       throw new Error("Strict must be a boolean");
+    }
+
+    return this;
+  }
+
+  private checkGroupMiddlewaresIsArray() {
+    if (this.config.groups) {
+      for (const { middlewares } of this.config.groups) {
+        if (middlewares && !Array.isArray(middlewares)) {
+          throw new Error("Group Middlewares must be an array");
+        }
+
+        if (middlewares) {
+          for (const middleware of middlewares) {
+            if (typeof middleware !== "function") {
+              throw new Error("Middleware must be a function");
+            }
+
+            if (middleware.length !== 1) {
+              throw new Error(`Middleware must have Context as parameter in ${middleware.name}`);
+            }
+          }
+        }
+      }
     }
 
     return this;
