@@ -43,7 +43,6 @@ describe("ServeValidator", () => {
   test("checkGroupsIsArray", () => {
     expect(() => {
       new ServeValidator({
-        controllers: [{ prototype: {} }],
         groups: "null" as any,
       }).validate();
     }).toThrow("Groups must be an array");
@@ -52,7 +51,6 @@ describe("ServeValidator", () => {
   test("checkMiddlewaresIsArray", () => {
     expect(() => {
       new ServeValidator({
-        controllers: [{ prototype: {} }],
         middlewares: "null" as any,
       }).validate();
     }).toThrow("Middlewares must be an array");
@@ -61,7 +59,6 @@ describe("ServeValidator", () => {
   test("checkErrorHandlerIsFunction", () => {
     expect(() => {
       new ServeValidator({
-        controllers: [{ prototype: {} }],
         errorHandler: "null" as any,
       }).validate();
     }).toThrow("ErrorHandler must be a function");
@@ -70,7 +67,6 @@ describe("ServeValidator", () => {
   test("checkPortIsNumber", () => {
     expect(() => {
       new ServeValidator({
-        controllers: [{ prototype: {} }],
         serveOptions: { port: "null" },
       }).validate();
     }).toThrow("Port must be a number");
@@ -79,7 +75,6 @@ describe("ServeValidator", () => {
   test("checkHostnameIsString", () => {
     expect(() => {
       new ServeValidator({
-        controllers: [{ prototype: {} }],
         serveOptions: { hostname: 1 as any },
       }).validate();
     }).toThrow("Hostname must be a string");
@@ -88,7 +83,6 @@ describe("ServeValidator", () => {
   test("checkBunServeOptionsIsObject", () => {
     expect(() => {
       new ServeValidator({
-        controllers: [{ prototype: {} }],
         serveOptions: "null" as any,
       }).validate();
     }).toThrow("BunServeOptions must be an object");
@@ -97,7 +91,6 @@ describe("ServeValidator", () => {
   test("checkPrefixIsString", () => {
     expect(() => {
       new ServeValidator({
-        controllers: [{ prototype: {} }],
         prefix: 1 as any,
       }).validate();
     }).toThrow("Prefix must be a string");
@@ -111,8 +104,14 @@ describe("ServeValidator", () => {
 
   test("checkStrictIsBoolean", () => {
     expect(() => {
+      @Controller("/")
+      class Test {
+        @Get()
+        public get() {}
+      }
+
       new ServeValidator({
-        controllers: [{ prototype: {} }],
+        controllers: [Test],
         strict: "null" as any,
       }).validate();
     }).toThrow("Strict must be a boolean");
@@ -3283,5 +3282,97 @@ describe("Group", async () => {
     }
 
     serve.stop();
+  });
+});
+
+describe("Controller Type", async () => {
+  test("Controller without decorator", async () => {
+    class Test {
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test as any],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    expect(() => Serve(config)).toThrow(
+      "Controller must be decorated with @Controller decorator"
+    );
+  });
+
+  test("Controller with decorator", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    expect(() => Serve(config)).not.toThrow();
+  });
+
+  test("Group without decorator", async () => {
+    class Test {
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      groups: [
+        {
+          controllers: [Test],
+          prefix: "/group",
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    expect(() => Serve(config)).toThrow(
+      "Controller must be decorated with @Controller decorator"
+    );
+  });
+
+  test("Group with decorator", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      groups: [
+        {
+          controllers: [Test],
+          prefix: "/group",
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    expect(() => Serve(config)).not.toThrow();
   });
 });
