@@ -230,7 +230,7 @@ ikari provides a `Config` type to define configuration for your application. Thi
 - `disableStartupMessage` is used to disable startup message. Default value is `false`. 
   - Example: `disableStartupMessage: true`
 - `strict` is used to enable strict trailing slash handling for routes. Default value is `false`. 
- - Example: `strict: true`. If you enable strict mode, `/users` and `/users/` will be different routes.
+  - Example: `strict: true`. If you enable strict mode, `/users` and `/users/` will be different routes.
 - `serveOptions` is used to define bun serve options. 
   - Example: `serveOptions: { port: 3000 }`. You can provide all bun serve options here.
 - `group` is used to define a group for your application. See [Routing Groups](#routing-groups) for more information
