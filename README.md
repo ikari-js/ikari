@@ -219,13 +219,20 @@ Serve({
 
 ikari provides a `Config` type to define configuration for your application. This type is used in `Serve` function.
 
-- `prefix` is used to define a prefix for all routes in your application. Default value is empty string. Example: `prefix: "/api"`
-- `controllers` is used to define controllers for your application. Example: `controllers: [UserController]` or `controllers: [UserController, PostController]`
-- `middlewares` is used to define middleware for your application. Example: `middlewares: [authMiddleware, loggerMiddleware]`
-- `errorHandler` is used to define a global error handler for your application. Example: `errorHandler: (err: Errorlike) => Response | Promise<Response>`. It is replace with default error handler if not provided. If not provided default error handler will be used.
-- `disableStartupMessage` is used to disable startup message. Default value is `false`. Example: `disableStartupMessage: true`
-- `strict` is used to enable strict trailing slash handling for routes. Default value is `false`. Example: `strict: true`. If you enable strict mode, `/users` and `/users/` will be different routes.
-- `serveOptions` is used to define bun serve options. Example: `serveOptions: { port: 3000 }`. You can provide all bun serve options here.
+- `prefix` is used to define a prefix for all routes in your application. Default value is empty string. 
+  - Example: `prefix: "/api"`
+- `controllers` is used to define controllers for your application. 
+  - Example: `controllers: [UserController]` or `controllers: [UserController, PostController]`
+- `middlewares` is used to define middleware for your application. 
+  - Example: `middlewares: [authMiddleware, loggerMiddleware]`
+- `errorHandler` is used to define a global error handler for your application. 
+  - Example: `errorHandler: (err: Errorlike) => Response | Promise<Response>`. It is replace with default error handler if not provided. If not provided default error handler will be used.
+- `disableStartupMessage` is used to disable startup message. Default value is `false`. 
+  - Example: `disableStartupMessage: true`
+- `strict` is used to enable strict trailing slash handling for routes. Default value is `false`. 
+ - Example: `strict: true`. If you enable strict mode, `/users` and `/users/` will be different routes.
+- `serveOptions` is used to define bun serve options. 
+  - Example: `serveOptions: { port: 3000 }`. You can provide all bun serve options here.
 - `group` is used to define a group for your application. See [Routing Groups](#routing-groups) for more information
 
 
