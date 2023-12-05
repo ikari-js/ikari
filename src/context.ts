@@ -527,6 +527,28 @@ class Local {
   public has(key: string): boolean {
     return this.locals.has(key);
   }
+
+  /**
+   * Deletes the specified local variable.
+   * @example
+   * ```ts
+   * ctx.locals.delete("local_value");
+   * ```
+   */
+  public delete(key: string): boolean {
+    return this.locals.delete(key);
+  }
+
+  /**
+   * Deletes all local variables.
+   * @example
+   * ```ts
+   * ctx.locals.clear();
+   * ```
+   */
+  public clear(): void {
+    this.locals.clear();
+  }
 }
 
 export class Routes {
