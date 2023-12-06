@@ -88,8 +88,32 @@ export function Serve(config: Config) {
     request: Request,
     server: Server
   ) {
+    const ctx = new Context(
+      server,
+      request,
+      new Routes(config.middlewares || []),
+      {}
+    );
     const url = new URL(request.url);
     const routeKey = request.method + "|" + url.pathname;
+
+    while (ctx.routes.hasNext()) {
+      const fnIndex = ctx.routes.currentIndex;
+      const fn = ctx.routes.currentHandler();
+      if (!fn) {
+        break;
+      }
+
+      await fn(ctx);
+      if (fnIndex === ctx.routes.currentIndex) {
+        break;
+      }
+    }
+
+    if (ctx.routes.currentIndex < ctx.routes.length) {
+      return returnContextResponse(ctx);
+    }
+
     let route = router.lookup(routeKey);
     if (!route) {
       route = router.lookup(HttpMethod.ALL + "|" + url.pathname);
@@ -104,12 +128,10 @@ export function Serve(config: Config) {
         }
       }
 
-      return new Response(null, {
-        status: StatusCode.NO_CONTENT,
-        headers: {
-          Allow: [...allowedMethods].join(", "),
-        },
-      });
+      return ctx
+        .status(StatusCode.NO_CONTENT)
+        .set("Allow", [...allowedMethods].join(", "))
+        .getResWithoutBody();
     }
 
     if (!route && request.method === HttpMethod.HEAD) {
@@ -117,32 +139,15 @@ export function Serve(config: Config) {
     }
 
     if (!route) {
-      if (
-        request.method === HttpMethod.HEAD ||
-        request.method === HttpMethod.OPTIONS
-      ) {
-        return new Response(null, {
-          status: StatusCode.NOT_FOUND,
-        });
-      }
-      return new Response(JSON.stringify({ message: "Not Found" }), {
-        status: StatusCode.NOT_FOUND,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      return NotFound(ctx);
     }
 
-    const ctx = new Context(
-      server,
-      request,
-      new Routes([
-        ...route.before,
-        route.target.prototype[route.fnName],
-        ...route.after,
-      ]),
-      route?.params || {}
-    );
+    ctx.routes = new Routes([
+      ...route.before,
+      route.target.prototype[route.fnName],
+      ...route.after,
+    ]);
+    ctx.params = route?.params || {};
 
     // TODO performance
     // TODO maybe there is a bug in here
@@ -159,7 +164,7 @@ export function Serve(config: Config) {
       }
     }
 
-    return ctx.res;
+    return returnContextResponse(ctx);
   };
 
   (config.serveOptions as BunServe).error = function (
@@ -199,6 +204,20 @@ export function Serve(config: Config) {
   }) as IkariServer;
 }
 
+function returnContextResponse(ctx: Context) {
+  if (ctx.method === HttpMethod.HEAD || ctx.method === HttpMethod.OPTIONS) {
+    return ctx.getResWithoutBody();
+  }
+  return ctx.res;
+}
+
+function NotFound(ctx: Context) {
+  if (ctx.method === HttpMethod.HEAD) {
+    return ctx.status(StatusCode.NOT_FOUND).getResWithoutBody();
+  }
+  return ctx.json({ message: "Not Found" }, StatusCode.NOT_FOUND).res;
+}
+
 function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
   if (groups.length === 0) {
     return [];
@@ -224,12 +243,6 @@ function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
             if (config.prefix) routePath = config.prefix + routePath;
             if (middlewares) {
               routeBefore = [...(middlewares as Handler[]), ...route.before];
-            }
-            if (config.middlewares) {
-              routeBefore = [
-                ...(config.middlewares as Handler[]),
-                ...routeBefore,
-              ];
             }
 
             return { ...route, path: routePath, before: routeBefore } as Route;
@@ -258,14 +271,10 @@ function getRoutesFromControllers(
       );
 
       return routes.map((route) => {
-        let routeBefore = route.before;
         let routePath = route.path;
         if (config.prefix) routePath = config.prefix + routePath;
-        if (config.middlewares) {
-          routeBefore = [...(config.middlewares as Handler[]), ...route.before];
-        }
 
-        return { ...route, path: routePath, before: routeBefore } as Route;
+        return { ...route, path: routePath } as Route;
       });
     })
     .flat();
