@@ -33,7 +33,7 @@ try {
   await Bun.build({
     entrypoints: middlewaresFiles,
     target: "bun",
-    outdir: "./",
+    outdir: "./dist/middlewares",
     minify: true,
   });
 } catch (e) {
