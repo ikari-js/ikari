@@ -25,6 +25,17 @@ try {
     outdir: "./",
     minify: true,
   });
+
+  const middlewaresFiles = readdirSync("./dist/middlewares")
+    .filter((file) => file.endsWith(".js"))
+    .map((file) => `./dist/middlewares/${file}`);
+
+  await Bun.build({
+    entrypoints: middlewaresFiles,
+    target: "bun",
+    outdir: "./",
+    minify: true,
+  });
 } catch (e) {
   console.error(e);
 }
