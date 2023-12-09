@@ -1,5 +1,5 @@
-import { Context } from "..";
-import { HttpMethod, StatusCode } from "../utils";
+import { Context } from "../..";
+import { HttpMethod, StatusCode } from "../../utils";
 
 export type HTTPMethods =
   // Common Methods See: https://datatracker.ietf.org/doc/html/rfc7231#section-4.3
