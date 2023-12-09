@@ -2,6 +2,9 @@ import { Server, ServeOptions, TLSServeOptions, Errorlike } from "bun";
 
 import { Context } from "./context";
 
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type LiteralUnionStr<T extends U, U = string> = T | (string & {});
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types
 export type Controller = {} & { prototype: any; name: string; length: number, new(...args: any[]): any };
 
