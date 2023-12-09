@@ -26,15 +26,18 @@ try {
     minify: true,
   });
 
-  const middlewaresFiles = readdirSync("./dist/middlewares")
-    .filter((file) => file.endsWith(".js"))
-    .map((file) => `./dist/middlewares/${file}`);
+  const middlewares = readdirSync("./dist/middlewares");
+  middlewares.forEach((middleware) => {
+    const files = readdirSync(`./dist/middlewares/${middleware}`)
+      .filter((file) => file.endsWith(".js"))
+      .map((file) => `./dist/middlewares/${middleware}/${file}`);
 
-  await Bun.build({
-    entrypoints: middlewaresFiles,
-    target: "bun",
-    outdir: "./dist/middlewares",
-    minify: true,
+    Bun.build({
+      entrypoints: files,
+      target: "bun",
+      outdir: `./dist/middlewares/${middleware}`,
+      minify: true,
+    });
   });
 } catch (e) {
   console.error(e);
