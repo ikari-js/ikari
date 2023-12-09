@@ -755,6 +755,32 @@ ikari provides a set of official middlewares to help you build your web applicat
     ``` 
     </details>
 
+- `requestId` middleware is used to set a unique ID for each request.
+
+    <details>
+    <summary>Example</summary>
+
+    ```typescript
+    import { Context, Serve } from "ikari";
+    import { Controller, Get } from "ikari/decorators";
+    import { requestId } from "ikari/middlewares/request-id";
+
+    @Controller("/users")
+    class UserController {
+      @Get("/")
+      async list(ctx: Context) {
+        // logic here
+      }
+    }
+
+    Serve({
+      middlewares: [requestId()],
+      controllers: [UserController]
+    });
+    ``` 
+    </details>
+
+
 ## Contributors
 <a href = "https://github.com/ikari-js/ikari/graphs/contributors">
   <img src = "https://contrib.rocks/image?repo=ikari-js/ikari"/>
