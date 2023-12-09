@@ -68,6 +68,7 @@ Serve({
     <li><a href="#routing-groups">Routing Groups</a></li>
     <li><a href="#server">Server</a></li>
     <li><a href="#context">Context</a></li>
+    <li><a href="#official-middlewares">Official Middlewares</a></li>
     <li><a href="#contributors">Contributors</a></li>
   </ol>
 </details>
@@ -215,7 +216,7 @@ Serve({
 });
 ```
 
-#### Configuration
+## Configuration
 
 ikari provides a `Config` type to define configuration for your application. This type is used in `Serve` function.
 
@@ -258,7 +259,7 @@ const config: Config = {
 Serve(config);
 ```
 
-#### Routing Groups
+## Routing Groups
 
 ikari [config](#configuration) provides a `group` property to define a group for your application. This property is used to define a prefix for all routes in your application. You can also define a middleware for your group. This middleware will be executed before all routes in your group.
 
@@ -288,7 +289,7 @@ const config: Config = {
 Serve(config);
 ```	
 
-#### Server 
+## Server 
 
 ikari return a `Server` object when you call `Serve` function. This object has a `server` property that is a bun server instance. You can use this instance to access bun server methods and properties. Such as `server.stop()` or `server.port`.
 
@@ -314,7 +315,7 @@ const server = Serve(config);
 server.stop(); // stop the server
 ```	
 
-#### Context
+## Context
 
 ikari provides a `Context` object to access ikari context methods and properties. Such as `ctx.params` or `ctx.body()`. You can also use `ctx.next()` to call next middleware or route handler.
 
@@ -699,6 +700,59 @@ ikari provides a `Context` object to access ikari context methods and properties
       const locals = ctx.locals.all();
     }
     ```
+    </details>
+
+
+## Official Middlewares
+
+ikari provides a set of official middlewares to help you build your web application. These middlewares are designed to be simple and intuitive, allowing you to focus on your application's logic.
+
+- `CORS` middleware is used to enable CORS with various options. See [cors](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) for more information.
+    <details>
+    <summary>Example</summary>
+
+    ```typescript
+    import { Context, Serve } from "ikari";
+    import { Controller, Get } from "ikari/decorators";
+    import { CORS } from "ikari/middlewares/cors";
+
+    @Controller("/users")
+    class UserController {
+      @Get("/")
+      async list(ctx: Context) {
+        // logic here
+      }
+    }
+
+    Serve({
+      middlewares: [CORS()],
+      controllers: [UserController]
+    });
+    ``` 
+    </details>
+
+- `helmet` middleware is used to set various HTTP headers to help protect your application.
+    <details>
+    <summary>Example</summary>
+
+    ```typescript
+    import { Context, Serve } from "ikari";
+    import { Controller, Get } from "ikari/decorators";
+    import { helmet } from "ikari/middlewares/helmet";
+
+    @Controller("/users")
+    class UserController {
+      @Get("/")
+      async list(ctx: Context) {
+        // logic here
+      }
+    }
+
+    Serve({
+      middlewares: [helmet()],
+      controllers: [UserController]
+    });
+    ``` 
     </details>
 
 ## Contributors
