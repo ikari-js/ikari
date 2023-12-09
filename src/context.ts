@@ -482,6 +482,11 @@ export class Context {
   public get method(): string {
     return this.req.method;
   }
+
+
+  public get secure(): boolean {
+    return this.req.url.startsWith("https");
+  }
 }
 
 class Local {
