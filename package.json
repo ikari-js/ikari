@@ -13,7 +13,7 @@
     "name": "Abdurrahman Aydın",
     "url": "https://github.com/aaydin-tr"
   },
-  "version": "0.5.5",
+  "version": "0.5.6",
   "keywords": [
     "bun",
     "bunjs",
@@ -28,8 +28,11 @@
     "./decorators": {
       "import": "./dist/decorators/index.js"
     },
-    "./middlewares": {
-      "import": "./dist/middlewares/index.js"
+    "./middlewares/cors": {
+      "import": "./dist/middlewares/cors/index.js"
+    },
+    "./middlewares/helmet": {
+      "import": "./dist/middlewares/helmet/index.js"
     }
   },
   "files": [
