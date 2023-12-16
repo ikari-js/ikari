@@ -1,5 +1,5 @@
 import { Server } from "bun";
-import { Handler } from "./types";
+import { Handler, Handlers } from "./types";
 import { HttpMethod } from "./utils";
 import { parse } from "fast-querystring";
 
@@ -483,7 +483,6 @@ export class Context {
     return this.req.method;
   }
 
-
   public get secure(): boolean {
     return this.req.url.startsWith("https");
   }
@@ -557,7 +556,7 @@ class Local {
 }
 
 export class Routes {
-  constructor(public handlers: Handler[], public handlerIndex: number = 0) {}
+  constructor(public handlers: Handlers, public handlerIndex: number = 0) {}
 
   public next(): void {
     if (this.hasNext()) {

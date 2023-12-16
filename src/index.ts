@@ -1,14 +1,7 @@
 import "reflect-metadata";
 
 import { Server, Serve as BunServe, Errorlike } from "bun";
-import {
-  Config,
-  Controller,
-  Group,
-  Handler,
-  IkariServer,
-  Route,
-} from "./types";
+import { Config, Controller, Group, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
 import { HttpMethod, StatusCode, createPath, startupMessage } from "./utils";
@@ -242,7 +235,7 @@ function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
             if (prefix) routePath = prefix + routePath;
             if (config.prefix) routePath = config.prefix + routePath;
             if (middlewares) {
-              routeBefore = [...(middlewares as Handler[]), ...route.before];
+              routeBefore = [...middlewares, ...route.before];
             }
 
             return { ...route, path: routePath, before: routeBefore } as Route;

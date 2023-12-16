@@ -4,10 +4,12 @@ import { Context } from "./context";
 
 export type LiteralUnionStr<T extends U, U = string> = T | (string & object);
 
+export type FunctionTarget = {
+  [key: string]: Handler;
+};
+
 export type Controller = {
-  prototype: {
-    [key: string]: Handler;
-  };
+  prototype: FunctionTarget;
   name: string;
   length: number;
   new (...args: unknown[]): unknown;

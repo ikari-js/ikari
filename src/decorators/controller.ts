@@ -1,4 +1,4 @@
-import { Route } from "../types";
+import { Route, Controller } from "../types";
 
 /**
   Controller decorator is used to define a controller class.
@@ -7,8 +7,8 @@ import { Route } from "../types";
 **/
 export function Controller(prefix: string) {
   prefix = prefix.replace(/\/$/, "");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return function (target: any) {
+
+  return function (target: Controller) {
     for (const value of Object.getOwnPropertyNames(target.prototype)) {
       const path = Reflect.getMetadata("path", target.prototype, value);
       const method = Reflect.getMetadata("method", target.prototype, value);
