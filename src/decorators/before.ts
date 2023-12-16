@@ -15,7 +15,7 @@ export function Before(...handlers: Handler[]) {
 
     const before = Reflect.getMetadata("before", target, key);
     if (before) {
-      handlers = [...before, ...handlers];
+      handlers = before.concat(handlers);
     }
     Reflect.defineMetadata("before", handlers, target, key);
   };

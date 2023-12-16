@@ -15,7 +15,7 @@ export function After(...handlers: Handler[]) {
 
     const after = Reflect.getMetadata("after", target, key);
     if (after) {
-      handlers = [...after, ...handlers];
+      handlers = after.concat(handlers);
     }
     Reflect.defineMetadata("after", handlers, target, key);
   };
