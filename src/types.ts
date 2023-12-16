@@ -5,8 +5,14 @@ import { Context } from "./context";
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type LiteralUnionStr<T extends U, U = string> = T | (string & {});
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types
-export type Controller = {} & { prototype: any; name: string; length: number, new(...args: any[]): any };
+export type Controller = {
+  prototype: {
+    [key: string]: Handler;
+  };
+  name: string;
+  length: number;
+  new (...args: unknown[]): unknown;
+};
 
 export type Route = {
   path: string;
@@ -14,8 +20,8 @@ export type Route = {
   method: string;
   target: Controller;
   pathHasParams: boolean;
-  before: Handler[];
-  after: Handler[];
+  before: Handlers;
+  after: Handlers;
 };
 
 export interface Group {
@@ -32,7 +38,7 @@ export interface Group {
    * @example
    * middlewares: [AuthMiddleware()]
    */
-  middlewares?: Handler[];
+  middlewares?: Handlers;
   /**
    * Controller classes to be used in the group
    */
@@ -42,6 +48,8 @@ export interface Group {
 export type Handler = (
   ctx: Context
 ) => Context | Promise<Context> | void | Promise<void>;
+
+export type Handlers = Handler[];
 
 export type ErrorHandler = (err: Errorlike) => Response | Promise<Response>;
 
@@ -76,7 +84,7 @@ export type Config = {
    * @example
    * middlewares: [CORSMiddleware()]
    */
-  middlewares?: Handler[];
+  middlewares?: Handlers;
   /**
    * Serve options for the server. See Bun ServeOptions for more information.
    * @default ServeOptions
