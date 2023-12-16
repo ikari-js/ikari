@@ -6,9 +6,6 @@ import { Route } from "../types";
   @param prefix - the prefix for all routes in the controller
 **/
 export function Controller(prefix: string) {
-  if (typeof prefix !== "string")
-    throw new Error("Controller decorator can only be used on a class");
-
   prefix = prefix.replace(/\/$/, "");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function (target: any) {
