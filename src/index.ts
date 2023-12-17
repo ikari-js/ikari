@@ -224,16 +224,11 @@ function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
         );
 
         routes.forEach((route) => {
-          let routeBefore = route.before;
-          let routePath = route.path;
-          if (prefix) routePath = prefix + routePath;
-          if (config.prefix) routePath = config.prefix + routePath;
+          if (prefix) route.path = prefix + route.path;
+          if (config.prefix) route.path = config.prefix + route.path;
           if (middlewares) {
-            routeBefore = middlewares.concat(route.before);
+            route.before = middlewares.concat(route.before);
           }
-
-          route.path = routePath;
-          route.before = routeBefore;
 
           total.push(route);
         });
