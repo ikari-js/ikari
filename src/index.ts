@@ -196,6 +196,7 @@ export function Serve(config: Config) {
   }) as IkariServer;
 }
 
+//TODO: Tests are missing for this function. We have to test it.
 function returnContextResponse(ctx: Context) {
   if (ctx.method === HttpMethod.HEAD || ctx.method === HttpMethod.OPTIONS) {
     return ctx.getResWithoutBody();
@@ -203,6 +204,7 @@ function returnContextResponse(ctx: Context) {
   return ctx.res;
 }
 
+//TODO: Tests are missing for this function. We have to test it.
 function NotFound(ctx: Context) {
   if (ctx.method === HttpMethod.HEAD) {
     return ctx.status(StatusCode.NOT_FOUND).getResWithoutBody();
@@ -210,6 +212,7 @@ function NotFound(ctx: Context) {
   return ctx.json({ message: "Not Found" }, StatusCode.NOT_FOUND).res;
 }
 
+//TODO: Tests are missing for this function. We have to test it.
 function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
   return groups.reduce(
     (total: Route[], { prefix, controllers, middlewares }: Group) => {
@@ -240,6 +243,7 @@ function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
   );
 }
 
+//TODO: Tests are missing for this function. We have to test it.
 function getRoutesFromControllers(
   config: Config,
   controllers: Controller[]
