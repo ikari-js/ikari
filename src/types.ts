@@ -8,9 +8,9 @@ export type LiteralUnionStr<T extends U, U = string> = T | (string & object);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FunctionTarget = any;
 
-export type Controller = ClassConstructor;
+export type Controller = Constructor;
 
-export type ClassConstructor<T = object> = new (...args: unknown[]) => T;
+export type Constructor<T = object> = new (...args: unknown[]) => T;
 
 export type Route = {
   path: string;
