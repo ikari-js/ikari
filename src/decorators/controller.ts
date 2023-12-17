@@ -1,7 +1,7 @@
 import {
   Route,
   Controller as ControllerType,
-  ClassConstructor,
+  Constructor,
 } from "../types";
 
 /**
@@ -12,7 +12,7 @@ import {
 export function Controller(prefix: string) {
   prefix = prefix.replace(/\/$/, "");
 
-  return function <T>(target: ClassConstructor<T>) {
+  return function <T>(target: Constructor<T>) {
     for (const value of Object.getOwnPropertyNames(target.prototype)) {
       const path = Reflect.getMetadata("path", target.prototype, value);
       const method = Reflect.getMetadata("method", target.prototype, value);
