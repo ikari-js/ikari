@@ -211,10 +211,6 @@ function NotFound(ctx: Context) {
 }
 
 function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
-  if (groups.length === 0) {
-    return [];
-  }
-
   return groups.reduce(
     (total: Route[], { prefix, controllers, middlewares }: Group) => {
       if (prefix) {
@@ -253,10 +249,6 @@ function getRoutesFromControllers(
   config: Config,
   controllers: Controller[]
 ): Route[] {
-  if (controllers.length === 0) {
-    return [];
-  }
-
   return controllers.reduce((total: Route[], controller: Controller) => {
     const routes: Route[] = Reflect.getMetadata("routes", controller.prototype);
 
