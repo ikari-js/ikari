@@ -215,7 +215,7 @@ function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
     return [];
   }
 
-  const routes = groups.reduce(
+  return groups.reduce(
     (total: Route[], { prefix, controllers, middlewares }: Group) => {
       if (prefix) {
         prefix = createPath(prefix).replace(/\/+$/, "");
@@ -247,8 +247,6 @@ function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
     },
     []
   );
-
-  return routes;
 }
 
 function getRoutesFromControllers(
