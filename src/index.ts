@@ -259,23 +259,18 @@ function getRoutesFromControllers(
     return [];
   }
 
-  const routes = controllers
-    .map((controller: Controller) => {
-      const routes: Route[] = Reflect.getMetadata(
-        "routes",
-        controller.prototype
-      );
+  return controllers.reduce((total: Route[], controller: Controller) => {
+    const routes: Route[] = Reflect.getMetadata("routes", controller.prototype);
 
-      return routes.map((route) => {
-        let routePath = route.path;
-        if (config.prefix) routePath = config.prefix + routePath;
+    routes.forEach((route) => {
+      if (config.prefix) {
+        route.path = config.prefix + route.path;
+      }
+      total.push(route);
+    });
 
-        return { ...route, path: routePath } as Route;
-      });
-    })
-    .flat();
-
-  return routes;
+    return total;
+  }, []);
 }
 
 export { Context };
