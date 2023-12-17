@@ -1,4 +1,8 @@
-import { Route, Controller } from "../types";
+import {
+  Route,
+  Controller as ControllerType,
+  ClassConstructor,
+} from "../types";
 
 /**
   Controller decorator is used to define a controller class.
@@ -8,7 +12,7 @@ import { Route, Controller } from "../types";
 export function Controller(prefix: string) {
   prefix = prefix.replace(/\/$/, "");
 
-  return function (target: Controller) {
+  return function <T>(target: ClassConstructor<T>) {
     for (const value of Object.getOwnPropertyNames(target.prototype)) {
       const path = Reflect.getMetadata("path", target.prototype, value);
       const method = Reflect.getMetadata("method", target.prototype, value);
@@ -26,7 +30,7 @@ export function Controller(prefix: string) {
             : routePath,
           fnName: value,
           method,
-          target,
+          target: target as ControllerType,
           pathHasParams,
           before: Reflect.getMetadata("before", target.prototype, value) || [],
           after: Reflect.getMetadata("after", target.prototype, value) || [],

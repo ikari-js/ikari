@@ -4,16 +4,17 @@ import { Context } from "./context";
 
 export type LiteralUnionStr<T extends U, U = string> = T | (string & object);
 
-export type FunctionTarget = {
-  [key: string]: Handler;
-};
+// It is not possible to get the generic type of a function in TypeScript.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FunctionTarget = any;
 
 export type Controller = {
-  prototype: FunctionTarget;
   name: string;
   length: number;
   new (...args: unknown[]): unknown;
 };
+
+export type ClassConstructor<T = object> = new (...args: unknown[]) => T;
 
 export type Route = {
   path: string;
