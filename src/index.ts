@@ -56,14 +56,13 @@ export function Serve(config: Config) {
   let routes: Route[] = [];
 
   if (config.controllers) {
-    routes = [
-      ...routes,
-      ...getRoutesFromControllers(config, config.controllers),
-    ];
+    routes = routes.concat(
+      getRoutesFromControllers(config, config.controllers)
+    );
   }
 
   if (config.groups) {
-    routes = [...routes, ...getRoutesFromGroups(config, config.groups)];
+    routes = routes.concat(getRoutesFromGroups(config, config.groups));
   }
 
   if (routes.length === 0) {
