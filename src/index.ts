@@ -216,34 +216,38 @@ function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
     return [];
   }
 
-  const routes = groups
-    .map(({ prefix, controllers, middlewares }: Group) => {
+  const routes = groups.reduce(
+    (total: Route[], { prefix, controllers, middlewares }: Group) => {
       if (prefix) {
         prefix = createPath(prefix).replace(/\/+$/, "");
       }
 
-      return controllers
-        .map((controller: Controller) => {
-          const routes: Route[] = Reflect.getMetadata(
-            "routes",
-            controller.prototype
-          );
+      controllers.forEach((controller: Controller) => {
+        const routes: Route[] = Reflect.getMetadata(
+          "routes",
+          controller.prototype
+        );
 
-          return routes.map((route) => {
-            let routeBefore = route.before;
-            let routePath = route.path;
-            if (prefix) routePath = prefix + routePath;
-            if (config.prefix) routePath = config.prefix + routePath;
-            if (middlewares) {
-              routeBefore = [...middlewares, ...route.before];
-            }
+        routes.forEach((route) => {
+          let routeBefore = route.before;
+          let routePath = route.path;
+          if (prefix) routePath = prefix + routePath;
+          if (config.prefix) routePath = config.prefix + routePath;
+          if (middlewares) {
+            routeBefore = middlewares.concat(route.before);
+          }
 
-            return { ...route, path: routePath, before: routeBefore } as Route;
-          });
-        })
-        .flat();
-    })
-    .flat();
+          route.path = routePath;
+          route.before = routeBefore;
+
+          total.push(route);
+        });
+      });
+
+      return total;
+    },
+    []
+  );
 
   return routes;
 }
