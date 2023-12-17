@@ -167,7 +167,6 @@ export function Serve(config: Config) {
     return config.errorHandler!(err);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bunServe = Bun.serve(config.serveOptions as BunServe);
 
   if (bunServe && !config.disableStartupMessage) {
