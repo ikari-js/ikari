@@ -261,5 +261,15 @@ function getRoutesFromControllers(
   }, []);
 }
 
+export const TestingFunctions =
+  process.env.NODE_ENV === "test"
+    ? {
+        getRoutesFromControllers,
+        getRoutesFromGroups,
+        returnContextResponse,
+        NotFound,
+      }
+    : null;
+
 export { Context };
 export * from "./types";
