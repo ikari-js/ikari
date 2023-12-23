@@ -57,13 +57,10 @@ Serve({
   <ol>
     <li><a href="#about-the-project">About The Project</a></li>
     <li><a href="#motivation">Motivation</a></li>
-    <li><a href="#features">Features</a></li>
-      <ul>
-        <li><a href="#controller">Controller</a></li>
-        <li><a href="#get-post-put-patch-delete-options-head">GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD</a></li>
-        <li><a href="#all">ALL</a></li>
-        <li><a href="#middleware">Middleware</a></li>
-      </ul>
+    <li><a href="#controller">Controller</a></li>
+    <li><a href="#get-post-put-patch-delete-options-head">GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD</a></li>
+    <li><a href="#all">ALL</a></li>
+    <li><a href="#middleware">Middleware</a></li>
     <li><a href="#configuration">Configuration</a></li>
     <li><a href="#routing-groups">Routing Groups</a></li>
     <li><a href="#server">Server</a></li>
