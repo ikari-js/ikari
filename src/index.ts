@@ -56,14 +56,13 @@ export function Serve(config: Config) {
   let routes: Route[] = [];
 
   if (config.controllers) {
-    routes = [
-      ...routes,
-      ...getRoutesFromControllers(config, config.controllers),
-    ];
+    routes = routes.concat(
+      getRoutesFromControllers(config, config.controllers)
+    );
   }
 
   if (config.groups) {
-    routes = [...routes, ...getRoutesFromGroups(config, config.groups)];
+    routes = routes.concat(getRoutesFromGroups(config, config.groups));
   }
 
   if (routes.length === 0) {
@@ -167,7 +166,6 @@ export function Serve(config: Config) {
     return config.errorHandler!(err);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bunServe = Bun.serve(config.serveOptions as BunServe);
 
   if (bunServe && !config.disableStartupMessage) {
@@ -197,6 +195,7 @@ export function Serve(config: Config) {
   }) as IkariServer;
 }
 
+//TODO: Tests are missing for this function. We have to test it.
 function returnContextResponse(ctx: Context) {
   if (ctx.method === HttpMethod.HEAD || ctx.method === HttpMethod.OPTIONS) {
     return ctx.getResWithoutBody();
@@ -204,6 +203,7 @@ function returnContextResponse(ctx: Context) {
   return ctx.res;
 }
 
+//TODO: Tests are missing for this function. We have to test it.
 function NotFound(ctx: Context) {
   if (ctx.method === HttpMethod.HEAD) {
     return ctx.status(StatusCode.NOT_FOUND).getResWithoutBody();
@@ -211,68 +211,54 @@ function NotFound(ctx: Context) {
   return ctx.json({ message: "Not Found" }, StatusCode.NOT_FOUND).res;
 }
 
+//TODO: Tests are missing for this function. We have to test it.
 function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
-  if (groups.length === 0) {
-    return [];
-  }
-
-  const routes = groups
-    .map(({ prefix, controllers, middlewares }: Group) => {
+  return groups.reduce(
+    (total: Route[], { prefix, controllers, middlewares }: Group) => {
       if (prefix) {
         prefix = createPath(prefix).replace(/\/+$/, "");
       }
 
-      return controllers
-        .map((controller: Controller) => {
-          const routes: Route[] = Reflect.getMetadata(
-            "routes",
-            controller.prototype
-          );
+      controllers.forEach((controller: Controller) => {
+        const routes: Route[] = Reflect.getMetadata(
+          "routes",
+          controller.prototype
+        );
 
-          return routes.map((route) => {
-            let routeBefore = route.before;
-            let routePath = route.path;
-            if (prefix) routePath = prefix + routePath;
-            if (config.prefix) routePath = config.prefix + routePath;
-            if (middlewares) {
-              routeBefore = [...middlewares, ...route.before];
-            }
+        routes.forEach((route) => {
+          if (prefix) route.path = prefix + route.path;
+          if (config.prefix) route.path = config.prefix + route.path;
+          if (middlewares) {
+            route.before = middlewares.concat(route.before);
+          }
 
-            return { ...route, path: routePath, before: routeBefore } as Route;
-          });
-        })
-        .flat();
-    })
-    .flat();
+          total.push(route);
+        });
+      });
 
-  return routes;
+      return total;
+    },
+    []
+  );
 }
 
+//TODO: Tests are missing for this function. We have to test it.
 function getRoutesFromControllers(
   config: Config,
   controllers: Controller[]
 ): Route[] {
-  if (controllers.length === 0) {
-    return [];
-  }
+  return controllers.reduce((total: Route[], controller: Controller) => {
+    const routes: Route[] = Reflect.getMetadata("routes", controller.prototype);
 
-  const routes = controllers
-    .map((controller: Controller) => {
-      const routes: Route[] = Reflect.getMetadata(
-        "routes",
-        controller.prototype
-      );
+    routes.forEach((route) => {
+      if (config.prefix) {
+        route.path = config.prefix + route.path;
+      }
+      total.push(route);
+    });
 
-      return routes.map((route) => {
-        let routePath = route.path;
-        if (config.prefix) routePath = config.prefix + routePath;
-
-        return { ...route, path: routePath } as Route;
-      });
-    })
-    .flat();
-
-  return routes;
+    return total;
+  }, []);
 }
 
 export { Context };

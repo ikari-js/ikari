@@ -1,8 +1,4 @@
-import {
-  Route,
-  Controller as ControllerType,
-  Constructor,
-} from "../types";
+import { Route, Controller as ControllerType, Constructor } from "../types";
 
 /**
   Controller decorator is used to define a controller class.
