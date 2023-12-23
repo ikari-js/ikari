@@ -136,7 +136,7 @@ export function Serve(config: Config) {
 
     ctx.routes = new Routes([
       ...route.before,
-      route.target.prototype[route.fnName],
+      route.target.prototype ? route.target.prototype[route.fnName].bind(route.target) : route.target[route.fnName].bind(route.target),
       ...route.after,
     ]);
     ctx.params = route?.params || {};
@@ -219,12 +219,15 @@ function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
       }
 
       controllers.forEach((controller: Controller) => {
-        const routes: Route[] = Reflect.getMetadata(
-          "routes",
-          controller.prototype
-        );
+        let routes: Route[] = [];
+        if (Reflect.hasMetadata("routes", controller)) {
+          routes = Reflect.getMetadata("routes", controller);
+        } else {
+          routes = Reflect.getMetadata("routes", controller.prototype);
+        }
 
         routes.forEach((route) => {
+          route.target = controller;
           if (prefix) route.path = prefix + route.path;
           if (config.prefix) route.path = config.prefix + route.path;
           if (middlewares) {
@@ -247,12 +250,19 @@ function getRoutesFromControllers(
   controllers: Controller[]
 ): Route[] {
   return controllers.reduce((result: Route[], controller: Controller) => {
-    const routes: Route[] = Reflect.getMetadata("routes", controller.prototype);
+    let routes: Route[] = [];
+    if (Reflect.hasMetadata("routes", controller)) {
+      routes = Reflect.getMetadata("routes", controller);
+    } else {
+      routes = Reflect.getMetadata("routes", controller.prototype);
+    }
 
     routes.forEach((route) => {
+      route.target = controller;
       if (config.prefix) {
         route.path = config.prefix + route.path;
       }
+
       result.push(route);
     });
 
