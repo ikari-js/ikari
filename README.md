@@ -98,6 +98,64 @@ The `Controller` decorator is used to define a controller class. This decorator 
 class UserController {}
 ```
 
+##### How To Use Controller Class With Other Dependency Classes
+
+ikari does not have a dependency injection system so ikari can not intialize outside classes. But you can use your classes in ikari controllers. You can use your classes in two ways. First way is you can extend your class from ikari controller class. Second way is you can create an instance of your class and pass it to ikari controller class. 
+
+```typescript
+  class CustomClass {
+    private readonly name: string = "CustomClass";
+
+    getName() {
+      return this.name;
+    }
+  }
+
+  @Controller("/users")
+  class UserController extends CustomClass {
+    constructor() {
+      super();
+    }
+
+    @Get("/")
+    async index(ctx: Context) {
+      return ctx.string(super.getName());
+    }
+  }
+
+  Serve({
+    controllers: [UserController],
+  });
+```
+
+OR 
+
+```typescript
+  class CustomClass {
+    private readonly name: string = "CustomClass";
+
+    getName() {
+      return this.name;
+    }
+  }
+
+  @Controller("/users")
+  class UserController {
+    constructor(private readonly customClass: CustomClass) {}
+
+    @Get("/")
+    async index(ctx: Context) {
+      return ctx.string(this.customClass.getName());
+    }
+
+  }
+
+  Serve({
+    controllers: [new UserController(new CustomClass())],
+  });
+```
+
+
 #### GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 
 These decorators are used to define routes in a controller. They take a path as their first argument, which will be appended to the base path of the controller. The path can also contain parameters. If path argument are not provided function name will be used as path.
