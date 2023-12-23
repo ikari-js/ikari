@@ -1,4 +1,4 @@
-import { Route, Controller as ControllerType, Constructor } from "../types";
+import { Route, Constructor } from "../types";
 
 /**
   Controller decorator is used to define a controller class.
@@ -26,8 +26,8 @@ export function Controller(prefix: string) {
             : routePath,
           fnName: value,
           method,
-          target: target as ControllerType,
           pathHasParams,
+          // TODO reflect has check
           before: Reflect.getMetadata("before", target.prototype, value) || [],
           after: Reflect.getMetadata("after", target.prototype, value) || [],
         });
