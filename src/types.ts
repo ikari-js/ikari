@@ -8,15 +8,16 @@ export type LiteralUnionStr<T extends U, U = string> = T | (string & object);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FunctionTarget = any;
 
-export type Controller = Constructor;
+export type Controller = Constructor | InstanceType<Constructor>;
 
-export type Constructor<T = object> = new (...args: unknown[]) => T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Constructor<T = object> = new (...args: any[]) => T | any;
 
 export type Route = {
   path: string;
   fnName: string;
   method: string;
-  target: Controller;
+  target?: Controller;
   pathHasParams: boolean;
   before: Handlers;
   after: Handlers;
