@@ -214,7 +214,7 @@ function NotFound(ctx: Context) {
 //TODO: Tests are missing for this function. We have to test it.
 function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
   return groups.reduce(
-    (total: Route[], { prefix, controllers, middlewares }: Group) => {
+    (result: Route[], { prefix, controllers, middlewares }: Group) => {
       if (prefix) {
         prefix = createPath(prefix).replace(/\/+$/, "");
       }
@@ -232,11 +232,11 @@ function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
             route.before = middlewares.concat(route.before);
           }
 
-          total.push(route);
+          result.push(route);
         });
       });
 
-      return total;
+      return result;
     },
     []
   );
@@ -247,17 +247,17 @@ function getRoutesFromControllers(
   config: Config,
   controllers: Controller[]
 ): Route[] {
-  return controllers.reduce((total: Route[], controller: Controller) => {
+  return controllers.reduce((result: Route[], controller: Controller) => {
     const routes: Route[] = Reflect.getMetadata("routes", controller.prototype);
 
     routes.forEach((route) => {
       if (config.prefix) {
         route.path = config.prefix + route.path;
       }
-      total.push(route);
+      result.push(route);
     });
 
-    return total;
+    return result;
   }, []);
 }
 
