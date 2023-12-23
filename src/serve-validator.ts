@@ -33,10 +33,21 @@ export class ServeValidator {
 
     if (this.config.controllers) {
       for (const controller of this.config.controllers) {
-        if (!controller.prototype)
+        if (!controller.prototype && typeof controller !== "object")
           throw new Error("Controller must be a class");
 
-        if (!Reflect.getMetadata("routes", controller.prototype))
+        if (
+          typeof controller === "object" &&
+          !Reflect.getMetadata("routes", controller)
+        )
+          throw new Error(
+            `Controller must be decorated with @Controller decorator in ${controller?.name}`
+          );
+
+        if (
+          typeof controller !== "object" &&
+          !Reflect.getMetadata("routes", controller.prototype)
+        )
           throw new Error(
             `Controller must be decorated with @Controller decorator in ${controller?.name}`
           );
@@ -65,10 +76,21 @@ export class ServeValidator {
         }
 
         for (const controller of controllers) {
-          if (!controller.prototype)
+          if (!controller.prototype && typeof controller !== "object")
             throw new Error("Controller must be a class");
+          
+          if (
+            typeof controller === "object" &&
+            !Reflect.getMetadata("routes", controller)
+          )
+            throw new Error(
+              `Controller must be decorated with @Controller decorator in ${controller?.name}`
+            );
 
-          if (!Reflect.getMetadata("routes", controller.prototype))
+          if (
+            typeof controller !== "object" &&
+            !Reflect.getMetadata("routes", controller.prototype)
+          )
             throw new Error(
               `Controller must be decorated with @Controller decorator in ${controller?.name}`
             );
@@ -105,7 +127,9 @@ export class ServeValidator {
         }
 
         if (middleware.length !== 1) {
-          throw new Error(`Middleware must have Context as parameter in ${middleware.name}`);
+          throw new Error(
+            `Middleware must have Context as parameter in ${middleware.name}`
+          );
         }
       }
     }
@@ -187,7 +211,9 @@ export class ServeValidator {
             }
 
             if (middleware.length !== 1) {
-              throw new Error(`Middleware must have Context as parameter in ${middleware.name}`);
+              throw new Error(
+                `Middleware must have Context as parameter in ${middleware.name}`
+              );
             }
           }
         }
