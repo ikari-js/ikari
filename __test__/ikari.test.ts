@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { expect, test, describe } from "bun:test";
+import { expect, test, describe, jest } from "bun:test";
 import { HttpMethod, StatusCode, createPath } from "../src/utils";
 import { ServeValidator } from "../src/serve-validator";
 import {
@@ -3376,6 +3376,37 @@ describe("Controller Type", async () => {
     expect(() => Serve(config)).not.toThrow();
   });
 });
+
+process.env.NODE_ENV = "test";
+
+const createContextMock = (method: HttpMethod) => {
+  const statusMock = jest.fn();
+  const jsonMock = jest.fn();
+  const getResWithoutBodyMock = jest.fn();
+  const context = {
+    method,
+    status: (param: number) => {
+      statusMock(param);
+      return context;
+    },
+    getResWithoutBody: () => {
+      getResWithoutBodyMock();
+      return context;
+    },
+    json: (param: any, status: number) => {
+      jsonMock(param, status);
+      return context;
+    },
+    res: null,
+  } as unknown as Context;
+
+  return {
+    context,
+    statusMock,
+    jsonMock,
+    getResWithoutBodyMock,
+  };
+};
 
 // TODO middleware type check
 // TODO locals delete and clear test
