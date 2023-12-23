@@ -83,13 +83,11 @@ Welcome to ikari, a powerful TypeScript-based HTTP framework meticulously design
 ikari is built with a straightforward vision: TypeScript decorators. This choice is aimed at creating an enterprise-ready framework with simplicity at its core. TypeScript decorators provide an organized and scalable way to structure code, simplifying feature implementation and ensuring adaptability to changing project needs. This approach prioritizes a developer-friendly experience, enhancing code readability and speeding up development. In essence, ikari embraces TypeScript decorators to make web development simple, scalable, and enjoyable.
 
 
-## Features
-
-### Decorators
+## Decorators
 
 ikari provides a set of decorators to help you build your web application. These decorators are designed to be simple and intuitive, allowing you to focus on your application's logic.
 
-#### Controller
+### Controller
 
 The `Controller` decorator is used to define a controller class. This decorator takes a path as its first argument, which will be used as the base path for all routes defined in the controller.
 
@@ -98,7 +96,7 @@ The `Controller` decorator is used to define a controller class. This decorator 
 class UserController {}
 ```
 
-##### How To Use Controller Class With Other Dependency Classes
+#### How To Use Controller Class With Other Dependency Classes
 
 ikari does not have a dependency injection system so ikari can not intialize outside classes. But you can use your classes in ikari controllers. You can use your classes in two ways. First way is you can extend your class from ikari controller class. Second way is you can create an instance of your class and pass it to ikari controller class. 
 
@@ -156,7 +154,7 @@ OR
 ```
 
 
-#### GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
+### GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 
 These decorators are used to define routes in a controller. They take a path as their first argument, which will be appended to the base path of the controller. The path can also contain parameters. If path argument are not provided function name will be used as path.
 
@@ -216,7 +214,7 @@ Serve({
 });
 ```
 
-#### ALL 
+### ALL 
 
 The `ALL` decorator is used to define a route that matches all HTTP methods. It takes a path as its first argument, which will be appended to the base path of the controller. The path can also contain parameters. If path argument are not provided function name will be used as path.
 
@@ -237,7 +235,7 @@ Serve({
 });
 ```
 
-#### Middleware
+### Middleware
 
 ikari provides a `Before` and `After` decorator to define middleware for routes. These decorators take a `Handler` type functions array as their first argument. The middleware will be executed in the order they are defined. For controller level middleware see [Configuration](#configuration).
 
