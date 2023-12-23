@@ -3378,6 +3378,7 @@ describe("Controller Type", async () => {
 });
 
 process.env.NODE_ENV = "test";
+import { TestingFunctions } from "../src";
 
 const createContextMock = (method: HttpMethod) => {
   const statusMock = jest.fn();
@@ -3407,6 +3408,40 @@ const createContextMock = (method: HttpMethod) => {
     getResWithoutBodyMock,
   };
 };
+
+describe("tests NotFound function", async () => {
+  if (!TestingFunctions) {
+    throw new Error("You must be in test environment");
+  }
+
+  const { NotFound } = TestingFunctions;
+
+  test("when NotFound called with HEAD it returns 404 without body.", async () => {
+    const { context, statusMock, getResWithoutBodyMock } = createContextMock(
+      HttpMethod.HEAD
+    );
+
+    NotFound(context);
+
+    expect(statusMock).toHaveBeenCalledTimes(1);
+    expect(statusMock.mock.calls[0][0]).toBe(StatusCode.NOT_FOUND);
+    expect(getResWithoutBodyMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("when NotFound called except HEAD it calls json method `Not Found` message with 404 status code and returns res", async () => {
+    const { context, jsonMock } = createContextMock(HttpMethod.GET);
+
+    NotFound(context);
+
+    expect(jsonMock).toHaveBeenCalledTimes(1);
+
+    const [response, status] = jsonMock.mock.calls[0];
+    expect(response).toEqual({ message: "Not Found" });
+    expect(status).toBe(StatusCode.NOT_FOUND);
+
+    expect(context.res).toBeNull();
+  });
+});
 
 // TODO middleware type check
 // TODO locals delete and clear test

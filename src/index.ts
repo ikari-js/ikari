@@ -203,7 +203,6 @@ function returnContextResponse(ctx: Context) {
   return ctx.res;
 }
 
-//TODO: Tests are missing for this function. We have to test it.
 function NotFound(ctx: Context) {
   if (ctx.method === HttpMethod.HEAD) {
     return ctx.status(StatusCode.NOT_FOUND).getResWithoutBody();
