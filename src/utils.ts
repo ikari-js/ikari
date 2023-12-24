@@ -171,6 +171,10 @@ export function getRoutesFromControllers(
   controllers: Controller[]
 ): Route[] {
   return controllers.reduce((result: Route[], controller: Controller) => {
+    if (controller == null) return result;
+    if (typeof controller !== "function" && typeof controller !== "object")
+      return result;
+
     let routes: Route[] = [];
     if (Reflect.hasMetadata("routes", controller)) {
       routes = Reflect.getMetadata("routes", controller);
@@ -179,6 +183,9 @@ export function getRoutesFromControllers(
     }
 
     routes.forEach((route) => {
+      if (route == null) return;
+      if (typeof route !== "function" && typeof route !== "object") return;
+
       route.target = controller;
       if (config.prefix) {
         route.path = config.prefix + route.path;
