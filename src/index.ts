@@ -1,25 +1,21 @@
 import "reflect-metadata";
 
 import { Server, Serve as BunServe, Errorlike } from "bun";
-import { Config, Controller, Group, IkariServer, Route } from "./types";
+import { Config, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context, Routes } from "./context";
-import { HttpMethod, StatusCode, createPath, startupMessage } from "./utils";
+import {
+  HttpMethod,
+  NotFound,
+  StatusCode,
+  createPath,
+  defaultErrorHandler,
+  getRoutesFromControllers,
+  getRoutesFromGroups,
+  returnContextResponse,
+  startupMessage,
+} from "./utils";
 import { createRouter } from "radix3";
-
-export function defaultErrorHandler(err: Errorlike) {
-  return new Response(
-    JSON.stringify({
-      message: err?.message,
-      stack: err?.stack,
-      cause: err?.cause,
-    }),
-    {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    }
-  );
-}
 
 const bannedProps = [
   "fetch",
@@ -136,7 +132,9 @@ export function Serve(config: Config) {
 
     ctx.routes = new Routes([
       ...route.before,
-      route.target.prototype ? route.target.prototype[route.fnName].bind(route.target) : route.target[route.fnName].bind(route.target),
+      route.target.prototype
+        ? route.target.prototype[route.fnName].bind(route.target)
+        : route.target[route.fnName].bind(route.target),
       ...route.after,
     ]);
     ctx.params = route?.params || {};
@@ -193,82 +191,6 @@ export function Serve(config: Config) {
       return Reflect.set(target, prop, value);
     },
   }) as IkariServer;
-}
-
-//TODO: Tests are missing for this function. We have to test it.
-function returnContextResponse(ctx: Context) {
-  if (ctx.method === HttpMethod.HEAD || ctx.method === HttpMethod.OPTIONS) {
-    return ctx.getResWithoutBody();
-  }
-  return ctx.res;
-}
-
-//TODO: Tests are missing for this function. We have to test it.
-function NotFound(ctx: Context) {
-  if (ctx.method === HttpMethod.HEAD) {
-    return ctx.status(StatusCode.NOT_FOUND).getResWithoutBody();
-  }
-  return ctx.json({ message: "Not Found" }, StatusCode.NOT_FOUND).res;
-}
-
-//TODO: Tests are missing for this function. We have to test it.
-function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
-  return groups.reduce(
-    (result: Route[], { prefix, controllers, middlewares }: Group) => {
-      if (prefix) {
-        prefix = createPath(prefix).replace(/\/+$/, "");
-      }
-
-      controllers.forEach((controller: Controller) => {
-        let routes: Route[] = [];
-        if (Reflect.hasMetadata("routes", controller)) {
-          routes = Reflect.getMetadata("routes", controller);
-        } else {
-          routes = Reflect.getMetadata("routes", controller.prototype);
-        }
-
-        routes.forEach((route) => {
-          route.target = controller;
-          if (prefix) route.path = prefix + route.path;
-          if (config.prefix) route.path = config.prefix + route.path;
-          if (middlewares) {
-            route.before = middlewares.concat(route.before);
-          }
-
-          result.push(route);
-        });
-      });
-
-      return result;
-    },
-    []
-  );
-}
-
-//TODO: Tests are missing for this function. We have to test it.
-function getRoutesFromControllers(
-  config: Config,
-  controllers: Controller[]
-): Route[] {
-  return controllers.reduce((result: Route[], controller: Controller) => {
-    let routes: Route[] = [];
-    if (Reflect.hasMetadata("routes", controller)) {
-      routes = Reflect.getMetadata("routes", controller);
-    } else {
-      routes = Reflect.getMetadata("routes", controller.prototype);
-    }
-
-    routes.forEach((route) => {
-      route.target = controller;
-      if (config.prefix) {
-        route.path = config.prefix + route.path;
-      }
-
-      result.push(route);
-    });
-
-    return result;
-  }, []);
 }
 
 export { Context };

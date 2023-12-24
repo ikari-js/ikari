@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { expect, test, describe } from "bun:test";
-import { HttpMethod, StatusCode, createPath } from "../src/utils";
+import { expect, test, describe, jest } from "bun:test";
+import {
+  HttpMethod,
+  NotFound,
+  StatusCode,
+  createPath,
+  defaultErrorHandler,
+  getRoutesFromControllers,
+  getRoutesFromGroups,
+  returnContextResponse,
+} from "../src/utils";
 import { ServeValidator } from "../src/serve-validator";
 import {
   After,
@@ -16,7 +25,7 @@ import {
   All,
 } from "../src/decorators";
 import "reflect-metadata";
-import { Config, Context, Route, Serve, defaultErrorHandler } from "../src";
+import { Config, Context, Route, Serve } from "../src";
 import { unlinkSync } from "node:fs";
 import { Errorlike } from "bun";
 
@@ -2840,7 +2849,7 @@ describe("Route", async () => {
           credentials: "include",
           headers: {},
           redirect: "follow",
-        },
+        }
       );
 
       let body = null;
@@ -3450,6 +3459,293 @@ describe("Controller Type", async () => {
     };
 
     expect(() => Serve(config)).not.toThrow();
+  });
+});
+
+const createContextMock = (method: HttpMethod) => {
+  const statusMock = jest.fn();
+  const jsonMock = jest.fn();
+  const getResWithoutBodyMock = jest.fn();
+  const resMock = {};
+  const context = {
+    method,
+    status: (param: number) => {
+      statusMock(param);
+      return context;
+    },
+    getResWithoutBody: () => {
+      getResWithoutBodyMock();
+      return context;
+    },
+    json: (param: any, status: number) => {
+      jsonMock(param, status);
+      return context;
+    },
+    res: resMock,
+  } as unknown as Context;
+
+  return {
+    context,
+    statusMock,
+    jsonMock,
+    getResWithoutBodyMock,
+    resMock,
+  };
+};
+
+describe("tests NotFound function", async () => {
+  test("when NotFound called with HEAD it returns 404 without body.", async () => {
+    const { context, statusMock, getResWithoutBodyMock } = createContextMock(
+      HttpMethod.HEAD
+    );
+
+    NotFound(context);
+
+    expect(statusMock).toHaveBeenCalledTimes(1);
+
+    const [status] = statusMock.mock.calls[0];
+
+    //In the future, we can use toHaveBeenCalledWith but it is not implemented yet in Bun.
+    expect(status).toBe(StatusCode.NOT_FOUND);
+    expect(getResWithoutBodyMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("when NotFound called except HEAD it calls json method `Not Found` message with 404 status code and returns res", async () => {
+    const { context, jsonMock, resMock } = createContextMock(HttpMethod.GET);
+
+    NotFound(context);
+
+    expect(jsonMock).toHaveBeenCalledTimes(1);
+
+    //In the future, we can use toHaveBeenCalledWith but it is not implemented yet in Bun.
+    const [response, status] = jsonMock.mock.calls[0];
+
+    expect(response).toEqual({ message: "Not Found" });
+    expect(status).toBe(StatusCode.NOT_FOUND);
+
+    expect(context.res).toBe(resMock);
+  });
+});
+
+describe("tests returnContextResponse function", () => {
+  test("when returnContextResponse called with HEAD it returns res without body", async () => {
+    const { context, getResWithoutBodyMock } = createContextMock(
+      HttpMethod.HEAD
+    );
+
+    returnContextResponse(context);
+
+    expect(getResWithoutBodyMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("when returnContextResponse called except HEAD it returns res", async () => {
+    const { context, resMock } = createContextMock(HttpMethod.GET);
+
+    returnContextResponse(context);
+
+    expect(context.res).toBe(resMock);
+  });
+});
+
+describe("tests defaultErrorHandler function", () => {
+  test("when defaultErrorHandler called with error it returns response with 500 Status Code and error attributes as a response", async () => {
+    const errorText = "test error";
+    const error = new Error(errorText);
+    const response = defaultErrorHandler(error);
+
+    const { message, stack } = JSON.parse(await response.text());
+
+    expect(message).toBe(errorText);
+    expect(stack).toBe(error.stack);
+    expect(response.status).toBe(StatusCode.INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe("tests getRoutesFromControllers function", () => {
+  test("when getRoutesFromControllers called with controllers it returns routes", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const routes = getRoutesFromControllers({}, [Test]);
+
+    expect(routes).toEqual([
+      {
+        after: [],
+        before: [],
+        path: "/test/get",
+        method: HttpMethod.GET,
+        fnName: "get",
+        pathHasParams: false,
+        target: Test,
+      },
+    ]);
+  });
+
+  test("when getRoutesFromControllers called with controllers and prefix it returns routes", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const routes = getRoutesFromControllers(
+      {
+        prefix: "/api",
+      },
+      [Test]
+    );
+
+    expect(routes).toEqual([
+      {
+        after: [],
+        before: [],
+        path: "/api/test/get",
+        method: HttpMethod.GET,
+        fnName: "get",
+        pathHasParams: false,
+        target: Test,
+      },
+    ]);
+  });
+
+  test("when getRoutesFromControllers called with empty controllers it returns empty routes", async () => {
+    const routes = getRoutesFromControllers({}, []);
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromControllers called with empty controllers and prefix it returns empty routes", async () => {
+    const routes = getRoutesFromControllers(
+      {
+        prefix: "/api",
+      },
+      []
+    );
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromControllers called with filled null array controllers it returns empty routes", async () => {
+    const routes = getRoutesFromControllers({}, [null]);
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromControllers called with filled string array controllers it returns empty routes", async () => {
+    const routes = getRoutesFromControllers({}, ["test"]);
+
+    expect(routes).toEqual([]);
+  });
+});
+
+describe("tests getRoutesFromGroups function", () => {
+  test("when getRoutesFromGroups called with groups it returns routes", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const routes = getRoutesFromGroups({}, [
+      {
+        prefix: "/api",
+        controllers: [Test],
+      },
+    ]);
+
+    expect(routes).toEqual([
+      {
+        after: [],
+        before: [],
+        path: "/api/test/get",
+        method: HttpMethod.GET,
+        fnName: "get",
+        pathHasParams: false,
+        target: Test,
+      },
+    ]);
+  });
+
+  test("when getRoutesFromGroups called with groups and prefix it returns routes", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const routes = getRoutesFromGroups(
+      {
+        prefix: "/api",
+      },
+      [
+        {
+          prefix: "/api",
+          controllers: [Test],
+        },
+      ]
+    );
+
+    expect(routes).toEqual([
+      {
+        after: [],
+        before: [],
+        path: "/api/api/test/get",
+        method: HttpMethod.GET,
+        fnName: "get",
+        pathHasParams: false,
+        target: Test,
+      },
+    ]);
+  });
+
+  test("when getRoutesFromGroups called with empty groups it returns empty routes", async () => {
+    const routes = getRoutesFromGroups({}, []);
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromGroups called with empty groups and prefix it returns empty routes", async () => {
+    const routes = getRoutesFromGroups(
+      {
+        prefix: "/api",
+      },
+      []
+    );
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromGroups called with filled null array groups it returns empty routes", async () => {
+    const routes = getRoutesFromGroups({}, [
+      {
+        prefix: "/api",
+        controllers: [null],
+      },
+    ]);
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromGroups called with filled string array groups it returns empty routes", async () => {
+    const routes = getRoutesFromGroups({}, [
+      {
+        prefix: "/api",
+        controllers: ["test"],
+      },
+    ]);
+
+    expect(routes).toEqual([]);
   });
 });
 
