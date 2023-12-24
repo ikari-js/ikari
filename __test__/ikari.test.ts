@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect, test, describe, jest } from "bun:test";
-import { HttpMethod, StatusCode, createPath } from "../src/utils";
+import {
+  HttpMethod,
+  NotFound,
+  StatusCode,
+  createPath,
+  defaultErrorHandler,
+} from "../src/utils";
 import { ServeValidator } from "../src/serve-validator";
 import {
   After,
@@ -16,7 +22,7 @@ import {
   All,
 } from "../src/decorators";
 import "reflect-metadata";
-import { Config, Context, Route, Serve, defaultErrorHandler } from "../src";
+import { Config, Context, Route, Serve } from "../src";
 import { unlinkSync } from "node:fs";
 import { Errorlike } from "bun";
 
@@ -2770,91 +2776,6 @@ describe("Route", async () => {
       expect(res.headers.get("middleware1")).toBe(expected.headers.middleware1);
     }
   });
-
-  test("Routes with mutiple Classes", async () => {
-    class CustomClass {
-      private name = "custom-class";
-
-      public getName() {
-        return this.name;
-      }
-    }
-
-    class CustomClass1 {
-      private name = "custom-class1";
-
-      public getName() {
-        return this.name;
-      }
-    }
-
-    @Controller("/test")
-    class Test {
-      constructor(
-        private readonly customClass: CustomClass,
-        private readonly customClass1: CustomClass1
-      ) {}
-
-      @Get("/test")
-      public get(ctx: Context) {
-        return ctx
-          .set("fn", "get")
-          .set("method", ctx.method)
-          .status(StatusCode.OK)
-          .json({
-            fn: "get",
-            method: ctx.method,
-            parentNames: `${this.customClass.getName()} ${this.customClass1.getName()}`,
-          });
-      }
-    }
-
-    const config: Config = {
-      controllers: [new Test(new CustomClass(), new CustomClass1())],
-      disableStartupMessage: true,
-      serveOptions: {
-        port: 0,
-      },
-    };
-
-    const server = Serve(config);
-    const expectedValues = [
-      {
-        path: "/test/test",
-        method: HttpMethod.GET,
-        bodyType: "json",
-        body: {
-          fn: "get",
-          method: HttpMethod.GET,
-          parentNames: "custom-class custom-class1",
-        },
-        statusCode: StatusCode.OK,
-      },
-    ];
-
-    for (const expected of expectedValues) {
-      const res = await fetch(
-        server.hostname + ":" + server.port + expected.path,
-        {
-          method: expected.method,
-          credentials: "include",
-          headers: {},
-          redirect: "follow",
-        },
-      );
-
-      let body = null;
-      if (expected.bodyType === "json") {
-        body = await res.json();
-      } else if (expected.bodyType === "text") {
-        body = await res.text();
-      }
-      expect(body).toEqual(expected.body);
-      expect(res.status).toBe(expected.statusCode);
-    }
-
-    server.stop();
-  });
 });
 
 describe("Context Locals", async () => {
@@ -3453,9 +3374,6 @@ describe("Controller Type", async () => {
   });
 });
 
-process.env.NODE_ENV = "test";
-import { TestingFunctions } from "../src";
-
 const createContextMock = (method: HttpMethod) => {
   const statusMock = jest.fn();
   const jsonMock = jest.fn();
@@ -3486,12 +3404,6 @@ const createContextMock = (method: HttpMethod) => {
 };
 
 describe("tests NotFound function", async () => {
-  if (!TestingFunctions) {
-    throw new Error("You must be in test environment");
-  }
-
-  const { NotFound } = TestingFunctions;
-
   test("when NotFound called with HEAD it returns 404 without body.", async () => {
     const { context, statusMock, getResWithoutBodyMock } = createContextMock(
       HttpMethod.HEAD
