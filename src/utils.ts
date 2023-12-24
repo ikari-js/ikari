@@ -165,7 +165,6 @@ export function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
   );
 }
 
-//TODO: Tests are missing for this function. We have to test it.
 export function getRoutesFromControllers(
   config: Config,
   controllers: Controller[]
