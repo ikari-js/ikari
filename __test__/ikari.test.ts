@@ -7,6 +7,7 @@ import {
   createPath,
   defaultErrorHandler,
   getRoutesFromControllers,
+  getRoutesFromGroups,
   returnContextResponse,
 } from "../src/utils";
 import { ServeValidator } from "../src/serve-validator";
@@ -3639,6 +3640,88 @@ describe("tests getRoutesFromControllers function", () => {
 
   test("when getRoutesFromControllers called with filled string array controllers it returns empty routes", async () => {
     const routes = getRoutesFromControllers({}, ["test"]);
+
+    expect(routes).toEqual([]);
+  });
+});
+
+describe("tests getRoutesFromGroups function", () => {
+  test("when getRoutesFromGroups called with groups it returns routes", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const routes = getRoutesFromGroups({}, [
+      {
+        prefix: "/api",
+        controllers: [Test],
+      },
+    ]);
+
+    expect(routes).toEqual([
+      {
+        after: [],
+        before: [],
+        path: "/api/test/get",
+        method: HttpMethod.GET,
+        fnName: "get",
+        pathHasParams: false,
+        target: Test,
+      },
+    ]);
+  });
+
+  test("when getRoutesFromGroups called with groups and prefix it returns routes", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const routes = getRoutesFromGroups(
+      {
+        prefix: "/api",
+      },
+      [
+        {
+          prefix: "/api",
+          controllers: [Test],
+        },
+      ]
+    );
+
+    expect(routes).toEqual([
+      {
+        after: [],
+        before: [],
+        path: "/api/api/test/get",
+        method: HttpMethod.GET,
+        fnName: "get",
+        pathHasParams: false,
+        target: Test,
+      },
+    ]);
+  });
+
+  test("when getRoutesFromGroups called with empty groups it returns empty routes", async () => {
+    const routes = getRoutesFromGroups({}, []);
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromGroups called with empty groups and prefix it returns empty routes", async () => {
+    const routes = getRoutesFromGroups(
+      {
+        prefix: "/api",
+      },
+      []
+    );
 
     expect(routes).toEqual([]);
   });
