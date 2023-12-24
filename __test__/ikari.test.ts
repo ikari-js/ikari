@@ -3460,6 +3460,20 @@ describe("tests returnContextResponse function", () => {
   });
 });
 
+describe("tests defaultErrorHandler function", () => {
+  test("when defaultErrorHandler called with error it returns response with 500 Status Code and error attributes as a response", async () => {
+    const errorText = "test error";
+    const error = new Error(errorText);
+    const response = defaultErrorHandler(error);
+
+    const { message, stack } = JSON.parse(await response.text());
+
+    expect(message).toBe(errorText);
+    expect(stack).toBe(error.stack);
+    expect(response.status).toBe(StatusCode.INTERNAL_SERVER_ERROR);
+  });
+});
+
 // TODO middleware type check
 // TODO locals delete and clear test
 // TODO CORS test

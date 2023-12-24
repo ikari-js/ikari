@@ -191,7 +191,6 @@ export function getRoutesFromControllers(
   }, []);
 }
 
-//TODO: Tests are missing for this function. We have to test it.
 export function defaultErrorHandler(err: Errorlike) {
   return new Response(
     JSON.stringify({
