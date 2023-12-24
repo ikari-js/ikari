@@ -2777,6 +2777,91 @@ describe("Route", async () => {
       expect(res.headers.get("middleware1")).toBe(expected.headers.middleware1);
     }
   });
+
+  test("Routes with mutiple Classes", async () => {
+    class CustomClass {
+      private name = "custom-class";
+
+      public getName() {
+        return this.name;
+      }
+    }
+
+    class CustomClass1 {
+      private name = "custom-class1";
+
+      public getName() {
+        return this.name;
+      }
+    }
+
+    @Controller("/test")
+    class Test {
+      constructor(
+        private readonly customClass: CustomClass,
+        private readonly customClass1: CustomClass1
+      ) {}
+
+      @Get("/test")
+      public get(ctx: Context) {
+        return ctx
+          .set("fn", "get")
+          .set("method", ctx.method)
+          .status(StatusCode.OK)
+          .json({
+            fn: "get",
+            method: ctx.method,
+            parentNames: `${this.customClass.getName()} ${this.customClass1.getName()}`,
+          });
+      }
+    }
+
+    const config: Config = {
+      controllers: [new Test(new CustomClass(), new CustomClass1())],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const server = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: {
+          fn: "get",
+          method: HttpMethod.GET,
+          parentNames: "custom-class custom-class1",
+        },
+        statusCode: StatusCode.OK,
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        server.hostname + ":" + server.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+    }
+
+    server.stop();
+  });
 });
 
 describe("Context Locals", async () => {
