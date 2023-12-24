@@ -6,6 +6,7 @@ import {
   StatusCode,
   createPath,
   defaultErrorHandler,
+  getRoutesFromControllers,
   returnContextResponse,
 } from "../src/utils";
 import { ServeValidator } from "../src/serve-validator";
@@ -3556,6 +3557,90 @@ describe("tests defaultErrorHandler function", () => {
     expect(message).toBe(errorText);
     expect(stack).toBe(error.stack);
     expect(response.status).toBe(StatusCode.INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe("tests getRoutesFromControllers function", () => {
+  test("when getRoutesFromControllers called with controllers it returns routes", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const routes = getRoutesFromControllers({}, [Test]);
+
+    expect(routes).toEqual([
+      {
+        after: [],
+        before: [],
+        path: "/test/get",
+        method: HttpMethod.GET,
+        fnName: "get",
+        pathHasParams: false,
+        target: Test,
+      },
+    ]);
+  });
+
+  test("when getRoutesFromControllers called with controllers and prefix it returns routes", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get(ctx: Context) {
+        return ctx.json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const routes = getRoutesFromControllers(
+      {
+        prefix: "/api",
+      },
+      [Test]
+    );
+
+    expect(routes).toEqual([
+      {
+        after: [],
+        before: [],
+        path: "/api/test/get",
+        method: HttpMethod.GET,
+        fnName: "get",
+        pathHasParams: false,
+        target: Test,
+      },
+    ]);
+  });
+
+  test("when getRoutesFromControllers called with empty controllers it returns empty routes", async () => {
+    const routes = getRoutesFromControllers({}, []);
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromControllers called with empty controllers and prefix it returns empty routes", async () => {
+    const routes = getRoutesFromControllers(
+      {
+        prefix: "/api",
+      },
+      []
+    );
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromControllers called with filled null array controllers it returns empty routes", async () => {
+    const routes = getRoutesFromControllers({}, [null]);
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromControllers called with filled string array controllers it returns empty routes", async () => {
+    const routes = getRoutesFromControllers({}, ["test"]);
+
+    expect(routes).toEqual([]);
   });
 });
 
