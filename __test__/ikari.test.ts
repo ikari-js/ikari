@@ -3725,6 +3725,28 @@ describe("tests getRoutesFromGroups function", () => {
 
     expect(routes).toEqual([]);
   });
+
+  test("when getRoutesFromGroups called with filled null array groups it returns empty routes", async () => {
+    const routes = getRoutesFromGroups({}, [
+      {
+        prefix: "/api",
+        controllers: [null],
+      },
+    ]);
+
+    expect(routes).toEqual([]);
+  });
+
+  test("when getRoutesFromGroups called with filled string array groups it returns empty routes", async () => {
+    const routes = getRoutesFromGroups({}, [
+      {
+        prefix: "/api",
+        controllers: ["test"],
+      },
+    ]);
+
+    expect(routes).toEqual([]);
+  });
 });
 
 // TODO middleware type check
