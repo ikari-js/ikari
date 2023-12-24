@@ -3415,22 +3415,28 @@ describe("tests NotFound function", async () => {
     NotFound(context);
 
     expect(statusMock).toHaveBeenCalledTimes(1);
-    expect(statusMock.mock.calls[0][0]).toBe(StatusCode.NOT_FOUND);
+
+    const [status] = statusMock.mock.calls[0];
+
+    //In the future, we can use toHaveBeenCalledWith but it is not implemented yet in Bun.
+    expect(status).toBe(StatusCode.NOT_FOUND);
     expect(getResWithoutBodyMock).toHaveBeenCalledTimes(1);
   });
 
   test("when NotFound called except HEAD it calls json method `Not Found` message with 404 status code and returns res", async () => {
-    const { context, jsonMock } = createContextMock(HttpMethod.GET);
+    const { context, jsonMock, resMock } = createContextMock(HttpMethod.GET);
 
     NotFound(context);
 
     expect(jsonMock).toHaveBeenCalledTimes(1);
 
+    //In the future, we can use toHaveBeenCalledWith but it is not implemented yet in Bun.
     const [response, status] = jsonMock.mock.calls[0];
+
     expect(response).toEqual({ message: "Not Found" });
     expect(status).toBe(StatusCode.NOT_FOUND);
 
-    expect(context.res).toBeNull();
+    expect(context.res).toBe(resMock);
   });
 });
 
