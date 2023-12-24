@@ -117,7 +117,6 @@ export function startupMessage(
   return msg;
 }
 
-//TODO: Tests are missing for this function. We have to test it.
 export function returnContextResponse(ctx: Context) {
   if (ctx.method === HttpMethod.HEAD || ctx.method === HttpMethod.OPTIONS) {
     return ctx.getResWithoutBody();

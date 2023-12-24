@@ -6,6 +6,7 @@ import {
   StatusCode,
   createPath,
   defaultErrorHandler,
+  returnContextResponse,
 } from "../src/utils";
 import { ServeValidator } from "../src/serve-validator";
 import {
@@ -3378,6 +3379,7 @@ const createContextMock = (method: HttpMethod) => {
   const statusMock = jest.fn();
   const jsonMock = jest.fn();
   const getResWithoutBodyMock = jest.fn();
+  const resMock = {};
   const context = {
     method,
     status: (param: number) => {
@@ -3392,7 +3394,7 @@ const createContextMock = (method: HttpMethod) => {
       jsonMock(param, status);
       return context;
     },
-    res: null,
+    res: resMock,
   } as unknown as Context;
 
   return {
@@ -3400,6 +3402,7 @@ const createContextMock = (method: HttpMethod) => {
     statusMock,
     jsonMock,
     getResWithoutBodyMock,
+    resMock,
   };
 };
 
@@ -3428,6 +3431,26 @@ describe("tests NotFound function", async () => {
     expect(status).toBe(StatusCode.NOT_FOUND);
 
     expect(context.res).toBeNull();
+  });
+});
+
+describe("tests returnContextResponse function", () => {
+  test("when returnContextResponse called with HEAD it returns res without body", async () => {
+    const { context, getResWithoutBodyMock } = createContextMock(
+      HttpMethod.HEAD
+    );
+
+    returnContextResponse(context);
+
+    expect(getResWithoutBodyMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("when returnContextResponse called except HEAD it returns res", async () => {
+    const { context, resMock } = createContextMock(HttpMethod.GET);
+
+    returnContextResponse(context);
+
+    expect(context.res).toBe(resMock);
   });
 });
 
