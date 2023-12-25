@@ -13,11 +13,11 @@ export class Context {
   constructor(
     private server: Server,
     public req: Request,
-    public routes: Routes,
     /**
      * The all path parameters of the request.
      */
     public params: Record<string, string>,
+    public routes?: Routes,
     public res: Response = new Response()
   ) {}
 
@@ -37,7 +37,7 @@ export class Context {
    *
    */
   public next(): Context {
-    this.routes.next();
+    this.routes!.next(this);
     return this;
   }
 
@@ -555,32 +555,33 @@ class Local {
   }
 }
 
+type RouteHandler = {
+  handler: Handler;
+  done: boolean;
+};
+
 export class Routes {
-  constructor(public handlers: Handlers, public handlerIndex: number = 0) {}
-
-  public next(): void {
-    if (this.hasNext()) {
-      this.handlerIndex++;
-    }
+  private routes: RouteHandler[] = [];
+  constructor(handlers: Handlers) {
+    this.routes = handlers.map((handler) => ({
+      handler: handler,
+      // TODO find a better way to do this
+      done: false,
+    }));
   }
 
-  public hasNext(): boolean {
-    return this.handlerIndex < this.length;
+  public async start(ctx: Context): Promise<void> {
+    if (this.routes.length === 0) return;
+    const handler = this.routes[0];
+    handler.done = true;
+    await handler.handler(ctx);
   }
 
-  public currentHandler(): Handler {
-    return this.handlers[this.handlerIndex];
-  }
-
-  public reset(): void {
-    this.handlerIndex = 0;
-  }
-
-  public get length(): number {
-    return this.handlers.length;
-  }
-
-  public get currentIndex(): number {
-    return this.handlerIndex;
+  public async next(ctx: Context): Promise<void> {
+    // TODO: performance check
+    const nextHandler = this.routes.find((handler) => !handler.done);
+    if (!nextHandler) return;
+    nextHandler.done = true;
+    await nextHandler.handler(ctx);
   }
 }
