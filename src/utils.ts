@@ -125,10 +125,11 @@ export function returnContextResponse(ctx: Context) {
 }
 
 export function NotFound(ctx: Context) {
-  if (ctx.method === HttpMethod.HEAD) {
-    return ctx.status(StatusCode.NOT_FOUND).getResWithoutBody();
+  // TODO not sure about this
+  if (ctx.method !== HttpMethod.OPTIONS) {
+    ctx.status(StatusCode.NOT_FOUND);
   }
-  return ctx.json({ message: "Not Found" }, StatusCode.NOT_FOUND).res;
+  return ctx.json({ message: "Not Found" });
 }
 
 //TODO: Tests are missing for this function. We have to test it.
