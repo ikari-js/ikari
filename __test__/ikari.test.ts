@@ -2069,7 +2069,7 @@ describe("Route", async () => {
       public get(ctx: Context) {
         return ctx
           .set("fn", "get")
-          .set("method", "get")
+          .set("method", ctx.method)
           .status(StatusCode.OK)
           .json({ fn: "get", method: ctx.method });
       }
@@ -2079,7 +2079,7 @@ describe("Route", async () => {
         return ctx
           .status(StatusCode.OK)
           .set("fn", "post")
-          .set("method", "post")
+          .set("method", ctx.method)
           .json({ fn: "post", method: ctx.method });
       }
     }
@@ -2134,7 +2134,7 @@ describe("Route", async () => {
         statusCode: StatusCode.OK,
         headers: {
           fn: "get",
-          method: HttpMethod.GET,
+          method: HttpMethod.HEAD,
         },
       },
     ];
@@ -2159,6 +2159,9 @@ describe("Route", async () => {
 
       expect(body).toEqual(expected.body);
       expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
     }
 
     serve.stop();
@@ -2286,8 +2289,9 @@ describe("Route", async () => {
 
       expect(body).toEqual(expected.body);
       expect(res.status).toBe(expected.statusCode);
-      expect(res.headers.get("fn")).toBe(expected.headers.fn);
-      expect(res.headers.get("method")).toBe(expected.headers.method);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
     }
 
     serve.stop();
@@ -2426,8 +2430,9 @@ describe("Route", async () => {
 
       expect(body).toEqual(expected.body);
       expect(res.status).toBe(expected.statusCode);
-      expect(res.headers.get("fn")).toBe(expected.headers.fn);
-      expect(res.headers.get("method")).toBe(expected.headers.method);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
     }
   });
 
@@ -2514,12 +2519,9 @@ describe("Route", async () => {
 
       expect(body).toEqual(expected.body);
       expect(res.status).toBe(expected.statusCode);
-      expect(res.headers.get("fn")).toBe(expected.headers.fn);
-      expect(res.headers.get("method")).toBe(expected.headers.method);
-      expect(res.headers.get("before")).toBe(expected.headers.before);
-      expect(res.headers.get("before1")).toBe(expected.headers.before1);
-      expect(res.headers.get("after")).toBe(expected.headers.after);
-      expect(res.headers.get("after1")).toBe(expected.headers.after1);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
     }
   });
 
@@ -2629,12 +2631,9 @@ describe("Route", async () => {
 
       expect(body).toEqual(expected.body);
       expect(res.status).toBe(expected.statusCode);
-      expect(res.headers.get("fn")).toBe(expected.headers.fn);
-      expect(res.headers.get("method")).toBe(expected.headers.method);
-      expect(res.headers.get("before")).toBe(expected.headers.before);
-      expect(res.headers.get("before1")).toBe(expected.headers.before1);
-      expect(res.headers.get("after")).toBe(expected.headers.after);
-      expect(res.headers.get("after1")).toBe(expected.headers.after1);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
     }
   });
 
@@ -2691,9 +2690,9 @@ describe("Route", async () => {
       );
 
       expect(res.status).toBe(expected.statusCode);
-      expect(res.headers.get("before")).toBe(expected.headers.before);
-      expect(res.headers.get("fn")).toBe(expected.headers.fn);
-      expect(res.headers.get("method")).toBe(expected.headers.method);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
     }
   });
 
@@ -2773,10 +2772,9 @@ describe("Route", async () => {
 
       expect(body).toEqual(expected.body);
       expect(res.status).toBe(expected.statusCode);
-      expect(res.headers.get("fn")).toBe(expected.headers.fn);
-      expect(res.headers.get("method")).toBe(expected.headers.method);
-      expect(res.headers.get("middleware")).toBe(expected.headers.middleware);
-      expect(res.headers.get("middleware1")).toBe(expected.headers.middleware1);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
     }
   });
 
@@ -3241,7 +3239,6 @@ describe("Group", async () => {
         headers: {
           middleware: "middleware",
           middleware1: "middleware1",
-          before: "before",
         },
       },
     ];
@@ -3263,8 +3260,9 @@ describe("Group", async () => {
 
       expect(body).toEqual(expected.body);
       expect(res.status).toBe(expected.statusCode);
-      expect(res.headers.get("middleware")).toBe(expected.headers.middleware);
-      expect(res.headers.get("middleware1")).toBe(expected.headers.middleware1);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
     }
 
     serve.stop();
@@ -3361,9 +3359,9 @@ describe("Group", async () => {
 
       expect(body).toEqual(expected.body);
       expect(res.status).toBe(expected.statusCode);
-      expect(res.headers.get("middleware")).toBe(expected.headers.middleware);
-      expect(res.headers.get("middleware1")).toBe(expected.headers.middleware1);
-      expect(res.headers.get("before")).toBe(expected.headers.before);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
     }
 
     serve.stop();
@@ -3493,32 +3491,34 @@ const createContextMock = (method: HttpMethod) => {
   };
 };
 
-describe("tests NotFound function", async () => {
+describe("NotFound function", async () => {
   test("when NotFound called with HEAD it returns 404 without body.", async () => {
-    const { context, statusMock, getResWithoutBodyMock } = createContextMock(
-      HttpMethod.HEAD
-    );
+    const { context, statusMock } = createContextMock(HttpMethod.HEAD);
 
     NotFound(context);
 
     expect(statusMock).toHaveBeenCalledTimes(1);
 
-    const [status] = statusMock.mock.calls[0];
+    const [status, response] = statusMock.mock.calls[0];
 
     //In the future, we can use toHaveBeenCalledWith but it is not implemented yet in Bun.
     expect(status).toBe(StatusCode.NOT_FOUND);
-    expect(getResWithoutBodyMock).toHaveBeenCalledTimes(1);
+    expect(response).toBeUndefined();
   });
 
   test("when NotFound called except HEAD it calls json method `Not Found` message with 404 status code and returns res", async () => {
-    const { context, jsonMock, resMock } = createContextMock(HttpMethod.GET);
+    const { context, jsonMock, resMock, statusMock } = createContextMock(
+      HttpMethod.GET
+    );
 
     NotFound(context);
 
     expect(jsonMock).toHaveBeenCalledTimes(1);
+    expect(statusMock).toHaveBeenCalledTimes(1);
 
     //In the future, we can use toHaveBeenCalledWith but it is not implemented yet in Bun.
-    const [response, status] = jsonMock.mock.calls[0];
+    const [response] = jsonMock.mock.calls[0];
+    const [status] = statusMock.mock.calls[0];
 
     expect(response).toEqual({ message: "Not Found" });
     expect(status).toBe(StatusCode.NOT_FOUND);
@@ -3527,7 +3527,7 @@ describe("tests NotFound function", async () => {
   });
 });
 
-describe("tests returnContextResponse function", () => {
+describe("returnContextResponse function", () => {
   test("when returnContextResponse called with HEAD it returns res without body", async () => {
     const { context, getResWithoutBodyMock } = createContextMock(
       HttpMethod.HEAD
@@ -3547,7 +3547,7 @@ describe("tests returnContextResponse function", () => {
   });
 });
 
-describe("tests defaultErrorHandler function", () => {
+describe("defaultErrorHandler function", () => {
   test("when defaultErrorHandler called with error it returns response with 500 Status Code and error attributes as a response", async () => {
     const errorText = "test error";
     const error = new Error(errorText);
@@ -3561,7 +3561,7 @@ describe("tests defaultErrorHandler function", () => {
   });
 });
 
-describe("tests getRoutesFromControllers function", () => {
+describe("getRoutesFromControllers function", () => {
   test("when getRoutesFromControllers called with controllers it returns routes", async () => {
     @Controller("/test")
     class Test {
@@ -3645,7 +3645,7 @@ describe("tests getRoutesFromControllers function", () => {
   });
 });
 
-describe("tests getRoutesFromGroups function", () => {
+describe("getRoutesFromGroups function", () => {
   test("when getRoutesFromGroups called with groups it returns routes", async () => {
     @Controller("/test")
     class Test {
@@ -3748,9 +3748,3 @@ describe("tests getRoutesFromGroups function", () => {
     expect(routes).toEqual([]);
   });
 });
-
-// TODO middleware type check
-// TODO locals delete and clear test
-// TODO CORS test
-// TODO add helmet test
-// TODO add requestId test
