@@ -3748,3 +3748,1099 @@ describe("getRoutesFromGroups function", () => {
     expect(routes).toEqual([]);
   });
 });
+
+describe("Request Cycle", () => {
+  test("Basic Request Cycle", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        return ctx
+          .set("fn", "get")
+          .set("method", ctx.method)
+          .status(StatusCode.OK)
+          .json({ fn: "get", method: ctx.method });
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        bodyType: "json",
+        body: { fn: "get", method: HttpMethod.GET },
+        statusCode: StatusCode.OK,
+        headers: {
+          fn: "get",
+          method: HttpMethod.GET,
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          headers: {},
+          redirect: "follow",
+        }
+      );
+
+      let body = null;
+      if (expected.bodyType === "json") {
+        body = await res.json();
+      } else if (expected.bodyType === "text") {
+        body = await res.text();
+      }
+
+      expect(body).toEqual(expected.body);
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle with Befores And Afters (Before call next but Handler won't) Not execute After", async () => {
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+      return ctx.next();
+    }
+
+    function after(ctx: Context) {
+      ctx.set("after", "after");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      @Before(before)
+      @After(after)
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return;
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          before: "before",
+          handler: "handler",
+          after: null,
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle with Befores And Afters (Before won't call next) Not Execute Handler", async () => {
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+    }
+
+    function after(ctx: Context) {
+      ctx.set("after", "after");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      @Before(before)
+      @After(after)
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          before: "before",
+          handler: null,
+          after: null,
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle with Befores And Afters (After won't call next) Not Execute Next After", async () => {
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+      return ctx.next();
+    }
+
+    function after(ctx: Context) {
+      ctx.set("after", "after");
+    }
+
+    function secondAfter(ctx: Context) {
+      ctx.set("secondAfter", "secondAfter");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      @Before(before)
+      @After(after, secondAfter)
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          before: "before",
+          handler: "handler",
+          after: "after",
+          secondAfter: null,
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle with Befores And Afters (After call next) Execute Next After", async () => {
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+      return ctx.next();
+    }
+
+    function after(ctx: Context) {
+      ctx.set("after", "after");
+      return ctx.next();
+    }
+
+    function secondAfter(ctx: Context) {
+      ctx.set("secondAfter", "secondAfter");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      @Before(before)
+      @After(after, secondAfter)
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          before: "before",
+          handler: "handler",
+          after: "after",
+          secondAfter: "secondAfter",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle with Befores And Afters (All call next) Execute All", async () => {
+    function before(ctx: Context) {
+      ctx.set("before", "before");
+      return ctx.next();
+    }
+
+    function secondBefore(ctx: Context) {
+      ctx.set("secondBefore", "secondBefore");
+      return ctx.next();
+    }
+
+    function after(ctx: Context) {
+      ctx.set("after", "after");
+      return ctx.next();
+    }
+
+    function secondAfter(ctx: Context) {
+      ctx.set("secondAfter", "secondAfter");
+      return ctx.next();
+    }
+
+    function thirdAfter(ctx: Context) {
+      ctx.set("thirdAfter", "thirdAfter");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      @Before(before, secondBefore)
+      @After(after, secondAfter, thirdAfter)
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          before: "before",
+          secondBefore: "secondBefore",
+          handler: "handler",
+          after: "after",
+          secondAfter: "secondAfter",
+          thirdAfter: "thirdAfter",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle with App level Middlewares (First middleware call next but Second middleware won't) Not Execute Handler", async () => {
+    function middleware(ctx: Context) {
+      ctx.set("middleware", "middleware");
+      return ctx.next();
+    }
+
+    function middleware1(ctx: Context) {
+      ctx.set("middleware1", "middleware1");
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      middlewares: [middleware, middleware1],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          middleware: "middleware",
+          middleware1: "middleware1",
+          handler: null,
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle with App level Middlewares (All middleware call next) Execute All", async () => {
+    function middleware(ctx: Context) {
+      ctx.set("middleware", "middleware");
+      return ctx.next();
+    }
+
+    function middleware1(ctx: Context) {
+      ctx.set("middleware1", "middleware1");
+      return ctx.next();
+    }
+
+    function middleware2(ctx: Context) {
+      ctx.set("middleware2", "middleware2");
+      return ctx.next();
+    }
+
+    function middleware3(ctx: Context) {
+      ctx.set("middleware3", "middleware3");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      middlewares: [middleware, middleware1, middleware2, middleware3],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          middleware: "middleware",
+          middleware1: "middleware1",
+          middleware2: "middleware2",
+          middleware3: "middleware3",
+          handler: "handler",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle with App level Middlewares (With Not Found Handler) Execute All Middlewares and Not Found Handler", async () => {
+    function middleware(ctx: Context) {
+      ctx.set("middleware", "middleware");
+      return ctx.next();
+    }
+
+    function middleware1(ctx: Context) {
+      ctx.set("middleware1", "middleware1");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      middlewares: [middleware, middleware1],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+
+    const expectedValues = [
+      {
+        path: "/test/test1",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.NOT_FOUND,
+        headers: {
+          middleware: "middleware",
+          middleware1: "middleware1",
+          handler: null,
+        },
+      },
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          middleware: "middleware",
+          middleware1: "middleware1",
+          handler: "handler",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle with Group level Middlewares (First middleware call next but Second middleware won't) Not Execute Handler", async () => {
+    function middleware(ctx: Context) {
+      ctx.set("middleware", "middleware");
+      return ctx.next();
+    }
+
+    function middleware1(ctx: Context) {
+      ctx.set("middleware1", "middleware1");
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      groups: [
+        {
+          prefix: "/api",
+          controllers: [Test],
+          middlewares: [middleware, middleware1],
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/api/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          middleware: "middleware",
+          middleware1: "middleware1",
+          handler: null,
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+    serve.stop();
+  });
+
+  test("Request Cycle with Group level Middlewares (All middleware call next) Execute All", async () => {
+    function middleware(ctx: Context) {
+      ctx.set("middleware", "middleware");
+      return ctx.next();
+    }
+
+    function middleware1(ctx: Context) {
+      ctx.set("middleware1", "middleware1");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      groups: [
+        {
+          prefix: "/api",
+          controllers: [Test],
+          middlewares: [middleware, middleware1],
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/api/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          middleware: "middleware",
+          middleware1: "middleware1",
+          handler: "handler",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path,
+        {
+          method: expected.method,
+          credentials: "include",
+          redirect: "follow",
+        }
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+    serve.stop();
+  });
+
+  test("Request Cycle with Group level Middlewares (With Not Found Handler) Won't Execute All", async () => {
+    function middleware(ctx: Context) {
+      ctx.set("middleware", "middleware");
+      return ctx.next();
+    }
+
+    function middleware1(ctx: Context) {
+      ctx.set("middleware1", "middleware1");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      groups: [
+        {
+          prefix: "/api",
+          controllers: [Test],
+          middlewares: [middleware, middleware1],
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/api/test/test1",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.NOT_FOUND,
+        headers: {
+          middleware: null,
+          middleware1: null,
+          handler: null,
+        },
+      },
+      {
+        path: "/api/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          middleware: "middleware",
+          middleware1: "middleware1",
+          handler: "handler",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+    serve.stop();
+  });
+
+  test("Request Cycle with App level Middlewares, Group level Middlewares and Befores And Afters (All call next) Execute All", async () => {
+    function firstAppMiddleware(ctx: Context) {
+      ctx.set("firstAppMiddleware", "firstAppMiddleware");
+      return ctx.next();
+    }
+
+    function secondAppMiddleware(ctx: Context) {
+      ctx.set("secondAppMiddleware", "secondAppMiddleware");
+      return ctx.next();
+    }
+
+    function firstGroupMiddleware(ctx: Context) {
+      ctx.set("firstGroupMiddleware", "firstGroupMiddleware");
+      return ctx.next();
+    }
+
+    function secondGroupMiddleware(ctx: Context) {
+      ctx.set("secondGroupMiddleware", "secondGroupMiddleware");
+      return ctx.next();
+    }
+
+    function firstBefore(ctx: Context) {
+      ctx.set("firstBefore", "firstBefore");
+      return ctx.next();
+    }
+
+    function secondBefore(ctx: Context) {
+      ctx.set("secondBefore", "secondBefore");
+      return ctx.next();
+    }
+
+    function firstAfter(ctx: Context) {
+      ctx.set("firstAfter", "firstAfter");
+      return ctx.next();
+    }
+
+    function secondAfter(ctx: Context) {
+      ctx.set("secondAfter", "secondAfter");
+      return ctx.next();
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      @Before(firstBefore, secondBefore)
+      @After(firstAfter, secondAfter)
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      middlewares: [firstAppMiddleware, secondAppMiddleware],
+      groups: [
+        {
+          prefix: "/api",
+          controllers: [Test],
+          middlewares: [firstGroupMiddleware, secondGroupMiddleware],
+        },
+      ],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/api/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          firstAppMiddleware: "firstAppMiddleware",
+          secondAppMiddleware: "secondAppMiddleware",
+          firstGroupMiddleware: "firstGroupMiddleware",
+          secondGroupMiddleware: "secondGroupMiddleware",
+          firstBefore: "firstBefore",
+          secondBefore: "secondBefore",
+          handler: "handler",
+          firstAfter: "firstAfter",
+          secondAfter: "secondAfter",
+        },
+      },
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          firstAppMiddleware: "firstAppMiddleware",
+          secondAppMiddleware: "secondAppMiddleware",
+          firstBefore: "firstBefore",
+          secondBefore: "secondBefore",
+          handler: "handler",
+          firstAfter: "firstAfter",
+          secondAfter: "secondAfter",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toBe(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle App level Middleware set header value after next (Execute All Handler after Add Header) Either way context can be modified", async () => {
+    function AppMiddleware(ctx: Context) {
+      ctx.set("BeforeAppMiddleware", "BeforeAppMiddleware");
+      ctx.next();
+      ctx.set("AfterAppMiddleware", "AfterAppMiddleware");
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      middlewares: [AppMiddleware],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          BeforeAppMiddleware: "BeforeAppMiddleware",
+          handler: "handler",
+          AfterAppMiddleware: "AfterAppMiddleware",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toEqual(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle App level Middleware set header value after next (Handler won't execute next) Either way context can be modified", async () => {
+    function AppMiddleware(ctx: Context) {
+      ctx.set("BeforeAppMiddleware", "BeforeAppMiddleware");
+      ctx.next();
+      ctx.set("AfterAppMiddleware", "AfterAppMiddleware");
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      middlewares: [AppMiddleware],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          BeforeAppMiddleware: "BeforeAppMiddleware",
+          handler: "handler",
+          AfterAppMiddleware: "AfterAppMiddleware",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toEqual(value);
+      });
+    }
+
+    serve.stop();
+  });
+
+  test("Request Cycle App level Second Middleware set header value after next (BeforeSecondAppMiddleware won't execute next) Either way context can be modified", async () => {
+    function AppMiddleware(ctx: Context) {
+      ctx.set("BeforeAppMiddleware", "BeforeAppMiddleware");
+      ctx.next();
+      ctx.set("AfterAppMiddleware", "AfterAppMiddleware");
+    }
+
+    function SecondAppMiddleware(ctx: Context) {
+      ctx.set("BeforeSecondAppMiddleware", "BeforeSecondAppMiddleware");
+    }
+
+    @Controller("/test")
+    class Test {
+      @Get("/test")
+      public get(ctx: Context) {
+        ctx.set("handler", "handler");
+        return ctx.next();
+      }
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      middlewares: [AppMiddleware, SecondAppMiddleware],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    const expectedValues = [
+      {
+        path: "/test/test",
+        method: HttpMethod.GET,
+        statusCode: StatusCode.OK,
+        headers: {
+          BeforeAppMiddleware: "BeforeAppMiddleware",
+          BeforeSecondAppMiddleware: "BeforeSecondAppMiddleware",
+          handler: null,
+          AfterAppMiddleware: "AfterAppMiddleware",
+        },
+      },
+    ];
+
+    for (const expected of expectedValues) {
+      const res = await fetch(
+        serve.hostname + ":" + serve.port + expected.path
+      );
+      expect(res.status).toBe(expected.statusCode);
+      Object.entries(expected.headers).forEach(([key, value]) => {
+        expect(res.headers.get(key)).toEqual(value);
+      });
+    }
+
+    serve.stop();
+  });
+});
+
+// TODO middleware type check
+// TODO locals delete and clear test
+// TODO CORS test
+// TODO add helmet test
+// TODO add requestId test
