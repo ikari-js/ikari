@@ -155,13 +155,15 @@ export function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
           if (typeof route !== "function" && typeof route !== "object") return;
 
           route.target = controller;
-          if (prefix) route.path = prefix + route.path;
-          if (config.prefix) route.path = config.prefix + route.path;
+          let path = route.path;
+          let before = route.before;
+          if (prefix) path = prefix + path;
+          if (config.prefix) path = config.prefix + path;
           if (middlewares) {
-            route.before = middlewares.concat(route.before);
+            before = middlewares.concat(before);
           }
 
-          result.push(route);
+          result.push({ ...route, path, before });
         });
       });
 
@@ -192,11 +194,12 @@ export function getRoutesFromControllers(
       if (typeof route !== "function" && typeof route !== "object") return;
 
       route.target = controller;
+      let path = route.path;
       if (config.prefix) {
-        route.path = config.prefix + route.path;
+        path = config.prefix + path;
       }
 
-      result.push(route);
+      result.push({ ...route, path });
     });
 
     return result;
