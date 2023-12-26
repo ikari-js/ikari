@@ -52,6 +52,7 @@ export class Context {
    */
   public query(query: string): string | null {
     if (!this._queries) {
+      // TODO URL object can set in index.ts
       this._queries = parse(this.req.url.split("?")[1]);
     }
     return this._queries[query] || null;
