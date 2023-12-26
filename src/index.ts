@@ -3,7 +3,8 @@ import "reflect-metadata";
 import { Server, Serve as BunServe, Errorlike } from "bun";
 import { Config, Handlers, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
-import { Context, Routes } from "./context";
+import { Context } from "./context";
+import { Routes } from "./route";
 import {
   HttpMethod,
   NotFound,
