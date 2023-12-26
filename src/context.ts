@@ -201,7 +201,7 @@ export class Context {
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async body(): Promise<FormData | string | ArrayBuffer | null> {
+  public async body<T = FormData | string | ArrayBuffer>(): Promise<T | null> {
     if (this.method === HttpMethod.GET || this.method === HttpMethod.HEAD)
       return null;
     if (this.req.bodyUsed) return this._body;
