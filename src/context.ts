@@ -1,7 +1,7 @@
 import { Server } from "bun";
-import { Handler, Handlers } from "./types";
 import { HttpMethod } from "./utils";
 import { parse } from "fast-querystring";
+import { Routes } from "./route";
 
 export class Context {
   private _queries: Record<string, string> | null = null;
@@ -36,9 +36,8 @@ export class Context {
    * Calls the next handler in the chain.
    *
    */
-  public next(): Context {
-    this.routes!.next(this);
-    return this;
+  public next(): void | Context | Promise<void | Context> {
+    return this.routes!.next(this);
   }
 
   /**
@@ -202,7 +201,7 @@ export class Context {
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async body(): Promise<any | FormData | string | ArrayBuffer> {
+  public async body(): Promise<FormData | string | ArrayBuffer | null> {
     if (this.method === HttpMethod.GET || this.method === HttpMethod.HEAD)
       return null;
     if (this.req.bodyUsed) return this._body;
@@ -552,36 +551,5 @@ class Local {
    */
   public clear(): void {
     this.locals.clear();
-  }
-}
-
-type RouteHandler = {
-  handler: Handler;
-  done: boolean;
-};
-
-export class Routes {
-  private routes: RouteHandler[] = [];
-  constructor(handlers: Handlers) {
-    this.routes = handlers.map((handler) => ({
-      handler: handler,
-      // TODO find a better way to do this
-      done: false,
-    }));
-  }
-
-  public async start(ctx: Context): Promise<void> {
-    if (this.routes.length === 0) return;
-    const handler = this.routes[0];
-    handler.done = true;
-    await handler.handler(ctx);
-  }
-
-  public async next(ctx: Context): Promise<void> {
-    // TODO: performance check
-    const nextHandler = this.routes.find((handler) => !handler.done);
-    if (!nextHandler) return;
-    nextHandler.done = true;
-    await nextHandler.handler(ctx);
   }
 }
