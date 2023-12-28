@@ -1343,7 +1343,7 @@ test("Context ", async () => {
 
     @Get("/get-url")
     public getUrl(ctx: Context) {
-      return ctx.json({ url: ctx.url() });
+      return ctx.json({ url: ctx.url });
     }
 
     @Get("/get-queries")
