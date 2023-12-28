@@ -25,7 +25,7 @@ export type Config = {
   done?: (ctx: Context, logString: string) => void;
   /**
    * format defines the logging tags
-   * @default [time] [status] [method] [path] [latency]\n
+   * @default [time] [status] [method] [path] [latency]
    */
   format?: string;
   /**
@@ -67,7 +67,7 @@ export interface Writer {
 class DefaultWriter implements Writer {
   write(s: string) {
     // eslint-disable-next-line no-console
-    console.log(s.replace(/\n$/, ""));
+    console.log(s);
   }
 }
 
@@ -81,7 +81,7 @@ export enum Tags {
 }
 
 const defaultConfig: Config = {
-  format: "[ip] [time] [status] [method] [path] [latency]\n",
+  format: "[ip] [time] [status] [method] [path] [latency]",
   timeFormatOptions: {
     hour12: false,
     hour: "numeric",
