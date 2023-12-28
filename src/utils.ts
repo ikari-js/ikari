@@ -65,6 +65,9 @@ export const resetColor = "\x1b[0m";
 export const greenColor = "\x1b[32m";
 export const blueColor = "\x1b[34m";
 export const cyanColor = "\x1b[36m";
+export const yellowColor = "\x1b[33m";
+export const redColor = "\x1b[31m";
+export const magentaColor = "\x1b[35m";
 
 export function startupMessage(
   config: Config,
