@@ -4844,3 +4844,4 @@ describe("Request Cycle", () => {
 // TODO CORS test
 // TODO add helmet test
 // TODO add requestId test
+// TODO add logger test
