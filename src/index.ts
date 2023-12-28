@@ -77,8 +77,8 @@ export function Serve(config: Config) {
     request: Request,
     server: Server
   ) {
-    const ctx = new Context(server, request, {});
     const url = new URL(request.url);
+    const ctx = new Context(server, request, {}, url);
     const routeKey = request.method + "|" + url.pathname;
 
     let route = router.lookup(routeKey);
