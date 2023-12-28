@@ -13,7 +13,7 @@
     "name": "Abdurrahman Aydın",
     "url": "https://github.com/aaydin-tr"
   },
-  "version": "0.7.1",
+  "version": "0.7.2",
   "keywords": [
     "bun",
     "bunjs",
@@ -36,6 +36,9 @@
     },
     "./middlewares/request-id": {
       "import": "./dist/middlewares/request-id/index.js"
+    },
+    "./middlewares/logger": {
+      "import": "./dist/middlewares/logger/index.js"
     }
   },
   "files": [
