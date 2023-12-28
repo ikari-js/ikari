@@ -17,6 +17,7 @@ export class Context {
      * The all path parameters of the request.
      */
     public params: Record<string, string>,
+    private _url: URL,
     public routes?: Routes,
     public res: Response = new Response()
   ) {}
@@ -377,8 +378,8 @@ export class Context {
   /**
    * Return the URL string of the request.
    */
-  public url(): string {
-    return this.req.url;
+  public get url(): URL {
+    return this._url;
   }
 
   /**
