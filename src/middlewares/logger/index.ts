@@ -13,10 +13,10 @@ import {
 
 export type Config = {
   /**
-   * Next defines a function to skip this middleware when returned true.
+   * Skip defines a function to skip this middleware when returned true.
    * @default undefined
    */
-  next?: (ctx: Context) => boolean;
+  skip?: (ctx: Context) => boolean;
   /**
    * Done is a function that is called after the log string for a request is written to Output,
    * and pass the log string as parameter.
@@ -46,13 +46,15 @@ export type Config = {
    * ```ts
    * import { createWriteStream } from "node:fs";
    * import { Logger } from "ikari/logger";
-   * 
+   *
    * Logger({
+   *  // createWriteStream can use for loging to file
+   *  // or you can use Bun.stdout for logging to console
    *  output: createWriteStream("./api.log", { flags: "a" }),
    * });
    * ```
    */
-  output?: Writer; 
+  output?: Writer;
   /**
    * disableColors defines if the logs output should be colorized
    * @default false
@@ -134,29 +136,33 @@ export function Logger(config: Config = {}) {
   const cfg = getDefaultConfig(config);
 
   if (!cfg.format) cfg.format = defaultConfig.format;
-  if (!cfg.timeFormatOptions) cfg.timeFormatOptions = defaultConfig.timeFormatOptions;
+  if (!cfg.timeFormatOptions)
+    cfg.timeFormatOptions = defaultConfig.timeFormatOptions;
   if (!cfg.timeZone) cfg.timeZone = defaultConfig.timeZone;
   if (!cfg.output) cfg.output = defaultConfig.output;
   if (!cfg.disableColors) cfg.disableColors = defaultConfig.disableColors;
 
   return async (ctx: Context) => {
-    const start = new Date().getTime();
-    if (cfg.next && cfg.next(ctx)) {
+    if (cfg.skip && cfg.skip(ctx)) {
       return ctx.next();
     }
 
-    const time = new Date().toLocaleTimeString(cfg.timeZone, cfg.timeFormatOptions);
-
-    let error: Errorlike | null | unknown = null;
+    const time = new Date().toLocaleTimeString(
+      cfg.timeZone,
+      cfg.timeFormatOptions
+    );
+    const start = new Date().getTime();
+    const ip = ctx.ip();
+    let error: Errorlike | unknown = null;
     try {
       await ctx.next();
     } catch (e) {
       error = e;
     }
+    const end = new Date().getTime();
 
     const { pathname } = ctx.url;
     const status = ctx.getStatus();
-    const ip = ctx.ip();
 
     let logString = "";
     if (cfg.disableColors) {
@@ -182,7 +188,7 @@ export function Logger(config: Config = {}) {
           )}`
         )
         .replace(Tags.path, `${cyanColor}${pathname}${resetColor}`)
-        .replace(Tags.latency, `${new Date().getTime() - start}ms`)
+        .replace(Tags.latency, `${end - start}ms`)
         .replace(Tags.ip, `${yellowColor}${ip}${resetColor}`)
         .concat(error ? ` | ${redColor}${error}${resetColor}` : "");
     }
