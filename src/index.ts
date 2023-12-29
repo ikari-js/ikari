@@ -126,6 +126,10 @@ export function Serve(config: Config) {
 
     // TODO performance
     // TODO context can be modified by middleware after all routes are executed is this ok?
+    /*
+     TODO bug when using ctx.next() in middleware withouth returning it like Logger middleware
+     and handler or middlewares throws error, error wont show up in console 
+    */
     await ctx.routes.start(ctx);
 
     return returnContextResponse(ctx);
