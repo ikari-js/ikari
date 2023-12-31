@@ -51,10 +51,10 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.16.0",
-    "@typescript-eslint/parser": "^6.16.0",
-    "bun-types": "^1.0.20",
-    "eslint": "^8.55.0",
+    "@typescript-eslint/eslint-plugin": "^6.11.0",
+    "@typescript-eslint/parser": "^6.11.0",
+    "bun-types": "latest",
+    "eslint": "^8.53.0",
     "eslint-plugin-import": "^2.29.1"
   },
   "peerDependencies": {
@@ -63,6 +63,6 @@
   "dependencies": {
     "fast-querystring": "^1.1.2",
     "radix3": "^1.1.0",
-    "reflect-metadata": "^0.2.1"
+    "reflect-metadata": "^0.1.13"
   }
 }
