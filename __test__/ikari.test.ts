@@ -3466,7 +3466,7 @@ const createContextMock = (method: HttpMethod) => {
   const statusMock = jest.fn();
   const jsonMock = jest.fn();
   const getResWithoutBodyMock = jest.fn();
-  const resMock = {};
+  const resMock = {} as Response;
   const context = {
     method,
     status: (param: number) => {
