@@ -4840,7 +4840,7 @@ describe("Request Cycle", () => {
   });
 });
 
-describe("tests Helmet", () => {
+describe("Helmet", () => {
   test("Helmet should be work", async () => {
     @Controller("/test")
     class Test {
