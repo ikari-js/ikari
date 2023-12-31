@@ -278,7 +278,7 @@ export class Context {
     this.res = new Response(null, {
       status: status,
       headers: {
-        ...this.res.headers.toJSON(),
+        ...Object.fromEntries(this.res.headers),
       },
     });
 
@@ -319,7 +319,7 @@ export class Context {
     this.res = new Response(jsonData, {
       status: status || this.res.status,
       headers: {
-        ...this.res.headers.toJSON(),
+        ...Object.fromEntries(this.res.headers),
         "Content-Type": "application/json",
       },
     });
@@ -369,7 +369,7 @@ export class Context {
   public getResWithoutBody(): Response {
     return new Response(null, {
       status: this.res.status,
-      headers: this.res.headers,
+      headers: Object.fromEntries(this.res.headers),
     });
   }
 
@@ -398,7 +398,7 @@ export class Context {
     this.res = new Response(data, {
       status: status || this.res.status,
       headers: {
-        ...this.res.headers.toJSON(),
+        ...Object.fromEntries(this.res.headers),
         "Content-Type": contentType,
       },
     });
@@ -424,7 +424,7 @@ export class Context {
     this.res = new Response(data, {
       status: status || this.res.status,
       headers: {
-        ...this.res.headers.toJSON(),
+        ...Object.fromEntries(this.res.headers),
         "Content-Type": contentType,
       },
     });
@@ -450,7 +450,7 @@ export class Context {
     this.res = new Response(data, {
       status: status || this.res.status,
       headers: {
-        ...this.res.headers.toJSON(),
+        ...Object.fromEntries(this.res.headers),
         "Content-Type": contentType,
       },
     });
