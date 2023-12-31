@@ -98,24 +98,24 @@ export type Config = {
   OriginAgentCluster?: "?1" | "?0";
 };
 
-function defaultConfig(config: Config): Config {
-  const defaultConfig: Config = {
-    XSSProtection: "0",
-    ContentTypeNosniff: "nosniff",
-    XFrameOptions: "SAMEORIGIN",
-    HSTSMaxAge: 0,
-    ReferrerPolicy: "no-referrer",
-    CrossOriginEmbedderPolicy: "require-corp",
-    CrossOriginOpenerPolicy: "same-origin",
-    CrossOriginResourcePolicy: "same-origin",
-    OriginAgentCluster: "?1",
-  };
+const defaultConfig: Config = {
+  XSSProtection: "0",
+  ContentTypeNosniff: "nosniff",
+  XFrameOptions: "SAMEORIGIN",
+  HSTSMaxAge: 0,
+  ReferrerPolicy: "no-referrer",
+  CrossOriginEmbedderPolicy: "require-corp",
+  CrossOriginOpenerPolicy: "same-origin",
+  CrossOriginResourcePolicy: "same-origin",
+  OriginAgentCluster: "?1",
+};
 
+function getDefaultConfig(config: Config): Config {
   return { ...defaultConfig, ...config };
 }
 
 export function helmet(config: Config = {}): Handler {
-  const helmetConfig = defaultConfig(config);
+  const helmetConfig = getDefaultConfig(config);
 
   return (ctx: Context) => {
     if (helmetConfig.ContentSecurityPolicy) {

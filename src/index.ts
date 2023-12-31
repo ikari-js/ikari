@@ -1,9 +1,10 @@
 import "reflect-metadata";
 
 import { Server, Serve as BunServe, Errorlike } from "bun";
-import { Config, IkariServer, Route } from "./types";
+import { Config, Handlers, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
-import { Context, Routes } from "./context";
+import { Context } from "./context";
+import { Routes } from "./route";
 import {
   HttpMethod,
   NotFound,
@@ -76,31 +77,9 @@ export function Serve(config: Config) {
     request: Request,
     server: Server
   ) {
-    const ctx = new Context(
-      server,
-      request,
-      new Routes(config.middlewares || []),
-      {}
-    );
     const url = new URL(request.url);
+    const ctx = new Context(server, request, {}, url);
     const routeKey = request.method + "|" + url.pathname;
-
-    while (ctx.routes.hasNext()) {
-      const fnIndex = ctx.routes.currentIndex;
-      const fn = ctx.routes.currentHandler();
-      if (!fn) {
-        break;
-      }
-
-      await fn(ctx);
-      if (fnIndex === ctx.routes.currentIndex) {
-        break;
-      }
-    }
-
-    if (ctx.routes.currentIndex < ctx.routes.length) {
-      return returnContextResponse(ctx);
-    }
 
     let route = router.lookup(routeKey);
     if (!route) {
@@ -116,43 +95,42 @@ export function Serve(config: Config) {
         }
       }
 
-      return ctx
-        .status(StatusCode.NO_CONTENT)
-        .set("Allow", [...allowedMethods].join(", "))
-        .getResWithoutBody();
+      if (allowedMethods.size > 0) {
+        ctx.set("Allow", [...allowedMethods].join(", "));
+        ctx.status(StatusCode.NO_CONTENT);
+      } else {
+        ctx.status(StatusCode.NOT_FOUND);
+      }
     }
 
     if (!route && request.method === HttpMethod.HEAD) {
       route = router.lookup(HttpMethod.GET + "|" + url.pathname);
     }
 
+    let handlers: Handlers;
     if (!route) {
-      return NotFound(ctx);
+      handlers = [...(config?.middlewares || []), NotFound];
+    } else {
+      handlers = [
+        ...(config?.middlewares || []),
+        ...route.before,
+        route.target.prototype
+          ? route.target.prototype[route.fnName].bind(route.target)
+          : route.target[route.fnName].bind(route.target),
+        ...route.after,
+      ];
     }
 
-    ctx.routes = new Routes([
-      ...route.before,
-      route.target.prototype
-        ? route.target.prototype[route.fnName].bind(route.target)
-        : route.target[route.fnName].bind(route.target),
-      ...route.after,
-    ]);
+    ctx.routes = new Routes(handlers);
     ctx.params = route?.params || {};
 
     // TODO performance
-    // TODO maybe there is a bug in here
-    while (ctx.routes.hasNext()) {
-      const fnIndex = ctx.routes.currentIndex;
-      const fn = ctx.routes.currentHandler();
-      if (!fn) {
-        break;
-      }
-
-      await fn(ctx);
-      if (fnIndex === ctx.routes.currentIndex) {
-        break;
-      }
-    }
+    // TODO context can be modified by middleware after all routes are executed is this ok?
+    /*
+     TODO bug when using ctx.next() in middleware withouth returning it like Logger middleware
+     and handler or middlewares throws error, error wont show up in console 
+    */
+    await ctx.routes.start(ctx);
 
     return returnContextResponse(ctx);
   };

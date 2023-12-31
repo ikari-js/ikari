@@ -46,7 +46,7 @@ export interface Group {
 
 export type Handler = (
   ctx: Context
-) => Context | Promise<Context> | void | Promise<void>;
+) => Promise<void | Context> | void | Context;
 
 export type Handlers = Handler[];
 

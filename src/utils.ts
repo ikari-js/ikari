@@ -65,6 +65,9 @@ export const resetColor = "\x1b[0m";
 export const greenColor = "\x1b[32m";
 export const blueColor = "\x1b[34m";
 export const cyanColor = "\x1b[36m";
+export const yellowColor = "\x1b[33m";
+export const redColor = "\x1b[31m";
+export const magentaColor = "\x1b[35m";
 
 export function startupMessage(
   config: Config,
@@ -125,10 +128,11 @@ export function returnContextResponse(ctx: Context) {
 }
 
 export function NotFound(ctx: Context) {
-  if (ctx.method === HttpMethod.HEAD) {
-    return ctx.status(StatusCode.NOT_FOUND).getResWithoutBody();
+  // TODO not sure about this
+  if (ctx.method !== HttpMethod.OPTIONS) {
+    ctx.status(StatusCode.NOT_FOUND);
   }
-  return ctx.json({ message: "Not Found" }, StatusCode.NOT_FOUND).res;
+  return ctx.json({ message: "Not Found" });
 }
 
 //TODO: Tests are missing for this function. We have to test it.
@@ -155,13 +159,15 @@ export function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
           if (typeof route !== "function" && typeof route !== "object") return;
 
           route.target = controller;
-          if (prefix) route.path = prefix + route.path;
-          if (config.prefix) route.path = config.prefix + route.path;
+          let path = route.path;
+          let before = route.before;
+          if (prefix) path = prefix + path;
+          if (config.prefix) path = config.prefix + path;
           if (middlewares) {
-            route.before = middlewares.concat(route.before);
+            before = middlewares.concat(before);
           }
 
-          result.push(route);
+          result.push({ ...route, path, before });
         });
       });
 
@@ -192,11 +198,12 @@ export function getRoutesFromControllers(
       if (typeof route !== "function" && typeof route !== "object") return;
 
       route.target = controller;
+      let path = route.path;
       if (config.prefix) {
-        route.path = config.prefix + route.path;
+        path = config.prefix + path;
       }
 
-      result.push(route);
+      result.push({ ...route, path });
     });
 
     return result;
