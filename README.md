@@ -833,6 +833,30 @@ ikari provides a set of official middlewares to help you build your web applicat
     ``` 
     </details>
 
+- `logger` middleware is used to log request and response information.
+
+    <details>
+    <summary>Example</summary>
+
+    ```typescript
+    import { Context, Serve } from "ikari";
+    import { Controller, Get } from "ikari/decorators";
+    import { Logger } from "ikari/middlewares/logger";
+
+    @Controller("/users")
+    class UserController {
+      @Get("/")
+      async list(ctx: Context) {
+        // logic here
+      }
+    }
+
+    Serve({
+      middlewares: [Logger()],
+      controllers: [UserController]
+    });
+    ``` 
+    </details>
 
 ## Contributors
 <a href = "https://github.com/ikari-js/ikari/graphs/contributors">

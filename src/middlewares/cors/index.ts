@@ -45,7 +45,7 @@ export type HTTPMethods =
   | "UPDATEREDIRECTREF"
   | "VERSION-CONTROL";
 
-export type CorsOptions = {
+export type Config = {
   /**
    * Configures the Access-Control-Allow-Origin CORS header.
    * @default '*'
@@ -88,17 +88,17 @@ export type CorsOptions = {
   maxAge?: number;
 };
 
-function defaultOptions(options: CorsOptions) {
-  const corsOptions: CorsOptions = {
-    origin: "*",
-    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
-    credentials: true,
-    maxAge: 5,
-  };
+const defaultOptions: Config = {
+  origin: "*",
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+  credentials: true,
+  maxAge: 5,
+};
 
+function getDefaultConfig(options: Config) {
   return {
-    ...corsOptions,
+    ...defaultOptions,
     ...options,
   };
 }
@@ -123,33 +123,33 @@ function allowedOrigin(
   return "";
 }
 
-export function CORS(options: CorsOptions = {}) {
-  const corsOptions = defaultOptions(options);
+export function CORS(config: Config = {}) {
+  const corsConfig = getDefaultConfig(config);
 
   let exposedHeadersStr = "";
-  if (corsOptions.exposedHeaders) {
-    if (Array.isArray(corsOptions.exposedHeaders)) {
-      exposedHeadersStr = corsOptions.exposedHeaders.join(",");
+  if (corsConfig.exposedHeaders) {
+    if (Array.isArray(corsConfig.exposedHeaders)) {
+      exposedHeadersStr = corsConfig.exposedHeaders.join(",");
     } else {
-      exposedHeadersStr = corsOptions.exposedHeaders;
+      exposedHeadersStr = corsConfig.exposedHeaders;
     }
   }
 
   let methodsStr = "";
-  if (corsOptions.methods) {
-    if (Array.isArray(corsOptions.methods)) {
-      methodsStr = corsOptions.methods.join(",");
+  if (corsConfig.methods) {
+    if (Array.isArray(corsConfig.methods)) {
+      methodsStr = corsConfig.methods.join(",");
     } else {
-      methodsStr = corsOptions.methods;
+      methodsStr = corsConfig.methods;
     }
   }
 
   let allowedHeadersStr = "";
-  if (corsOptions.allowedHeaders) {
-    if (Array.isArray(corsOptions.allowedHeaders)) {
-      allowedHeadersStr = corsOptions.allowedHeaders.join(",");
+  if (corsConfig.allowedHeaders) {
+    if (Array.isArray(corsConfig.allowedHeaders)) {
+      allowedHeadersStr = corsConfig.allowedHeaders.join(",");
     } else {
-      allowedHeadersStr = corsOptions.allowedHeaders;
+      allowedHeadersStr = corsConfig.allowedHeaders;
     }
   }
 
@@ -159,15 +159,15 @@ export function CORS(options: CorsOptions = {}) {
       return ctx.next();
     }
 
-    const origin = allowedOrigin(ctx, reqOrigin, corsOptions.origin!);
+    const origin = allowedOrigin(ctx, reqOrigin, corsConfig.origin!);
     if (ctx.method !== HttpMethod.OPTIONS) {
       ctx.append("Vary", "Origin");
       ctx.set("Access-Control-Allow-Origin", origin);
-      if (corsOptions.credentials) {
+      if (corsConfig.credentials) {
         ctx.set("Access-Control-Allow-Credentials", "true");
       }
 
-      if (corsOptions.exposedHeaders) {
+      if (corsConfig.exposedHeaders) {
         ctx.set("Access-Control-Expose-Headers", exposedHeadersStr);
       }
       return ctx.next();
@@ -180,15 +180,15 @@ export function CORS(options: CorsOptions = {}) {
     ctx.set("Access-Control-Allow-Methods", methodsStr);
     ctx.set("Access-Control-Allow-Origin", origin);
 
-    if (corsOptions.credentials) {
+    if (corsConfig.credentials) {
       ctx.set("Access-Control-Allow-Credentials", "true");
     }
 
-    if (corsOptions.maxAge && corsOptions.maxAge > 0) {
-      ctx.set("Access-Control-Max-Age", String(corsOptions.maxAge));
+    if (corsConfig.maxAge && corsConfig.maxAge > 0) {
+      ctx.set("Access-Control-Max-Age", String(corsConfig.maxAge));
     }
 
-    if (corsOptions.allowedHeaders) {
+    if (corsConfig.allowedHeaders) {
       ctx.set("Access-Control-Allow-Headers", allowedHeadersStr);
     } else {
       ctx.set(

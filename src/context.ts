@@ -1,7 +1,7 @@
 import { Server } from "bun";
-import { Handler, Handlers } from "./types";
 import { HttpMethod } from "./utils";
 import { parse } from "fast-querystring";
+import { Routes } from "./route";
 
 export class Context {
   private _queries: Record<string, string> | null = null;
@@ -13,11 +13,12 @@ export class Context {
   constructor(
     private server: Server,
     public req: Request,
-    public routes: Routes,
     /**
      * The all path parameters of the request.
      */
     public params: Record<string, string>,
+    private _url: URL,
+    public routes?: Routes,
     public res: Response = new Response()
   ) {}
 
@@ -36,9 +37,9 @@ export class Context {
    * Calls the next handler in the chain.
    *
    */
-  public next(): Context {
-    this.routes.next();
-    return this;
+  public next(): void | Context | Promise<void | Context> {
+    // TODO fix await ctx.next() issue
+    return this.routes!.next(this);
   }
 
   /**
@@ -53,6 +54,7 @@ export class Context {
    */
   public query(query: string): string | null {
     if (!this._queries) {
+      // TODO URL object can set in index.ts
       this._queries = parse(this.req.url.split("?")[1]);
     }
     return this._queries[query] || null;
@@ -202,7 +204,7 @@ export class Context {
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async body(): Promise<any | FormData | string | ArrayBuffer> {
+  public async body<T = FormData | string | ArrayBuffer>(): Promise<T | null> {
     if (this.method === HttpMethod.GET || this.method === HttpMethod.HEAD)
       return null;
     if (this.req.bodyUsed) return this._body;
@@ -376,8 +378,8 @@ export class Context {
   /**
    * Return the URL string of the request.
    */
-  public url(): string {
-    return this.req.url;
+  public get url(): URL {
+    return this._url;
   }
 
   /**
@@ -552,35 +554,5 @@ class Local {
    */
   public clear(): void {
     this.locals.clear();
-  }
-}
-
-export class Routes {
-  constructor(public handlers: Handlers, public handlerIndex: number = 0) {}
-
-  public next(): void {
-    if (this.hasNext()) {
-      this.handlerIndex++;
-    }
-  }
-
-  public hasNext(): boolean {
-    return this.handlerIndex < this.length;
-  }
-
-  public currentHandler(): Handler {
-    return this.handlers[this.handlerIndex];
-  }
-
-  public reset(): void {
-    this.handlerIndex = 0;
-  }
-
-  public get length(): number {
-    return this.handlers.length;
-  }
-
-  public get currentIndex(): number {
-    return this.handlerIndex;
   }
 }
