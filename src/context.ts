@@ -280,7 +280,7 @@ export class Context {
     this.res = new Response(null, {
       status: status,
       headers: {
-        ...Object.fromEntries(this.res.headers),
+        ...this.res.headers.toJSON(),
       },
     });
 
