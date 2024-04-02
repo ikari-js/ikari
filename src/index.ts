@@ -1,6 +1,6 @@
 import "reflect-metadata";
 
-import { Server, Serve as BunServe, Errorlike } from "bun";
+import { Server, Serve as BunServe, ErrorLike } from "bun";
 import { Config, Handlers, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context } from "./context";
@@ -137,7 +137,7 @@ export function Serve(config: Config) {
 
   (config.serveOptions as BunServe).error = function (
     this: Server,
-    err: Errorlike
+    err: ErrorLike
   ) {
     return config.errorHandler!(err);
   };

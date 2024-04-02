@@ -1,4 +1,4 @@
-import { Server, ServeOptions, TLSServeOptions, Errorlike } from "bun";
+import { Server, ServeOptions, TLSServeOptions, ErrorLike } from "bun";
 
 import { Context } from "./context";
 
@@ -50,7 +50,7 @@ export type Handler = (
 
 export type Handlers = Handler[];
 
-export type ErrorHandler = (err: Errorlike) => Response | Promise<Response>;
+export type ErrorHandler = (err: ErrorLike) => Response | Promise<Response>;
 
 export type IkariServeOptions =
   | Omit<ServeOptions, "error" | "fetch">
