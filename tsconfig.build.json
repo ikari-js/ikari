@@ -13,8 +13,5 @@
     "moduleResolution": "Bundler",
     "target": "ES2020",
     "declaration": true,
-    "types": [
-      "bun-types" // add Bun global
-    ]
   }
 }
