@@ -695,9 +695,9 @@ test("Context", async () => {
     public async postBodyFormData(ctx: Context) {
       const formData = (await ctx.body()) as FormData;
       const fields: Record<string, string> = {};
-      for (const [key, value] of formData) {
+      formData.forEach((value, key) => {
         fields[key] = value.toString();
-      }
+      }); 
 
       return ctx.json(fields);
     }
