@@ -1,4 +1,4 @@
-import { Errorlike, Server, TLSServeOptions } from "bun";
+import { ErrorLike, Server } from "bun";
 import { Config, Context, Controller, Group, Route } from ".";
 import fs from "fs";
 
@@ -77,11 +77,8 @@ export function startupMessage(
   const { version } = JSON.parse(
     fs.readFileSync(import.meta.dir + "/../package.json", "utf-8")
   );
-
-  const schema = (config.serveOptions as TLSServeOptions).tls?.key
-    ? "https"
-    : "http";
-  const hostMsg = `${schema}://${bunServe.hostname}:${bunServe.port}`;
+  
+  const hostMsg = `${bunServe.url.toString()}`;
   const handlersMsg = `Handlers ...... ${routes.length}`;
   const pidMsg = `PID ...... ${process.pid}`;
   const handlerMsgAndPidMsg = `${handlersMsg}  ${pidMsg}`;
@@ -210,7 +207,7 @@ export function getRoutesFromControllers(
   }, []);
 }
 
-export function defaultErrorHandler(err: Errorlike) {
+export function defaultErrorHandler(err: ErrorLike) {
   return new Response(
     JSON.stringify({
       message: err?.message,
