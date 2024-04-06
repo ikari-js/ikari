@@ -1,6 +1,7 @@
 import { Server, ServeOptions, TLSServeOptions, ErrorLike } from "bun";
 
 import { Context } from "./context";
+import { ServiceOptions } from "typedi/types/interfaces/service-options.interface";
 
 export type LiteralUnionStr<T extends U, U = string> = T | (string & object);
 
@@ -9,6 +10,8 @@ export type LiteralUnionStr<T extends U, U = string> = T | (string & object);
 export type FunctionTarget = any;
 
 export type Controller = Constructor | InstanceType<Constructor>;
+
+export type ControllerOptions = Omit<ServiceOptions, "transient">;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Constructor<T = object> = new (...args: any[]) => T | any;
