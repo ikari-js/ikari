@@ -1,6 +1,7 @@
 import { ErrorLike, Server } from "bun";
 import { Config, Context, Controller, Group, Route } from ".";
 import fs from "fs";
+import Container from "typedi";
 
 export function createPath(str: string) {
   if (str[0] !== "/") {
@@ -151,6 +152,10 @@ export function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
           routes = Reflect.getMetadata("routes", controller.prototype);
         }
 
+        if (Container.has(controller)) {
+          controller = Container.get(controller);
+        }
+
         routes.forEach((route) => {
           if (route == null) return;
           if (typeof route !== "function" && typeof route !== "object") return;
@@ -188,6 +193,10 @@ export function getRoutesFromControllers(
       routes = Reflect.getMetadata("routes", controller);
     } else {
       routes = Reflect.getMetadata("routes", controller.prototype);
+    }
+
+    if (Container.has(controller)) {
+      controller = Container.get(controller);
     }
 
     routes.forEach((route) => {
