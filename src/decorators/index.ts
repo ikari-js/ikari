@@ -9,3 +9,5 @@ export * from "../decorators/patch";
 export * from "../decorators/delete";
 export * from "../decorators/options";
 export * from "../decorators/all";
+export * from "../decorators/service";
+export * from "../decorators/inject";
