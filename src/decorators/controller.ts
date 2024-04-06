@@ -1,14 +1,16 @@
-import { Route, Constructor } from "../types";
+import { Route, Constructor, ControllerOptions } from "../types";
+import { Service } from "./service";
 
 /**
   Controller decorator is used to define a controller class.
   It should be used on a class.
   @param prefix - the prefix for all routes in the controller
 **/
-export function Controller(prefix: string) {
+export function Controller(prefix: string, options?: ControllerOptions) {
   prefix = prefix.replace(/\/$/, "");
 
   return function <T>(target: Constructor<T>) {
+    Service(options)(target);
     for (const value of Object.getOwnPropertyNames(target.prototype)) {
       const path = Reflect.getMetadata("path", target.prototype, value);
       const method = Reflect.getMetadata("method", target.prototype, value);
