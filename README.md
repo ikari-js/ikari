@@ -58,6 +58,7 @@ Serve({
     <li><a href="#about-the-project">About The Project</a></li>
     <li><a href="#motivation">Motivation</a></li>
     <li><a href="#controller">Controller</a></li>
+    <li><a href="#service-and-inject">Service and Inject Decorators</a></li>
     <li><a href="#get-post-put-patch-delete-options-head">GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD</a></li>
     <li><a href="#all">ALL</a></li>
     <li><a href="#middleware">Middleware</a></li>
@@ -93,62 +94,51 @@ The `Controller` decorator is used to define a controller class. This decorator 
 class UserController {}
 ```
 
-#### How To Use Controller Class With Other Dependency Classes
+### Service and Inject Decorators
 
-ikari does not have a dependency injection system so ikari can not intialize outside classes. But you can use your classes in ikari controllers. You can use your classes in two ways. First way is you can extend your class from ikari controller class. Second way is you can create an instance of your class and pass it to ikari controller class. 
-
-```typescript
-  class CustomClass {
-    private readonly name: string = "CustomClass";
-
-    getName() {
-      return this.name;
-    }
-  }
-
-  @Controller("/users")
-  class UserController extends CustomClass {
-    constructor() {
-      super();
-    }
-
-    @Get("/")
-    async index(ctx: Context) {
-      return ctx.string(super.getName());
-    }
-  }
-
-  Serve({
-    controllers: [UserController],
-  });
-```
-
-OR 
+ikari provides a built-in dependency injection system to help you manage your services. You can use the `Service` decorator to define a service class and the `Inject` decorator to inject services into your controllers or other services.
 
 ```typescript
-  class CustomClass {
-    private readonly name: string = "CustomClass";
+import { Service, Inject, Controller } from "ikari/decorators";
+import { Context, Serve } from "ikari";
 
-    getName() {
-      return this.name;
-    }
+@Service()
+class UserService
+{
+  async list() {
+    // logic here
   }
+}
 
-  @Controller("/users")
-  class UserController {
-    constructor(private readonly customClass: CustomClass) {}
+@Controller("/users")
+class UserController {
+  @Inject()
+  userService: UserService;
 
-    @Get("/")
-    async index(ctx: Context) {
-      return ctx.string(this.customClass.getName());
-    }
-
+  @Get("/list")
+  async list(ctx: Context) {
+    this.userService.list();
   }
+}
 
-  Serve({
-    controllers: [new UserController(new CustomClass())],
-  });
+Serve({
+  controllers: [UserController],
+});
 ```
+
+Services are by default singleton instances, meaning that the same instance will be shared across all controllers and services that inject it. If you want to create a new instance of a service for each injection, you can use the `transient` option with the `Service` decorator.
+
+```typescript
+@Service({ transient: true })
+class UserService
+{
+  async list() {
+    // logic here
+  }
+}
+```
+
+> :warning: ikare use [typedi](https://github.com/typestack/typedi) for dependency injection under the hood. You can use all typedi options with ikari.
 
 
 ### GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
