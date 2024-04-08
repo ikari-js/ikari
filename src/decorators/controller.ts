@@ -29,8 +29,8 @@ export function Controller(prefix: string, options?: ControllerOptions) {
           fnName: value,
           method,
           pathHasParams,
-          before: Reflect.hasMetadata("before", target.prototype) ? Reflect.getMetadata("before", target.prototype, value) : [],
-          after: Reflect.hasMetadata("after", target.prototype) ? Reflect.getMetadata("after", target.prototype, value) : [],
+          before: Reflect.getMetadata("before", target.prototype, value) || [],
+          after: Reflect.getMetadata("after", target.prototype, value) || [],
         });
       }
     }
