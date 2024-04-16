@@ -27,6 +27,7 @@ bun add ikari
 {
   "compilerOptions": {
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
 }
 ```
