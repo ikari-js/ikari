@@ -29,7 +29,6 @@ export function Controller(prefix: string, options?: ControllerOptions) {
           fnName: value,
           method,
           pathHasParams,
-          // TODO reflect has check
           before: Reflect.getMetadata("before", target.prototype, value) || [],
           after: Reflect.getMetadata("after", target.prototype, value) || [],
         });
