@@ -108,7 +108,7 @@ export function Serve(config: Config) {
     }
 
     let handlers: Handlers;
-    if (!route) {
+    if (!route || !route.target) {
       handlers = [...(config?.middlewares || []), NotFound];
     } else {
       handlers = [
