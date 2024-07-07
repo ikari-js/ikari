@@ -112,20 +112,6 @@ describe("ServeValidator", () => {
     }).toThrow("Either groups or controllers must be provided");
   });
 
-  test("checkStrictIsBoolean", () => {
-    expect(() => {
-      @Controller("/")
-      class Test {
-        @Get()
-        public get() {}
-      }
-
-      new ServeValidator({
-        controllers: [Test],
-        strict: "null" as any,
-      }).validate();
-    }).toThrow("Strict must be a boolean");
-  });
 });
 
 test("Controller Decorator", () => {
@@ -697,7 +683,7 @@ test("Context", async () => {
       const fields: Record<string, string> = {};
       formData.forEach((value, key) => {
         fields[key] = value.toString();
-      }); 
+      });
 
       return ctx.json(fields);
     }
@@ -2260,130 +2246,6 @@ describe("Context Locals", async () => {
   });
 });
 
-describe("Strict routing", async () => {
-  test("Strict routing", async () => {
-    @Controller("/test")
-    class Test {
-      @Get("/test")
-      public get(ctx: Context) {
-        return ctx.json({ fn: "get", method: ctx.method });
-      }
-    }
-
-    const config: Config = {
-      controllers: [Test],
-      disableStartupMessage: true,
-      strict: true,
-      serveOptions: {
-        port: 0,
-      },
-    };
-
-    const serve = Serve(config);
-    const expectedValues = [
-      {
-        path: "/test/test",
-        method: HttpMethod.GET,
-        bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
-        statusCode: StatusCode.OK,
-      },
-      {
-        path: "/test/test/",
-        method: HttpMethod.GET,
-        bodyType: "json",
-        body: { message: "Not Found" },
-        statusCode: StatusCode.NOT_FOUND,
-      },
-    ];
-
-    for (const expected of expectedValues) {
-      const res = await fetch(
-        serve.hostname + ":" + serve.port + expected.path,
-        {
-          method: expected.method,
-          credentials: "include",
-          headers: {},
-          redirect: "follow",
-        }
-      );
-
-      let body = null;
-      if (expected.bodyType === "json") {
-        body = await res.json();
-      } else if (expected.bodyType === "text") {
-        body = await res.text();
-      }
-
-      expect(body).toEqual(expected.body);
-      expect(res.status).toBe(expected.statusCode);
-    }
-
-    serve.stop();
-  });
-
-  test("Strict without routing", async () => {
-    @Controller("/test")
-    class Test {
-      @Get("/test")
-      public get(ctx: Context) {
-        return ctx.json({ fn: "get", method: ctx.method });
-      }
-    }
-
-    const config: Config = {
-      controllers: [Test],
-      disableStartupMessage: true,
-      strict: false,
-      serveOptions: {
-        port: 0,
-      },
-    };
-
-    const serve = Serve(config);
-    const expectedValues = [
-      {
-        path: "/test/test",
-        method: HttpMethod.GET,
-        bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
-        statusCode: StatusCode.OK,
-      },
-      {
-        path: "/test/test/",
-        method: HttpMethod.GET,
-        bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
-        statusCode: StatusCode.OK,
-      },
-    ];
-
-    for (const expected of expectedValues) {
-      const res = await fetch(
-        serve.hostname + ":" + serve.port + expected.path,
-        {
-          method: expected.method,
-          credentials: "include",
-          headers: {},
-          redirect: "follow",
-        }
-      );
-
-      let body = null;
-      if (expected.bodyType === "json") {
-        body = await res.json();
-      } else if (expected.bodyType === "text") {
-        body = await res.text();
-      }
-
-      expect(body).toEqual(expected.body);
-      expect(res.status).toBe(expected.statusCode);
-    }
-
-    serve.stop();
-  });
-});
-
 describe("Group", async () => {
   test("Only group", async () => {
     @Controller("/test")
@@ -2756,7 +2618,6 @@ describe("Controller Type", async () => {
     expect(() => Serve(config)).not.toThrow();
   });
 });
-
 
 describe("NotFound function", async () => {
   test("when NotFound called with HEAD it returns 404 without body.", async () => {
