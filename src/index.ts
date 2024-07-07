@@ -16,7 +16,7 @@ import {
   returnContextResponse,
   startupMessage,
 } from "./utils";
-import { createRouter } from "radix3";
+import { createRouter, addRoute, findRoute } from "rou3";
 
 const bannedProps = [
   "fetch",
@@ -46,10 +46,6 @@ export function Serve(config: Config) {
     config.serveOptions = {};
   }
 
-  if (!config.strict) {
-    config.strict = false;
-  }
-
   let routes: Route[] = [];
 
   if (config.controllers) {
@@ -66,10 +62,10 @@ export function Serve(config: Config) {
     throw new Error("No routes found");
   }
 
-  const router = createRouter<Route>({ strictTrailingSlash: config.strict });
+  const router = createRouter<Route>();
 
   routes.forEach((route) => {
-    router.insert(route.method + "|" + route.path, route);
+    addRoute(router, route.path, route.method, route);
   });
 
   (config.serveOptions as BunServe).fetch = async function (
@@ -79,19 +75,18 @@ export function Serve(config: Config) {
   ) {
     const url = new URL(request.url);
     const ctx = new Context(server, request, {}, url);
-    const routeKey = request.method + "|" + url.pathname;
 
-    let route = router.lookup(routeKey);
+    let route = findRoute(router, url.pathname, request.method);
     if (!route) {
-      route = router.lookup(HttpMethod.ALL + "|" + url.pathname);
+      route = findRoute(router, url.pathname, HttpMethod.ALL);
     }
 
     if (!route && request.method === HttpMethod.OPTIONS) {
       const allowedMethods = new Set<string>();
-      for (const methods of Object.keys(HttpMethod)) {
-        const r = router.lookup(methods + "|" + url.pathname);
-        if (r) {
-          allowedMethods.add(r.method);
+      for (const method of Object.keys(HttpMethod)) {
+        const r = findRoute(router, url.pathname, method);
+        if (r?.data) {
+          allowedMethods.add(r.data.method);
         }
       }
 
@@ -104,20 +99,20 @@ export function Serve(config: Config) {
     }
 
     if (!route && request.method === HttpMethod.HEAD) {
-      route = router.lookup(HttpMethod.GET + "|" + url.pathname);
+      route = findRoute(router, url.pathname, HttpMethod.GET);
     }
 
     let handlers: Handlers;
-    if (!route || !route.target) {
+    if (!route?.data || !route.data.target) {
       handlers = [...(config?.middlewares || []), NotFound];
     } else {
       handlers = [
         ...(config?.middlewares || []),
-        ...route.before,
-        route.target.prototype
-          ? route.target.prototype[route.fnName].bind(route.target)
-          : route.target[route.fnName].bind(route.target),
-        ...route.after,
+        ...route.data.before,
+        route.data.target.prototype
+          ? route.data.target.prototype[route.data.fnName].bind(route.data.target)
+          : route.data.target[route.data.fnName].bind(route.data.target),
+        ...route.data.after,
       ];
     }
 

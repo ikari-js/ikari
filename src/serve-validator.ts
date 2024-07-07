@@ -14,7 +14,6 @@ export class ServeValidator {
       .checkServeOptionsIsObject()
       .checkPrefixIsString()
       .checkGroupsOrControllersIsNotEmpty()
-      .checkStrictMode()
       .checkGroupMiddlewaresIsArray();
   }
 
@@ -184,14 +183,6 @@ export class ServeValidator {
   private checkPrefixIsString() {
     if (this.config.prefix && typeof this.config.prefix !== "string") {
       throw new Error("Prefix must be a string");
-    }
-
-    return this;
-  }
-
-  private checkStrictMode() {
-    if (this.config.strict && typeof this.config.strict !== "boolean") {
-      throw new Error("Strict must be a boolean");
     }
 
     return this;

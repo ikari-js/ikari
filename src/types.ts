@@ -98,14 +98,6 @@ export type Config = {
    */
   disableStartupMessage?: boolean;
 
-  /**
-   * Strict mode enables strict trailing slash handling and removes the trailing slash from the path before matching it with the routes.
-   * When strict mode is enabled, `GET /users/` and `GET /users` are treated as different routes.
-   * @default false
-   * @example
-   * strict: true
-   */
-  strict?: boolean;
 };
 
 export type IkariServer = Omit<
