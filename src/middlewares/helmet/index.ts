@@ -7,7 +7,7 @@ export type Config = {
    * @default undefined
    * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
    */
-  ContentSecurityPolicy?: LiteralUnionStr<"default-src 'self'">;
+  ContentSecurityPolicy?: string;
   /**
    * Content Security Policy Report Only
    * @default false
@@ -31,7 +31,9 @@ export type Config = {
    * @default "SAMEORIGIN"
    * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
    */
-  XFrameOptions?: LiteralUnionStr<"SAMEORIGIN" | "DENY">;
+  XFrameOptions?: LiteralUnionStr<
+    "SAMEORIGIN" | "DENY" | `ALLOW-FROM ${string}`
+  >;
   /**
    * Strict-Transport-Security
    * @default undefined
