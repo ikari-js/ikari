@@ -541,15 +541,22 @@ test("Context", async () => {
     }
 
     @Get("/get-return-stream")
+    @After((ctx: Context) => {
+        if(!ctx.locals.has("filePath"))
+            return
+        const filePath = ctx.locals.get("filePath") as string;
+        setTimeout(() => {
+          unlinkSync(filePath);
+        }, 1000);
+    })
     public async getReturnStream(ctx: Context) {
       // create temporary file
       const filePath = import.meta.dir + "/test-file";
       await Bun.write(filePath, "test");
       const f = Bun.file(filePath);
       ctx.stream(f.stream());
-      setTimeout(() => {
-        unlinkSync(filePath);
-      }, 0);
+      ctx.locals.set("filePath", filePath);
+      return ctx.next();
     }
 
     @Get("/get-return-raw")
