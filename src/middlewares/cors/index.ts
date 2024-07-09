@@ -97,10 +97,60 @@ const defaultOptions: Config = {
 };
 
 function getDefaultConfig(options: Config) {
-  return {
-    ...defaultOptions,
-    ...options,
-  };
+  const cfg = { ...defaultOptions, ...options };
+
+  if (!cfg.origin) {
+    throw new Error("CORS middleware requires an origin option");
+  }
+
+  if (!cfg.methods) {
+    throw new Error("CORS middleware requires a methods option");
+  }
+
+  if (!cfg.allowedHeaders) {
+    throw new Error("CORS middleware requires a allowedHeaders option");
+  }
+
+  if (!cfg.credentials) {
+    throw new Error("CORS middleware requires a credentials option");
+  }
+
+  if (!cfg.maxAge) {
+    throw new Error("CORS middleware requires a maxAge option");
+  }
+
+  if (
+    typeof cfg.origin !== "string" &&
+    !Array.isArray(cfg.origin) &&
+    !(cfg.origin instanceof RegExp) &&
+    typeof cfg.origin !== "function"
+  ) {
+    throw new Error(
+      "CORS origin option must be a string, array, regular expression, or function"
+    );
+  }
+
+  if (!Array.isArray(cfg.methods) && typeof cfg.methods !== "string") {
+    throw new Error("CORS methods option must be an array or a string");
+  }
+
+  if (!Array.isArray(cfg.allowedHeaders) && typeof cfg.allowedHeaders !== "string") {
+    throw new Error("CORS allowedHeaders option must be an array");
+  }
+
+  if (cfg.exposedHeaders && !Array.isArray(cfg.exposedHeaders) && typeof cfg.exposedHeaders !== "string") {
+    throw new Error("CORS exposedHeaders option must be an array");
+  } 
+
+  if (typeof cfg.credentials !== "boolean") {
+    throw new Error("CORS credentials option must be a boolean");
+  }
+
+  if (typeof cfg.maxAge !== "number") {
+    throw new Error("CORS maxAge option must be a number");
+  }
+
+  return cfg;
 }
 
 function allowedOrigin(
