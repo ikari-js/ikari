@@ -796,7 +796,7 @@ ikari provides a set of official middlewares to help you build your web applicat
     ``` 
     </details>
 
-- `requestId` middleware is used to set a unique ID for each request.
+- `RequestId` middleware is used to set a unique ID for each request.
 
     <details>
     <summary>Example</summary>
@@ -804,7 +804,7 @@ ikari provides a set of official middlewares to help you build your web applicat
     ```typescript
     import { Context, Serve } from "ikari";
     import { Controller, Get } from "ikari/decorators";
-    import { requestId } from "ikari/middlewares/request-id";
+    import { RequestId } from "ikari/middlewares/request-id";
 
     @Controller("/users")
     class UserController {
@@ -815,7 +815,7 @@ ikari provides a set of official middlewares to help you build your web applicat
     }
 
     Serve({
-      middlewares: [requestId()],
+      middlewares: [RequestId()],
       controllers: [UserController]
     });
     ``` 
