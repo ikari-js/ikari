@@ -135,6 +135,14 @@ function getMethodColor(method: string): string {
 export function Logger(config: Config = {}) {
   const cfg = getDefaultConfig(config);
 
+  if (
+    !cfg.output ||
+    !cfg.output.write ||
+    typeof cfg.output.write !== "function"
+  ) {
+    throw new Error("Logger middleware requires a valid output writer");
+  }
+
   if (!cfg.format) cfg.format = defaultConfig.format;
   if (!cfg.timeFormatOptions)
     cfg.timeFormatOptions = defaultConfig.timeFormatOptions;
