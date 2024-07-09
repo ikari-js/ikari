@@ -74,7 +74,8 @@ export function Serve(config: Config) {
     server: Server
   ) {
     const url = new URL(request.url);
-    const ctx = new Context(server, request, {}, url);
+    let allowHeader = "";
+    let status;
 
     let route = findRoute(router, url.pathname, request.method);
     if (!route) {
@@ -91,10 +92,10 @@ export function Serve(config: Config) {
       }
 
       if (allowedMethods.size > 0) {
-        ctx.set("Allow", [...allowedMethods].join(", "));
-        ctx.status(StatusCode.NO_CONTENT);
+        allowHeader = [...allowedMethods].join(", ");
+        status = StatusCode.NO_CONTENT;
       } else {
-        ctx.status(StatusCode.NOT_FOUND);
+        status = StatusCode.NOT_FOUND;
       }
     }
 
@@ -110,14 +111,25 @@ export function Serve(config: Config) {
         ...(config?.middlewares || []),
         ...route.data.before,
         route.data.target.prototype
-          ? route.data.target.prototype[route.data.fnName].bind(route.data.target)
+          ? route.data.target.prototype[route.data.fnName].bind(
+              route.data.target
+            )
           : route.data.target[route.data.fnName].bind(route.data.target),
         ...route.data.after,
       ];
     }
 
-    ctx.routes = new Routes(handlers);
-    ctx.params = route?.params || {};
+    const routes = new Routes(handlers);
+    const params = route?.params || {};
+
+    const ctx = new Context(server, request, params, url, routes);
+    if (allowHeader) {
+      ctx.set("Allow", allowHeader);
+    }
+
+    if (status) {
+      ctx.status(status);
+    }
 
     // TODO performance
     // TODO context can be modified by middleware after all routes are executed is this ok?
@@ -125,7 +137,7 @@ export function Serve(config: Config) {
      TODO bug when using ctx.next() in middleware withouth returning it like Logger middleware
      and handler or middlewares throws error, error wont show up in console 
     */
-    await ctx.routes.start(ctx);
+    await ctx.next();
 
     return returnContextResponse(ctx);
   };

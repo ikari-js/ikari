@@ -18,8 +18,7 @@ export class Context {
      */
     public params: Record<string, string>,
     private _url: URL,
-    // TODO make it private
-    public routes?: Routes,
+    private routes: Routes,
     public res: Response = new Response()
   ) {}
 
@@ -40,7 +39,7 @@ export class Context {
    */
   public next(): void | Context | Promise<void | Context> {
     // TODO fix await ctx.next() issue
-    return this.routes!.next(this);
+    return this.routes.next(this);
   }
 
   /**

@@ -16,13 +16,6 @@ export class Routes {
     }));
   }
 
-  public async start(ctx: Context): Promise<void | Context> {
-    if (this.routes.length === 0) return;
-    const handler = this.routes[0];
-    handler.done = true;
-    return handler.handler(ctx);
-  }
-
   public async next(ctx: Context): Promise<void | Context> {
     // TODO: performance check
     const nextHandler = this.routes.find((handler) => !handler.done);
