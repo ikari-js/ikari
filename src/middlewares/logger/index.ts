@@ -1,4 +1,4 @@
-import { Errorlike } from "bun";
+import { ErrorLike } from "bun";
 import { Context } from "../../context";
 import {
   HttpMethod,
@@ -26,6 +26,7 @@ export type Config = {
   /**
    * format defines the logging tags
    * @default [time] [status] [method] [path] [latency]
+   * @see Tags
    */
   format?: string;
   /**
@@ -161,7 +162,7 @@ export function Logger(config: Config = {}) {
     );
     const start = new Date().getTime();
     const ip = ctx.ip();
-    let error: Errorlike | unknown = null;
+    let error: ErrorLike | unknown = null;
     try {
       await ctx.next();
     } catch (e) {
@@ -202,9 +203,7 @@ export function Logger(config: Config = {}) {
     }
 
     cfg.output!.write(logString);
-    if (cfg.done) {
-      cfg.done(ctx, logString);
-    }
+    if (cfg.done) cfg.done(ctx, logString);
 
     if (error) {
       throw error;
