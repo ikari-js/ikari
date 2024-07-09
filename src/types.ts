@@ -84,7 +84,7 @@ export type Config = {
   /**
    * Middlewares to be used in the server
    * @example
-   * middlewares: [CORSMiddleware()]
+   * middlewares: [CORS(), Logger()]
    */
   middlewares?: Handlers;
   /**
