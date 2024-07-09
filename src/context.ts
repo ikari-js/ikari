@@ -18,6 +18,7 @@ export class Context {
      */
     public params: Record<string, string>,
     private _url: URL,
+    // TODO make it private
     public routes?: Routes,
     public res: Response = new Response()
   ) {}
