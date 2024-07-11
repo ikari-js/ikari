@@ -10,14 +10,7 @@ export function createPath(str: string) {
   return str;
 }
 
-export const representationHeaders = [
-  "Content-Type",
-  "Content-Encoding",
-  "Content-Language",
-  "Content-Location",
-];
-
-export enum HttpMethod {
+export enum HTTPMethod {
   GET = "GET",
   POST = "POST",
   PUT = "PUT",
@@ -62,6 +55,29 @@ export enum StatusCode {
   SERVICE_UNAVAILABLE = 503,
 }
 
+export enum HTTPHeaders {
+  ContentType = "Content-Type",
+  ContentLength = "Content-Length",
+  ContentEncoding = "Content-Encoding",
+  Accept = "Accept",
+  AcceptEncoding = "Accept-Encoding",
+  Authorization = "Authorization",
+  UserAgent = "User-Agent",
+  Connection = "Connection",
+  Host = "Host",
+  Origin = "Origin",
+  Allow = "Allow",
+  Vary = "Vary",
+  AccessControlAllowOrigin = "Access-Control-Allow-Origin",
+  AccessControlAllowMethods = "Access-Control-Allow-Methods",
+  AccessControlAllowHeaders = "Access-Control-Allow-Headers",
+  AccessControlExposeHeaders = "Access-Control-Expose-Headers",
+  AccessControlAllowCredentials = "Access-Control-Allow-Credentials",
+  AccessControlMaxAge = "Access-Control-Max-Age",
+  AccessControlRequestHeaders = "Access-Control-Request-Headers",
+  AccessControlRequestMethod = "Access-Control-Request-Method",
+}
+
 export const resetColor = "\x1b[0m";
 export const greenColor = "\x1b[32m";
 export const blueColor = "\x1b[34m";
@@ -78,7 +94,7 @@ export function startupMessage(
   const { version } = JSON.parse(
     fs.readFileSync(import.meta.dir + "/../package.json", "utf-8")
   );
-  
+
   const hostMsg = `${bunServe.url.toString()}`;
   const handlersMsg = `Handlers ...... ${routes.length}`;
   const pidMsg = `PID ...... ${process.pid}`;
@@ -119,7 +135,7 @@ export function startupMessage(
 }
 
 export function returnContextResponse(ctx: Context) {
-  if (ctx.method === HttpMethod.HEAD || ctx.method === HttpMethod.OPTIONS) {
+  if (ctx.method === HTTPMethod.HEAD || ctx.method === HTTPMethod.OPTIONS) {
     return ctx.getResWithoutBody();
   }
   return ctx.res;
@@ -127,7 +143,7 @@ export function returnContextResponse(ctx: Context) {
 
 export function NotFound(ctx: Context) {
   // TODO not sure about this
-  if (ctx.method !== HttpMethod.OPTIONS) {
+  if (ctx.method !== HTTPMethod.OPTIONS) {
     ctx.status(StatusCode.NOT_FOUND);
   }
   return ctx.json({ message: "Not Found" });

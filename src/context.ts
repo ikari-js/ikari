@@ -1,5 +1,5 @@
 import { Server } from "bun";
-import { HttpMethod } from "./utils";
+import { HTTPMethod } from "./utils";
 import { parse } from "fast-querystring";
 import { Routes } from "./route";
 
@@ -205,7 +205,7 @@ export class Context {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async body<T = FormData | string | ArrayBuffer>(): Promise<T | null> {
-    if (this.method === HttpMethod.GET || this.method === HttpMethod.HEAD)
+    if (this.method === HTTPMethod.GET || this.method === HTTPMethod.HEAD)
       return null;
     if (this.req.bodyUsed) return this._body;
 

@@ -6,7 +6,8 @@ import { ServeValidator } from "./serve-validator";
 import { Context } from "./context";
 import { Routes } from "./route";
 import {
-  HttpMethod,
+  HTTPHeaders,
+  HTTPMethod,
   NotFound,
   StatusCode,
   createPath,
@@ -79,12 +80,12 @@ export function Serve(config: Config) {
 
     let route = findRoute(router, url.pathname, request.method);
     if (!route) {
-      route = findRoute(router, url.pathname, HttpMethod.ALL);
+      route = findRoute(router, url.pathname, HTTPMethod.ALL);
     }
 
-    if (!route && request.method === HttpMethod.OPTIONS) {
+    if (!route && request.method === HTTPMethod.OPTIONS) {
       const allowedMethods = new Set<string>();
-      for (const method of Object.keys(HttpMethod)) {
+      for (const method of Object.keys(HTTPMethod)) {
         const r = findRoute(router, url.pathname, method);
         if (r?.data) {
           allowedMethods.add(r.data.method);
@@ -99,8 +100,8 @@ export function Serve(config: Config) {
       }
     }
 
-    if (!route && request.method === HttpMethod.HEAD) {
-      route = findRoute(router, url.pathname, HttpMethod.GET);
+    if (!route && request.method === HTTPMethod.HEAD) {
+      route = findRoute(router, url.pathname, HTTPMethod.GET);
     }
 
     let handlers: Handlers;
@@ -124,7 +125,7 @@ export function Serve(config: Config) {
 
     const ctx = new Context(server, request, params, url, routes);
     if (allowHeader) {
-      ctx.set("Allow", allowHeader);
+      ctx.set(HTTPHeaders.Allow, allowHeader);
     }
 
     if (status) {
