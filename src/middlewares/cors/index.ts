@@ -1,5 +1,5 @@
 import { Context } from "../..";
-import { HttpMethod, StatusCode } from "../../utils";
+import { HTTPHeaders, HTTPMethod, StatusCode } from "../../utils";
 
 export type HTTPMethods =
   // Common Methods See: https://datatracker.ietf.org/doc/html/rfc7231#section-4.3
@@ -134,13 +134,20 @@ function getDefaultConfig(options: Config) {
     throw new Error("CORS methods option must be an array or a string");
   }
 
-  if (!Array.isArray(cfg.allowedHeaders) && typeof cfg.allowedHeaders !== "string") {
+  if (
+    !Array.isArray(cfg.allowedHeaders) &&
+    typeof cfg.allowedHeaders !== "string"
+  ) {
     throw new Error("CORS allowedHeaders option must be an array");
   }
 
-  if (cfg.exposedHeaders && !Array.isArray(cfg.exposedHeaders) && typeof cfg.exposedHeaders !== "string") {
+  if (
+    cfg.exposedHeaders &&
+    !Array.isArray(cfg.exposedHeaders) &&
+    typeof cfg.exposedHeaders !== "string"
+  ) {
     throw new Error("CORS exposedHeaders option must be an array");
-  } 
+  }
 
   if (typeof cfg.credentials !== "boolean") {
     throw new Error("CORS credentials option must be a boolean");
@@ -204,46 +211,45 @@ export function CORS(config: Config = {}) {
   }
 
   return function cors(ctx: Context) {
-    const reqOrigin = ctx.get("Origin");
+    const reqOrigin = ctx.get(HTTPHeaders.Origin);
     if (!reqOrigin) {
       return ctx.next();
     }
 
     const origin = allowedOrigin(ctx, reqOrigin, corsConfig.origin!);
-    if (ctx.method !== HttpMethod.OPTIONS) {
-      ctx.append("Vary", "Origin");
-      ctx.set("Access-Control-Allow-Origin", origin);
+    if (ctx.method !== HTTPMethod.OPTIONS) {
+      ctx.append(HTTPHeaders.Vary, HTTPHeaders.Origin);
+      ctx.set(HTTPHeaders.AccessControlAllowOrigin, origin);
       if (corsConfig.credentials) {
-        ctx.set("Access-Control-Allow-Credentials", "true");
+        ctx.set(HTTPHeaders.AccessControlAllowCredentials, "true");
       }
 
       if (corsConfig.exposedHeaders) {
-        ctx.set("Access-Control-Expose-Headers", exposedHeadersStr);
+        ctx.set(HTTPHeaders.AccessControlExposeHeaders, exposedHeadersStr);
       }
       return ctx.next();
     }
 
     // Preflight Request
-    ctx.append("Vary", "Origin");
-    ctx.append("Vary", "Access-Control-Request-Method");
-    ctx.append("Vary", "Access-Control-Request-Headers");
-    ctx.set("Access-Control-Allow-Methods", methodsStr);
-    ctx.set("Access-Control-Allow-Origin", origin);
+    ctx.append(HTTPHeaders.Vary, HTTPHeaders.Origin);
+    ctx.append(HTTPHeaders.Vary, HTTPHeaders.AccessControlRequestMethod);
+    ctx.append(HTTPHeaders.Vary, HTTPHeaders.AccessControlRequestHeaders);
+    ctx.set(HTTPHeaders.AccessControlAllowMethods , methodsStr);
+    ctx.set(HTTPHeaders.AccessControlAllowHeaders, origin);
 
     if (corsConfig.credentials) {
-      ctx.set("Access-Control-Allow-Credentials", "true");
+      ctx.set(HTTPHeaders.AccessControlAllowCredentials, "true");
     }
 
     if (corsConfig.maxAge && corsConfig.maxAge > 0) {
-      ctx.set("Access-Control-Max-Age", String(corsConfig.maxAge));
+      ctx.set(HTTPHeaders.AccessControlMaxAge, String(corsConfig.maxAge));
     }
 
     if (corsConfig.allowedHeaders) {
-      ctx.set("Access-Control-Allow-Headers", allowedHeadersStr);
+      ctx.set(HTTPHeaders.AccessControlAllowHeaders, allowedHeadersStr);
     } else {
-      ctx.set(
-        "Access-Control-Allow-Headers",
-        ctx.get("Access-Control-Request-Headers") || ""
+      ctx.set(HTTPHeaders.AccessControlAllowHeaders,
+        ctx.get(HTTPHeaders.AccessControlRequestHeaders) || ""
       );
     }
 
