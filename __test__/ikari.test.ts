@@ -540,25 +540,6 @@ test("Context", async () => {
       return ctx.buffer(Buffer.from("test"));
     }
 
-    @Get("/get-return-stream")
-    @After((ctx: Context) => {
-        if(!ctx.locals.has("filePath"))
-            return
-        const filePath = ctx.locals.get("filePath") as string;
-        setTimeout(() => {
-          unlinkSync(filePath);
-        }, 1000);
-    })
-    public async getReturnStream(ctx: Context) {
-      // create temporary file
-      const filePath = import.meta.dir + "/test-file";
-      await Bun.write(filePath, "test");
-      const f = Bun.file(filePath);
-      ctx.stream(f.stream());
-      ctx.locals.set("filePath", filePath);
-      return ctx.next();
-    }
-
     @Get("/get-return-raw")
     public getReturnRaw(ctx: Context) {
       return ctx.raw(new Response("test"));
@@ -771,13 +752,6 @@ test("Context", async () => {
     },
     {
       path: "/get-return-buffer",
-      method: HTTPMethod.GET,
-      bodyType: "text",
-      body: "test",
-      statusCode: StatusCode.OK,
-    },
-    {
-      path: "/get-return-stream",
       method: HTTPMethod.GET,
       bodyType: "text",
       body: "test",

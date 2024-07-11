@@ -1,4 +1,4 @@
-import { Server } from "bun";
+import { BunFile, Server } from "bun";
 import { HTTPMethod } from "./utils";
 import { parse } from "fast-querystring";
 import { Routes } from "./route";
@@ -435,26 +435,26 @@ export class Context {
   }
 
   /**
-   * Sets the specified stream to the Response object.
+   * Returns the specified file as a response.
    * @example
    * ```ts
-   * ctx.stream(fs.createReadStream("test.txt"));
+   * ctx.file(Bun.file("test.txt"));
    * ```
    * @param data
    * @param status Default: 200
-   * @param contentType Default: application/octet-stream
+   * @param contentType
    **/
-  public stream(
-    data: ReadableStream,
-    status?: number,
-    contentType: string = "application/octet-stream"
-  ): Context {
+  public file(data: BunFile, status?: number, contentType?: string): Context {
+    const headers = {
+      ...this.res.headers.toJSON(),
+    };
+    if (contentType) {
+      headers["Content-Type"] = contentType;
+    }
+
     this.res = new Response(data, {
       status: status || this.res.status,
-      headers: {
-        ...this.res.headers.toJSON(),
-        "Content-Type": contentType,
-      },
+      headers: headers,
     });
 
     return this;
