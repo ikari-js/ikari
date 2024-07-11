@@ -635,7 +635,7 @@ ikari provides a `Context` object to access ikari context methods and properties
     ```
     </details>
 
-  - `ctx.stream()` Sets the stream data to the Response object.
+  - `ctx.file()` Returns the specified file as a response..
 
     <details>
     <summary>Example</summary>
@@ -643,7 +643,7 @@ ikari provides a `Context` object to access ikari context methods and properties
     ```typescript
     @Get("/users")
     async list(ctx: Context) {
-      ctx.stream(fs.createReadStream("file.txt"));
+      ctx.file(Bun.file("file.txt"));
     }
     ```
     </details>
