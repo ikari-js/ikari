@@ -1,5 +1,5 @@
 import { FunctionTarget } from "..";
-import { HttpMethod, createPath } from "../utils";
+import { HTTPMethod, createPath } from "../utils";
 
 /**
  * Decorator for defining a route that handles DELETE requests
@@ -16,6 +16,6 @@ export function Delete(path?: string) {
 
     const routePath = path ? createPath(path) : createPath(key);
     Reflect.defineMetadata("path", routePath, target, key);
-    Reflect.defineMetadata("method", HttpMethod.DELETE, target, key);
+    Reflect.defineMetadata("method", HTTPMethod.DELETE, target, key);
   };
 }

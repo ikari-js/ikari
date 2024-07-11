@@ -1,5 +1,5 @@
 import { FunctionTarget } from "..";
-import { HttpMethod, createPath } from "../utils";
+import { HTTPMethod, createPath } from "../utils";
 
 /**
  * Decorator for defining a route that handles PUT requests
@@ -19,6 +19,6 @@ export function Put(path?: string) {
 
     const routePath = path ? createPath(path) : createPath(key);
     Reflect.defineMetadata("path", routePath, target, key);
-    Reflect.defineMetadata("method", HttpMethod.PUT, target, key);
+    Reflect.defineMetadata("method", HTTPMethod.PUT, target, key);
   };
 }

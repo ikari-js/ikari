@@ -1,5 +1,5 @@
 import { FunctionTarget } from "../types";
-import { HttpMethod, createPath } from "../utils";
+import { HTTPMethod, createPath } from "../utils";
 
 /**
  * Decorator for defining a route that handles All http requests
@@ -19,6 +19,6 @@ export function All(path?: string) {
 
     const routePath = path ? createPath(path) : createPath(key);
     Reflect.defineMetadata("path", routePath, target, key);
-    Reflect.defineMetadata("method", HttpMethod.ALL, target, key);
+    Reflect.defineMetadata("method", HTTPMethod.ALL, target, key);
   };
 }

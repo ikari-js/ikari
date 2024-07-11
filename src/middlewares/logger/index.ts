@@ -1,7 +1,7 @@
 import { ErrorLike } from "bun";
 import { Context } from "../../context";
 import {
-  HttpMethod,
+  HTTPMethod,
   blueColor,
   cyanColor,
   greenColor,
@@ -114,19 +114,19 @@ function getStatusColor(status: number): string {
 
 function getMethodColor(method: string): string {
   switch (method) {
-    case HttpMethod.GET:
+    case HTTPMethod.GET:
       return greenColor;
-    case HttpMethod.POST:
+    case HTTPMethod.POST:
       return yellowColor;
-    case HttpMethod.PUT:
+    case HTTPMethod.PUT:
       return cyanColor;
-    case HttpMethod.DELETE:
+    case HTTPMethod.DELETE:
       return redColor;
-    case HttpMethod.PATCH:
+    case HTTPMethod.PATCH:
       return magentaColor;
-    case HttpMethod.HEAD:
+    case HTTPMethod.HEAD:
       return greenColor;
-    case HttpMethod.OPTIONS:
+    case HTTPMethod.OPTIONS:
       return blueColor;
     default:
       return resetColor;

@@ -13,7 +13,7 @@ import {
   Options,
   All,
 } from "../src/decorators";
-import { HttpMethod } from "../src/utils";
+import { HTTPMethod } from "../src/utils";
 import "reflect-metadata";
 
 test("Get Decorator", () => {
@@ -100,7 +100,7 @@ test("Get Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
-    expect(route.method).toBe(HttpMethod.GET);
+    expect(route.method).toBe(HTTPMethod.GET);
   }
 });
 
@@ -188,7 +188,7 @@ test("Post Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
-    expect(route.method).toBe(HttpMethod.POST);
+    expect(route.method).toBe(HTTPMethod.POST);
   }
 });
 
@@ -276,7 +276,7 @@ test("Put Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
-    expect(route.method).toBe(HttpMethod.PUT);
+    expect(route.method).toBe(HTTPMethod.PUT);
   }
 });
 
@@ -364,7 +364,7 @@ test("Delete Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
-    expect(route.method).toBe(HttpMethod.DELETE);
+    expect(route.method).toBe(HTTPMethod.DELETE);
   }
 });
 
@@ -452,7 +452,7 @@ test("Head Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
-    expect(route.method).toBe(HttpMethod.HEAD);
+    expect(route.method).toBe(HTTPMethod.HEAD);
   }
 });
 
@@ -540,7 +540,7 @@ test("Patch Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
-    expect(route.method).toBe(HttpMethod.PATCH);
+    expect(route.method).toBe(HTTPMethod.PATCH);
   }
 });
 
@@ -628,7 +628,7 @@ test("Options Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
-    expect(route.method).toBe(HttpMethod.OPTIONS);
+    expect(route.method).toBe(HTTPMethod.OPTIONS);
   }
 });
 
@@ -716,6 +716,6 @@ test("All Decorator", () => {
     expect(route.path).toBe(expected.path);
     expect(route.fnName).toBe(expected.fnName);
     expect(route.pathHasParams).toBe(expected.hasParams);
-    expect(route.method).toBe(HttpMethod.ALL);
+    expect(route.method).toBe(HTTPMethod.ALL);
   }
 });

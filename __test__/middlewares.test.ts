@@ -2,7 +2,7 @@ import { expect, describe, test } from "bun:test";
 import { Context, Config, Serve } from "../src";
 import { Controller, Get } from "../src/decorators";
 import { helmet } from "../src/middlewares/helmet";
-import { HttpMethod, StatusCode } from "../src/utils";
+import { HTTPMethod, StatusCode } from "../src/utils";
 
 describe("Helmet", () => {
   test("Helmet should be work", async () => {
@@ -39,7 +39,7 @@ describe("Helmet", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           "content-security-policy": "default-src 'self'",
@@ -94,7 +94,7 @@ describe("Helmet", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           "x-content-type-options": "nosniff",
@@ -144,7 +144,7 @@ describe("Helmet", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {},
       },

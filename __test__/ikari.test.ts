@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect, test, describe } from "bun:test";
 import {
-  HttpMethod,
+  HTTPMethod,
   NotFound,
   StatusCode,
   createPath,
@@ -736,77 +736,77 @@ test("Context", async () => {
   const expectedValues = [
     {
       path: "/get",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       body: { test: "test" },
       statusCode: StatusCode.OK,
     },
     {
       path: "/get-withparams/1/test",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       body: { id: "1", name: "test" },
       statusCode: StatusCode.OK,
     },
     {
       path: "/get-withquery?id=1&name=test",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       body: { id: "1", name: "test" },
       statusCode: StatusCode.OK,
     },
     {
       path: "/get-with-query-and-params/1/test?id=2&name=test2",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       body: { id: "2", name: "test2", idParam: "1", nameParam: "test" },
       statusCode: StatusCode.OK,
     },
     {
       path: "/get-return-string",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "text",
       body: "test",
       statusCode: StatusCode.OK,
     },
     {
       path: "/get-return-buffer",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "text",
       body: "test",
       statusCode: StatusCode.OK,
     },
     {
       path: "/get-return-stream",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "text",
       body: "test",
       statusCode: StatusCode.OK,
     },
     {
       path: "/get-return-raw",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "text",
       body: "test",
       statusCode: StatusCode.OK,
     },
     {
       path: "/get-return-statuscode",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "text",
       body: "test",
       statusCode: StatusCode.ACCEPTED,
     },
     {
       path: "/get-return-redirect-in-app",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "text",
       body: '{"test":"test"}',
       statusCode: StatusCode.OK,
     },
     {
       path: "/get-cookie",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       responseHeaders: {
@@ -816,7 +816,7 @@ test("Context", async () => {
     },
     {
       path: "/get-append",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       responseHeaders: {
@@ -826,7 +826,7 @@ test("Context", async () => {
     },
     {
       path: "/get-set",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       responseHeaders: {
@@ -836,7 +836,7 @@ test("Context", async () => {
     },
     {
       path: "/get-get",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       reqHeaders: {
@@ -846,14 +846,14 @@ test("Context", async () => {
     },
     {
       path: "/get-locals",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       body: { value: "test-local", has: true },
     },
     {
       path: "/get-get-cookie",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       body: { test: "test" },
@@ -863,7 +863,7 @@ test("Context", async () => {
     },
     {
       path: "/get-set-cookie",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       responseHeaders: {
@@ -873,14 +873,14 @@ test("Context", async () => {
     },
     {
       path: "/get-ip",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       body: { ip: localIp },
     },
     {
       path: "/get-authorization",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       reqHeaders: {
@@ -890,14 +890,14 @@ test("Context", async () => {
     },
     {
       path: "/get-url",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       body: { url: `http://${serve.hostname}:${serve.port}/get-url` },
     },
     {
       path: "/post-json",
-      method: HttpMethod.POST,
+      method: HTTPMethod.POST,
       bodyType: "json",
       reqBody: { test: "test" },
       reqHeaders: {
@@ -908,28 +908,28 @@ test("Context", async () => {
     },
     {
       path: "/get-queries?id=1&name=test",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       body: { id: "1", name: "test" },
     },
     {
       path: "/get-res-status",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.NOT_FOUND,
       body: { status: StatusCode.NOT_FOUND },
     },
     {
       path: "/get-res-headers",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       statusCode: StatusCode.OK,
       body: { test: "test" },
     },
     {
       path: "/get-res-without-body",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "text",
       statusCode: StatusCode.NOT_FOUND,
       responseHeaders: {
@@ -940,7 +940,7 @@ test("Context", async () => {
     },
     {
       path: "/get-req-body",
-      method: HttpMethod.GET,
+      method: HTTPMethod.GET,
       bodyType: "json",
       reqHeaders: {
         "content-type": "application/json",
@@ -950,7 +950,7 @@ test("Context", async () => {
     },
     {
       path: "/post-double-body",
-      method: HttpMethod.POST,
+      method: HTTPMethod.POST,
       bodyType: "json",
       reqBody: { test: "test" },
       reqHeaders: {
@@ -961,7 +961,7 @@ test("Context", async () => {
     },
     {
       path: "/post-body-without-content-type",
-      method: HttpMethod.POST,
+      method: HTTPMethod.POST,
       bodyType: "text",
       reqBody: { test: "test" },
       statusCode: StatusCode.OK,
@@ -969,7 +969,7 @@ test("Context", async () => {
     },
     {
       path: "/post-body-form-data",
-      method: HttpMethod.POST,
+      method: HTTPMethod.POST,
       formData: {
         test: "test",
         test2: "test2",
@@ -983,7 +983,7 @@ test("Context", async () => {
     },
     {
       path: "/post-body-urlencoded",
-      method: HttpMethod.POST,
+      method: HTTPMethod.POST,
       bodyType: "json",
       statusCode: StatusCode.OK,
       urlSearch: {
@@ -997,7 +997,7 @@ test("Context", async () => {
     },
     {
       path: "/post-body-raw",
-      method: HttpMethod.POST,
+      method: HTTPMethod.POST,
       bodyType: "json",
       reqBody: "test raw body",
       reqHeaders: {
@@ -1008,7 +1008,7 @@ test("Context", async () => {
     },
     {
       path: "/post-body-stream",
-      method: HttpMethod.POST,
+      method: HTTPMethod.POST,
       bodyType: "json",
       reqHeaders: {
         "content-type": "application/octet-stream",
@@ -1279,48 +1279,48 @@ describe("Route", async () => {
     const expectedValues = [
       {
         path: "/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
       },
       {
         path: "/test/post",
-        method: HttpMethod.POST,
+        method: HTTPMethod.POST,
         bodyType: "json",
-        body: { fn: "post", method: HttpMethod.POST },
+        body: { fn: "post", method: HTTPMethod.POST },
         statusCode: StatusCode.OK,
       },
       {
         path: "/test/put",
-        method: HttpMethod.PUT,
+        method: HTTPMethod.PUT,
         bodyType: "json",
-        body: { fn: "put", method: HttpMethod.PUT },
+        body: { fn: "put", method: HTTPMethod.PUT },
         statusCode: StatusCode.OK,
       },
       {
         path: "/test/delete",
-        method: HttpMethod.DELETE,
+        method: HTTPMethod.DELETE,
         bodyType: "json",
-        body: { fn: "delete", method: HttpMethod.DELETE },
+        body: { fn: "delete", method: HTTPMethod.DELETE },
         statusCode: StatusCode.OK,
       },
       {
         path: "/test/head",
-        method: HttpMethod.HEAD,
+        method: HTTPMethod.HEAD,
         statusCode: StatusCode.NO_CONTENT,
         body: null,
       },
       {
         path: "/test/patch",
-        method: HttpMethod.PATCH,
+        method: HTTPMethod.PATCH,
         bodyType: "json",
-        body: { fn: "patch", method: HttpMethod.PATCH },
+        body: { fn: "patch", method: HTTPMethod.PATCH },
         statusCode: StatusCode.OK,
       },
       {
         path: "/test/options",
-        method: HttpMethod.OPTIONS,
+        method: HTTPMethod.OPTIONS,
         bodyType: "json",
         body: null,
         statusCode: StatusCode.NO_CONTENT,
@@ -1386,29 +1386,29 @@ describe("Route", async () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           fn: "get",
-          method: HttpMethod.GET,
+          method: HTTPMethod.GET,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.POST,
+        method: HTTPMethod.POST,
         bodyType: "json",
-        body: { fn: "post", method: HttpMethod.POST },
+        body: { fn: "post", method: HTTPMethod.POST },
         statusCode: StatusCode.OK,
         headers: {
           fn: "post",
-          method: HttpMethod.POST,
+          method: HTTPMethod.POST,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.OPTIONS,
+        method: HTTPMethod.OPTIONS,
         bodyType: "json",
         body: null,
         statusCode: StatusCode.NO_CONTENT,
@@ -1418,13 +1418,13 @@ describe("Route", async () => {
       },
       {
         path: "/test/test",
-        method: HttpMethod.HEAD,
+        method: HTTPMethod.HEAD,
         bodyType: "json",
         body: null,
         statusCode: StatusCode.OK,
         headers: {
           fn: "get",
-          method: HttpMethod.HEAD,
+          method: HTTPMethod.HEAD,
         },
       },
     ];
@@ -1482,79 +1482,79 @@ describe("Route", async () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "all", method: HttpMethod.GET },
+        body: { fn: "all", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.GET,
+          method: HTTPMethod.GET,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.POST,
+        method: HTTPMethod.POST,
         bodyType: "json",
-        body: { fn: "all", method: HttpMethod.POST },
+        body: { fn: "all", method: HTTPMethod.POST },
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.POST,
+          method: HTTPMethod.POST,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.OPTIONS,
+        method: HTTPMethod.OPTIONS,
         bodyType: "json",
         body: null,
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.OPTIONS,
+          method: HTTPMethod.OPTIONS,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.HEAD,
+        method: HTTPMethod.HEAD,
         bodyType: "json",
         body: null,
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.HEAD,
+          method: HTTPMethod.HEAD,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.PUT,
+        method: HTTPMethod.PUT,
         bodyType: "json",
-        body: { fn: "all", method: HttpMethod.PUT },
+        body: { fn: "all", method: HTTPMethod.PUT },
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.PUT,
+          method: HTTPMethod.PUT,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.DELETE,
+        method: HTTPMethod.DELETE,
         bodyType: "json",
-        body: { fn: "all", method: HttpMethod.DELETE },
+        body: { fn: "all", method: HTTPMethod.DELETE },
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.DELETE,
+          method: HTTPMethod.DELETE,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.PATCH,
+        method: HTTPMethod.PATCH,
         bodyType: "json",
-        body: { fn: "all", method: HttpMethod.PATCH },
+        body: { fn: "all", method: HTTPMethod.PATCH },
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.PATCH,
+          method: HTTPMethod.PATCH,
         },
       },
     ];
@@ -1622,80 +1622,80 @@ describe("Route", async () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           fn: "get",
-          method: HttpMethod.GET,
+          method: HTTPMethod.GET,
           custom: "custom get",
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.POST,
+        method: HTTPMethod.POST,
         bodyType: "json",
-        body: { fn: "all", method: HttpMethod.POST },
+        body: { fn: "all", method: HTTPMethod.POST },
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.POST,
+          method: HTTPMethod.POST,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.OPTIONS,
+        method: HTTPMethod.OPTIONS,
         bodyType: "json",
         body: null,
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.OPTIONS,
+          method: HTTPMethod.OPTIONS,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.HEAD,
+        method: HTTPMethod.HEAD,
         bodyType: "json",
         body: null,
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.HEAD,
+          method: HTTPMethod.HEAD,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.PUT,
+        method: HTTPMethod.PUT,
         bodyType: "json",
-        body: { fn: "all", method: HttpMethod.PUT },
+        body: { fn: "all", method: HTTPMethod.PUT },
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.PUT,
+          method: HTTPMethod.PUT,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.DELETE,
+        method: HTTPMethod.DELETE,
         bodyType: "json",
-        body: { fn: "all", method: HttpMethod.DELETE },
+        body: { fn: "all", method: HTTPMethod.DELETE },
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.DELETE,
+          method: HTTPMethod.DELETE,
         },
       },
       {
         path: "/test/test",
-        method: HttpMethod.PATCH,
+        method: HTTPMethod.PATCH,
         bodyType: "json",
-        body: { fn: "all", method: HttpMethod.PATCH },
+        body: { fn: "all", method: HTTPMethod.PATCH },
         statusCode: StatusCode.OK,
         headers: {
           fn: "all",
-          method: HttpMethod.PATCH,
+          method: HTTPMethod.PATCH,
         },
       },
     ];
@@ -1774,13 +1774,13 @@ describe("Route", async () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           fn: "get",
-          method: HttpMethod.GET,
+          method: HTTPMethod.GET,
           before: "before",
           before1: "before1",
           after: "after",
@@ -1871,13 +1871,13 @@ describe("Route", async () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           fn: "get",
-          method: HttpMethod.GET,
+          method: HTTPMethod.GET,
           before: "before",
           before1: "before1",
           after: null,
@@ -1886,13 +1886,13 @@ describe("Route", async () => {
       },
       {
         path: "/test/test",
-        method: HttpMethod.POST,
+        method: HTTPMethod.POST,
         bodyType: "json",
-        body: { fn: "post", method: HttpMethod.POST },
+        body: { fn: "post", method: HTTPMethod.POST },
         statusCode: StatusCode.OK,
         headers: {
           fn: "post",
-          method: HttpMethod.POST,
+          method: HTTPMethod.POST,
           before: null,
           before1: null,
           after: null,
@@ -1957,7 +1957,7 @@ describe("Route", async () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         body: null,
         statusCode: StatusCode.OK,
         headers: {
@@ -2028,13 +2028,13 @@ describe("Route", async () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           fn: "get",
-          method: HttpMethod.GET,
+          method: HTTPMethod.GET,
           middleware: "middleware",
           middleware1: "middleware1",
           before: "before",
@@ -2118,11 +2118,11 @@ describe("Route", async () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
         body: {
           fn: "get",
-          method: HttpMethod.GET,
+          method: HTTPMethod.GET,
           parentNames: "custom-class custom-class1",
         },
         statusCode: StatusCode.OK,
@@ -2211,7 +2211,7 @@ describe("Context Locals", async () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
         body: {
           value: "test-local",
@@ -2280,9 +2280,9 @@ describe("Group", async () => {
     const expectedValues = [
       {
         path: "/group/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
       },
     ];
@@ -2335,9 +2335,9 @@ describe("Group", async () => {
     const expectedValues = [
       {
         path: "/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
       },
     ];
@@ -2398,9 +2398,9 @@ describe("Group", async () => {
     const expectedValues = [
       {
         path: "/group/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           middleware: "middleware",
@@ -2488,9 +2488,9 @@ describe("Group", async () => {
     const expectedValues = [
       {
         path: "/api/group1/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "Groupget", method: HttpMethod.GET },
+        body: { fn: "Groupget", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           middleware: "middleware",
@@ -2500,9 +2500,9 @@ describe("Group", async () => {
       },
       {
         path: "/api/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "Controllerget", method: HttpMethod.GET },
+        body: { fn: "Controllerget", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           before: "before",
@@ -2628,7 +2628,7 @@ describe("Controller Type", async () => {
 
 describe("NotFound function", async () => {
   test("when NotFound called with HEAD it returns 404 without body.", async () => {
-    const { context, statusMock } = createContextMock(HttpMethod.HEAD);
+    const { context, statusMock } = createContextMock(HTTPMethod.HEAD);
 
     NotFound(context);
 
@@ -2643,7 +2643,7 @@ describe("NotFound function", async () => {
 
   test("when NotFound called except HEAD it calls json method `Not Found` message with 404 status code and returns res", async () => {
     const { context, jsonMock, resMock, statusMock } = createContextMock(
-      HttpMethod.GET
+      HTTPMethod.GET
     );
 
     NotFound(context);
@@ -2665,7 +2665,7 @@ describe("NotFound function", async () => {
 describe("returnContextResponse function", () => {
   test("when returnContextResponse called with HEAD it returns res without body", async () => {
     const { context, getResWithoutBodyMock } = createContextMock(
-      HttpMethod.HEAD
+      HTTPMethod.HEAD
     );
 
     returnContextResponse(context);
@@ -2674,7 +2674,7 @@ describe("returnContextResponse function", () => {
   });
 
   test("when returnContextResponse called except HEAD it returns res", async () => {
-    const { context, resMock } = createContextMock(HttpMethod.GET);
+    const { context, resMock } = createContextMock(HTTPMethod.GET);
 
     returnContextResponse(context);
 
@@ -2713,7 +2713,7 @@ describe("getRoutesFromControllers function", () => {
         after: [],
         before: [],
         path: "/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         fnName: "get",
         pathHasParams: false,
         target: Test,
@@ -2742,7 +2742,7 @@ describe("getRoutesFromControllers function", () => {
         after: [],
         before: [],
         path: "/api/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         fnName: "get",
         pathHasParams: false,
         target: Test,
@@ -2802,7 +2802,7 @@ describe("getRoutesFromGroups function", () => {
         after: [],
         before: [],
         path: "/api/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         fnName: "get",
         pathHasParams: false,
         target: Test,
@@ -2836,7 +2836,7 @@ describe("getRoutesFromGroups function", () => {
         after: [],
         before: [],
         path: "/api/api/test/get",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         fnName: "get",
         pathHasParams: false,
         target: Test,
@@ -2910,13 +2910,13 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         bodyType: "json",
-        body: { fn: "get", method: HttpMethod.GET },
+        body: { fn: "get", method: HTTPMethod.GET },
         statusCode: StatusCode.OK,
         headers: {
           fn: "get",
-          method: HttpMethod.GET,
+          method: HTTPMethod.GET,
         },
       },
     ];
@@ -2984,7 +2984,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           before: "before",
@@ -3046,7 +3046,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           before: "before",
@@ -3113,7 +3113,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           before: "before",
@@ -3182,7 +3182,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           before: "before",
@@ -3261,7 +3261,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           before: "before",
@@ -3325,7 +3325,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           middleware: "middleware",
@@ -3397,7 +3397,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           middleware: "middleware",
@@ -3461,7 +3461,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test1",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.NOT_FOUND,
         headers: {
           middleware: "middleware",
@@ -3471,7 +3471,7 @@ describe("Request Cycle", () => {
       },
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           middleware: "middleware",
@@ -3536,7 +3536,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/api/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           middleware: "middleware",
@@ -3601,7 +3601,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/api/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           middleware: "middleware",
@@ -3666,7 +3666,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/api/test/test1",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.NOT_FOUND,
         headers: {
           middleware: null,
@@ -3676,7 +3676,7 @@ describe("Request Cycle", () => {
       },
       {
         path: "/api/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           middleware: "middleware",
@@ -3770,7 +3770,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/api/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           firstAppMiddleware: "firstAppMiddleware",
@@ -3786,7 +3786,7 @@ describe("Request Cycle", () => {
       },
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           firstAppMiddleware: "firstAppMiddleware",
@@ -3842,7 +3842,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           BeforeAppMiddleware: "BeforeAppMiddleware",
@@ -3893,7 +3893,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           BeforeAppMiddleware: "BeforeAppMiddleware",
@@ -3949,7 +3949,7 @@ describe("Request Cycle", () => {
     const expectedValues = [
       {
         path: "/test/test",
-        method: HttpMethod.GET,
+        method: HTTPMethod.GET,
         statusCode: StatusCode.OK,
         headers: {
           BeforeAppMiddleware: "BeforeAppMiddleware",

@@ -1,8 +1,8 @@
 import { jest } from "bun:test";
 import { Context } from "../src";
-import { HttpMethod } from "../src/utils";
+import { HTTPMethod } from "../src/utils";
 
-export const createContextMock = (method: HttpMethod) => {
+export const createContextMock = (method: HTTPMethod) => {
   const statusMock = jest.fn();
   const jsonMock = jest.fn();
   const getResWithoutBodyMock = jest.fn();

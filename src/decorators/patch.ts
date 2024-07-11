@@ -1,5 +1,5 @@
 import { FunctionTarget } from "..";
-import { HttpMethod, createPath } from "../utils";
+import { HTTPMethod, createPath } from "../utils";
 
 /**
  * Decorator for defining a route that handles PATCH requests
@@ -16,6 +16,6 @@ export function Patch(path?: string) {
 
     const routePath = path ? createPath(path) : createPath(key);
     Reflect.defineMetadata("path", routePath, target, key);
-    Reflect.defineMetadata("method", HttpMethod.PATCH, target, key);
+    Reflect.defineMetadata("method", HTTPMethod.PATCH, target, key);
   };
 }
