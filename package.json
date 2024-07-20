@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "fast-querystring": "^1.1.2",
-    "reflect-metadata": "^0.1.13",
+    "reflect-metadata": "^0.2.2",
     "rou3": "^0.1.0",
     "typedi": "^0.10.0"
   }
