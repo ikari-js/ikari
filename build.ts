@@ -11,7 +11,7 @@ try {
 
 const files = readdirSync("./dist", { recursive: true })
   .filter((file) => typeof file === "string")
-  .filter((file) => file.endsWith(".js"))
+  .filter((file) => (file as string).endsWith(".js"))
   .map((file) => `./dist/${file}`);
 
 const output = await Bun.build({
