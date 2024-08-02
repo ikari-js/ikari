@@ -1,7 +1,7 @@
 import { Server, ServeOptions, TLSServeOptions, ErrorLike } from "bun";
 
 import { Context } from "./context";
-import { ServiceOptions } from "typedi/types/interfaces/service-options.interface";
+import type { ServiceOptions } from "typedi";
 
 export type LiteralUnionStr<T extends U, U = string> = T | (string & object);
 
@@ -97,7 +97,6 @@ export type Config = {
    * @default false
    */
   disableStartupMessage?: boolean;
-
 };
 
 export type IkariServer = Omit<
