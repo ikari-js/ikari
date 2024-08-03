@@ -1,44 +1,25 @@
-/* eslint-disable no-console */
-import { execSync } from "node:child_process";
+import { $ } from "bun";
 import { readdirSync } from "node:fs";
+
 try {
-  execSync("tsc -p tsconfig.build.json");
-
-  const files = readdirSync("./dist")
-    .filter((file) => file.endsWith(".js"))
-    .map((file) => `./dist/${file}`);
-
-  await Bun.build({
-    entrypoints: files,
-    target: "bun",
-    outdir: "./dist",
-    minify: true,
-  });
-
-  const decoratorsFiles = readdirSync("./dist/decorators")
-    .filter((file) => file.endsWith(".js"))
-    .map((file) => `./dist/decorators/${file}`);
-
-  await Bun.build({
-    entrypoints: decoratorsFiles,
-    target: "bun",
-    outdir: "./",
-    minify: true,
-  });
-
-  const middlewares = readdirSync("./dist/middlewares");
-  middlewares.forEach((middleware) => {
-    const files = readdirSync(`./dist/middlewares/${middleware}`)
-      .filter((file) => file.endsWith(".js"))
-      .map((file) => `./dist/middlewares/${middleware}/${file}`);
-
-    Bun.build({
-      entrypoints: files,
-      target: "bun",
-      outdir: `./dist/middlewares/${middleware}`,
-      minify: true,
-    });
-  });
-} catch (e) {
-  console.error(e);
+  await $`rm -rf ./dist`;
+  await $`tsc -p tsconfig.build.json`;
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.error(error);
 }
+
+const files = readdirSync("./src", { recursive: true })
+  .filter((file) => typeof file === "string")
+  .filter((file) => (file as string).endsWith(".ts"))
+  .map((file) => `./src/${file}`);
+
+const output = await Bun.build({
+  entrypoints: files,
+  target: "bun",
+  outdir: "./dist",
+  root: "./src",
+  minify: true,
+});
+
+if (!output.success) throw new Error(output.logs.join("\n"));
