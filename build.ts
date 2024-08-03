@@ -12,7 +12,10 @@ try {
 const files = readdirSync("./src", { recursive: true })
   .filter((file) => typeof file === "string")
   .filter((file) => (file as string).endsWith(".ts"))
-  .map((file) => `./src/${file}`);
+  .map((file) => `./src/${file}`)
+  .filter(
+    (file) => !file.includes("inject.ts") && !file.includes("service.ts")
+  );
 
 const output = await Bun.build({
   entrypoints: files,
