@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
 import { Server, Serve as BunServe, ErrorLike } from "bun";
-import { Config, Handlers, IkariServer, Route } from "./types";
+import { Config, IkariServer, Route } from "./types";
 import { ServeValidator } from "./serve-validator";
 import { Context } from "./context";
 import { Routes } from "./route";
@@ -17,8 +17,9 @@ import {
   returnContextResponse,
   startupMessage,
 } from "./utils";
-import { createRouter, addRoute, findRoute } from "rou3";
+import { createRouter, addRoute, findRoute, RouterContext } from "rou3";
 
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const bannedProps = [
   "fetch",
   "publish",
@@ -27,6 +28,8 @@ const bannedProps = [
   "requestIP",
   "pendingWebsockets",
 ];
+
+const functionCache = new Map<string, typeof AsyncFunction>();
 
 export function Serve(config: Config) {
   if (!Bun) {
@@ -74,73 +77,7 @@ export function Serve(config: Config) {
     request: Request,
     server: Server
   ) {
-    const url = new URL(request.url);
-    let allowHeader = "";
-    let status;
-
-    let route = findRoute(router, url.pathname, request.method);
-    if (!route) {
-      route = findRoute(router, url.pathname, HTTPMethod.ALL);
-    }
-
-    if (!route && request.method === HTTPMethod.OPTIONS) {
-      const allowedMethods = new Set<string>();
-      for (const method of Object.keys(HTTPMethod)) {
-        const r = findRoute(router, url.pathname, method);
-        if (r?.data) {
-          allowedMethods.add(r.data.method);
-        }
-      }
-
-      if (allowedMethods.size > 0) {
-        allowHeader = [...allowedMethods].join(", ");
-        status = StatusCode.NO_CONTENT;
-      } else {
-        status = StatusCode.NOT_FOUND;
-      }
-    }
-
-    if (!route && request.method === HTTPMethod.HEAD) {
-      route = findRoute(router, url.pathname, HTTPMethod.GET);
-    }
-
-    let handlers: Handlers;
-    if (!route?.data || !route.data.target) {
-      handlers = [...(config?.middlewares || []), NotFound];
-    } else {
-      handlers = [
-        ...(config?.middlewares || []),
-        ...route.data.before,
-        route.data.target.prototype
-          ? route.data.target.prototype[route.data.fnName].bind(
-              route.data.target
-            )
-          : route.data.target[route.data.fnName].bind(route.data.target),
-        ...route.data.after,
-      ];
-    }
-
-    const routes = new Routes(handlers);
-    const params = route?.params || {};
-
-    const ctx = new Context(server, request, params, url, routes);
-    if (allowHeader) {
-      ctx.set(HTTPHeaders.Allow, allowHeader);
-    }
-
-    if (status) {
-      ctx.status(status);
-    }
-
-    // TODO performance
-    // TODO context can be modified by middleware after all routes are executed is this ok?
-    /*
-     TODO bug when using ctx.next() in middleware withouth returning it like Logger middleware
-     and handler or middlewares throws error, error wont show up in console 
-    */
-    await ctx.next();
-
-    return returnContextResponse(ctx);
+    return fetchFunction(request, config, server, router);
   };
 
   (config.serveOptions as BunServe).error = function (
@@ -178,6 +115,137 @@ export function Serve(config: Config) {
     },
   }) as IkariServer;
 }
+
+const fetchFunction = async function (
+  request: Request,
+  config: Config,
+  server: Server,
+  router: RouterContext<Route>
+) {
+  if (functionCache.has(request.method)) {
+    const fn = functionCache.get(request.method);
+    return fn(
+      findRoute,
+      router,
+      HTTPMethod,
+      StatusCode,
+      NotFound,
+      Routes,
+      Context,
+      HTTPHeaders,
+      returnContextResponse,
+      config,
+      server,
+      request
+    );
+  }
+
+  let fn = `
+    const url = new URL(request.url)
+    let route = findRoute(router, url.pathname, request.method);
+    if (!route) {
+      route = findRoute(router, url.pathname, HTTPMethod.ALL);
+    }
+    `;
+
+  if (request.method === HTTPMethod.OPTIONS) {
+    fn += `
+        let allowHeader = "";
+        let status;
+        const allowedMethods = new Set();
+        for (const method of Object.keys(HTTPMethod)) {
+          const r = findRoute(router, url.pathname, method);
+          if (r?.data) {
+            allowedMethods.add(r.data.method);
+          }
+        }
+
+        if (allowedMethods.size > 0) {
+          allowHeader = [...allowedMethods].join(", ");
+          status = StatusCode.NO_CONTENT;
+        } else {
+          status = StatusCode.NOT_FOUND;
+        }
+      
+    `;
+  } else if (request.method === HTTPMethod.HEAD) {
+    fn += `
+      if (!route) {
+        route = findRoute(router, url.pathname, HTTPMethod.GET);
+      }
+    `;
+  }
+
+  fn += `
+      let handlers;
+      if (!route?.data || !route.data.target) {
+        handlers = [...(config?.middlewares || []), NotFound];
+      } else {
+        handlers = [
+          ...(config?.middlewares || []),
+          ...route.data.before,
+          route.data.target.prototype
+            ? route.data.target.prototype[route.data.fnName].bind(
+                route.data.target
+              )
+            : route.data.target[route.data.fnName].bind(route.data.target),
+          ...route.data.after,
+        ];
+      }
+      const routes = new Routes(handlers);
+      const params = route?.params || {};
+      const ctx = new Context(server, request, params, url, routes);
+  `;
+
+  if (request.method === HTTPMethod.OPTIONS) {
+    fn += `
+    if (allowHeader) {
+      ctx.set(HTTPHeaders.Allow, allowHeader);
+    }
+
+    if (status) {
+      ctx.status(status);
+    }
+    `;
+  }
+
+  fn += `
+    await ctx.next();
+    return returnContextResponse(ctx);
+  `;
+
+  const func = new AsyncFunction(
+    "findRoute",
+    "router",
+    "HTTPMethod",
+    "StatusCode",
+    "NotFound",
+    "Routes",
+    "Context",
+    "HTTPHeaders",
+    "returnContextResponse",
+    "config",
+    "server",
+    "request",
+    fn
+  );
+
+  functionCache.set(request.method, func);
+  return func(
+    findRoute,
+    router,
+    HTTPMethod,
+    StatusCode,
+    NotFound,
+    Routes,
+    Context,
+    HTTPHeaders,
+    returnContextResponse,
+    config,
+    server,
+    request
+  );
+};
 
 export { Context };
 export * from "./types";
