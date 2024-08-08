@@ -8,6 +8,7 @@ export class Context {
   private _locals: Local | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _body: any | FormData | string | null = null;
+  private _formFiles: Map<string, File> | null = null;
   private _cookies: Map<string, string> | null = null;
 
   constructor(
@@ -17,7 +18,7 @@ export class Context {
      * The all path parameters of the request.
      */
     public params: Record<string, string>,
-    private _url: URL,
+    private _url: string,
     private routes: Routes,
     public res: Response = new Response()
   ) {}
@@ -204,7 +205,10 @@ export class Context {
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public async body<T = FormData | string | ArrayBuffer>(): Promise<T | null> {
+  public async body<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    T = FormData | string | ArrayBuffer | Record<string, any>
+  >(): Promise<T | null> {
     if (this.method === HTTPMethod.GET || this.method === HTTPMethod.HEAD)
       return null;
     if (this.req.bodyUsed) return this._body;
@@ -216,10 +220,18 @@ export class Context {
         this._body = this.req.json();
         break;
       case "application/x-www-form-urlencoded":
-        this._body = this.req.formData();
+        this._body = parse(await this.req.text());
         break;
       case "multipart/form-data":
-        this._body = this.req.formData();
+        this._body = await this.req.formData();
+        for (const [key, value] of this._body.entries()) {
+          if (value instanceof File) {
+            if (!this._formFiles) {
+              this._formFiles = new Map<string, File>();
+            }
+            this._formFiles.set(key, value);
+          }
+        }
         break;
       case "text/plain":
         this._body = this.req.text();
@@ -233,6 +245,24 @@ export class Context {
     }
 
     return this._body;
+  }
+
+  /**
+   * Returns the specified form file from the request.
+   * @example
+   * ```ts
+   * const file = await ctx.formFile("file");
+   * console.log(file);
+   * ```
+   * @param name
+   * @returns File | null
+   * */
+  public async formFile(name: string): Promise<File | null> {
+    if (!this._formFiles) {
+      await this.body();
+    }
+
+    return this._formFiles?.get(name) || null;
   }
 
   /**
@@ -379,7 +409,7 @@ export class Context {
    * Return the URL string of the request.
    */
   public get url(): URL {
-    return this._url;
+    return new URL(this._url);
   }
 
   /**

@@ -427,6 +427,18 @@ ikari provides a `Context` object to access ikari context methods and properties
     ```
     </details>
 
+  - `ctx.formFile()` Returns the file of the specified form field.
+    <details>
+    <summary>Example</summary>
+
+    ```typescript
+    @Post("/users")
+    async create(ctx: Context) {
+      // curl -X POST -F "file=@/path/to/file" http://localhost:3000/users 
+      const file = await ctx.formFile("file");
+    }
+    ```
+
   - `ctx.cookie()` Returns the value of the specified cookie.
     <details>
     <summary>Example</summary>

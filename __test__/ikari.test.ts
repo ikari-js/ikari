@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { expect, test, describe } from "bun:test";
+import { expect, test, describe, afterAll } from "bun:test";
 import {
   HTTPMethod,
   NotFound,
@@ -111,7 +111,6 @@ describe("ServeValidator", () => {
       new ServeValidator({}).validate();
     }).toThrow("Either groups or controllers must be provided");
   });
-
 });
 
 test("Controller Decorator", () => {
@@ -678,13 +677,8 @@ test("Context", async () => {
 
     @Post("/post-body-urlencoded")
     public async postBodyUrlencoded(ctx: Context) {
-      const urlencoded = (await ctx.body()) as URLSearchParams;
-      const fields: Record<string, string> = {};
-      for (const [key, value] of urlencoded) {
-        fields[key] = value.toString();
-      }
-
-      return ctx.json(fields);
+      const urlencoded = await ctx.body<Record<string, string>>();
+      return ctx.json(urlencoded);
     }
 
     @Post("/post-body-raw")
@@ -697,6 +691,12 @@ test("Context", async () => {
       const stream = (await ctx.body()) as ArrayBuffer;
       const buffer = Buffer.from(stream);
       return ctx.json({ test: buffer.toString() });
+    }
+
+    @Post("/post-from-file")
+    public async postFromFile(ctx: Context) {
+      const file = await ctx.formFile("file");
+      return ctx.json({ name: file?.name });
     }
   }
 
@@ -991,6 +991,14 @@ test("Context", async () => {
       body: { test: "test raw body" },
       streamBody: "test raw body",
     },
+    {
+      path: "/post-from-file",
+      method: HTTPMethod.POST,
+      bodyType: "json",
+      statusCode: StatusCode.OK,
+      body: { name: "test.txt" },
+      fileName: "test.txt",
+    },
   ];
 
   for (const expected of expectedValues) {
@@ -1016,9 +1024,21 @@ test("Context", async () => {
       await Bun.write(filePath, expected.streamBody);
       const f = Bun.file(filePath);
       streamBody = f.stream();
-      setTimeout(() => {
+      afterAll(() => {
         unlinkSync(filePath);
-      }, 0);
+      });
+    }
+
+    let formFile: FormData | undefined;
+    if (expected.fileName) {
+      formFile = new FormData();
+      const filePath = expected.fileName;
+      await Bun.write(filePath, "test");
+      const f = Bun.file(filePath);
+      formFile.append("file", f);
+      afterAll(() => {
+        unlinkSync(filePath);
+      });
     }
 
     let reqBody;
@@ -1030,6 +1050,8 @@ test("Context", async () => {
       reqBody = formData;
     } else if (expected.streamBody) {
       reqBody = streamBody;
+    } else if (expected.fileName) {
+      reqBody = formFile;
     }
 
     const res = await fetch(serve.hostname + ":" + serve.port + expected.path, {
