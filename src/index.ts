@@ -74,19 +74,27 @@ export function Serve(config: Config) {
     request: Request,
     server: Server
   ) {
-    const url = new URL(request.url);
+    const pathFirstIndex = request.url.indexOf("/", 9);
+    const query = request.url.indexOf("?", pathFirstIndex + 1);
+    const path =
+      pathFirstIndex === -1
+        ? "/"
+        : query === -1
+        ? request.url.substring(pathFirstIndex)
+        : request.url.substring(pathFirstIndex, query);
+
     let allowHeader = "";
     let status;
 
-    let route = findRoute(router, url.pathname, request.method);
+    let route = findRoute(router, path, request.method);
     if (!route) {
-      route = findRoute(router, url.pathname, HTTPMethod.ALL);
+      route = findRoute(router, path, HTTPMethod.ALL);
     }
 
     if (!route && request.method === HTTPMethod.OPTIONS) {
       const allowedMethods = new Set<string>();
       for (const method of Object.keys(HTTPMethod)) {
-        const r = findRoute(router, url.pathname, method);
+        const r = findRoute(router, path, method);
         if (r?.data) {
           allowedMethods.add(r.data.method);
         }
@@ -101,7 +109,7 @@ export function Serve(config: Config) {
     }
 
     if (!route && request.method === HTTPMethod.HEAD) {
-      route = findRoute(router, url.pathname, HTTPMethod.GET);
+      route = findRoute(router, path, HTTPMethod.GET);
     }
 
     let handlers: Handlers;
@@ -123,7 +131,7 @@ export function Serve(config: Config) {
     const routes = new Routes(handlers);
     const params = route?.params || {};
 
-    const ctx = new Context(server, request, params, url, routes);
+    const ctx = new Context(server, request, params, request.url, routes);
     if (allowHeader) {
       ctx.set(HTTPHeaders.Allow, allowHeader);
     }
@@ -136,7 +144,7 @@ export function Serve(config: Config) {
     // TODO context can be modified by middleware after all routes are executed is this ok?
     /*
      TODO bug when using ctx.next() in middleware withouth returning it like Logger middleware
-     and handler or middlewares throws error, error wont show up in console 
+     and handler or middlewares throws error, error wont show up in console
     */
     await ctx.next();
 
