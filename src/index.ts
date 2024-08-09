@@ -119,11 +119,7 @@ export function Serve(config: Config) {
       handlers = [
         ...(config?.middlewares || []),
         ...route.data.before,
-        route.data.target.prototype
-          ? route.data.target.prototype[route.data.fnName].bind(
-              route.data.target
-            )
-          : route.data.target[route.data.fnName].bind(route.data.target),
+        route.data.target,
         ...route.data.after,
       ];
     }
