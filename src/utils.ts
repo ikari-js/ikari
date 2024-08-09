@@ -176,7 +176,7 @@ export function getRoutesFromGroups(config: Config, groups: Group[]): Route[] {
           if (route == null) return;
           if (typeof route !== "function" && typeof route !== "object") return;
 
-          route.target = controller;
+          route.target = controller[route.fnName].bind(controller);
           let path = route.path;
           let before = route.before;
           if (prefix) path = prefix + path;
@@ -219,7 +219,7 @@ export function getRoutesFromControllers(
       if (route == null) return;
       if (typeof route !== "function" && typeof route !== "object") return;
 
-      route.target = controller;
+      route.target = controller[route.fnName].bind(controller);
       let path = route.path;
       if (config.prefix) {
         path = config.prefix + path;
