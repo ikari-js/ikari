@@ -2703,18 +2703,20 @@ describe("getRoutesFromControllers function", () => {
     }
 
     const routes = getRoutesFromControllers({}, [Test]);
+    const getRouteWithOutTarget = { ...routes[0] };
+    delete getRouteWithOutTarget.target;
 
-    expect(routes).toEqual([
-      {
-        after: [],
-        before: [],
-        path: "/test/get",
-        method: HTTPMethod.GET,
-        fnName: "get",
-        pathHasParams: false,
-        target: Test,
-      },
-    ]);
+    expect(getRouteWithOutTarget).toEqual({
+      after: [],
+      before: [],
+      path: "/test/get",
+      method: HTTPMethod.GET,
+      fnName: "get",
+      pathHasParams: false,
+    });
+
+    expect(routes[0].target).toBeFunction();
+    expect(routes[0].target.name).toBe("bound get");
   });
 
   test("when getRoutesFromControllers called with controllers and prefix it returns routes", async () => {
@@ -2733,17 +2735,20 @@ describe("getRoutesFromControllers function", () => {
       [Test]
     );
 
-    expect(routes).toEqual([
-      {
-        after: [],
-        before: [],
-        path: "/api/test/get",
-        method: HTTPMethod.GET,
-        fnName: "get",
-        pathHasParams: false,
-        target: Test,
-      },
-    ]);
+    const getRouteWithOutTarget = { ...routes[0] };
+    delete getRouteWithOutTarget.target;
+
+    expect(getRouteWithOutTarget).toEqual({
+      after: [],
+      before: [],
+      path: "/api/test/get",
+      method: HTTPMethod.GET,
+      fnName: "get",
+      pathHasParams: false,
+    });
+
+    expect(routes[0].target).toBeFunction();
+    expect(routes[0].target.name).toBe("bound get");
   });
 
   test("when getRoutesFromControllers called with empty controllers it returns empty routes", async () => {
@@ -2793,17 +2798,20 @@ describe("getRoutesFromGroups function", () => {
       },
     ]);
 
-    expect(routes).toEqual([
-      {
-        after: [],
-        before: [],
-        path: "/api/test/get",
-        method: HTTPMethod.GET,
-        fnName: "get",
-        pathHasParams: false,
-        target: Test,
-      },
-    ]);
+    const getRouteWithOutTarget = { ...routes[0] };
+    delete getRouteWithOutTarget.target;
+
+    expect(getRouteWithOutTarget).toEqual({
+      after: [],
+      before: [],
+      path: "/api/test/get",
+      method: HTTPMethod.GET,
+      fnName: "get",
+      pathHasParams: false,
+    });
+
+    expect(routes[0].target).toBeFunction();
+    expect(routes[0].target.name).toBe("bound get");
   });
 
   test("when getRoutesFromGroups called with groups and prefix it returns routes", async () => {
@@ -2827,17 +2835,20 @@ describe("getRoutesFromGroups function", () => {
       ]
     );
 
-    expect(routes).toEqual([
-      {
-        after: [],
-        before: [],
-        path: "/api/api/test/get",
-        method: HTTPMethod.GET,
-        fnName: "get",
-        pathHasParams: false,
-        target: Test,
-      },
-    ]);
+    const getRouteWithOutTarget = { ...routes[0] };
+    delete getRouteWithOutTarget.target;
+
+    expect(getRouteWithOutTarget).toEqual({
+      after: [],
+      before: [],
+      path: "/api/api/test/get",
+      method: HTTPMethod.GET,
+      fnName: "get",
+      pathHasParams: false,
+    });
+
+    expect(routes[0].target).toBeFunction();
+    expect(routes[0].target.name).toBe("bound get");
   });
 
   test("when getRoutesFromGroups called with empty groups it returns empty routes", async () => {
