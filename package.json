@@ -12,7 +12,7 @@
     "name": "Abdurrahman Aydın",
     "url": "https://github.com/aaydin-tr"
   },
-  "version": "0.9.7-alpha",
+  "version": "0.9.7-alpha2",
   "keywords": [
     "bun",
     "bunjs",
@@ -22,32 +22,32 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/esm/index.js",
+      "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.js",
       "types": "./dist/types/index.d.ts"
     },
     "./decorators": {
-      "import": "./dist/esm/decorators/index.js",
+      "import": "./dist/esm/decorators/index.mjs",
       "require": "./dist/cjs/decorators/index.js",
       "types": "./dist/types/decorators/index.d.ts"
     },
     "./middlewares/cors": {
-      "import": "./dist/esm/middlewares/cors/index.js",
+      "import": "./dist/esm/middlewares/cors/index.mjs",
       "require": "./dist/cjs/middlewares/cors/index.js",
       "types": "./dist/types/middlewares/cors/index.d.ts"
     },
     "./middlewares/helmet": {
-      "import": "./dist/esm/middlewares/helmet/index.js",
+      "import": "./dist/esm/middlewares/helmet/index.mjs",
       "require": "./dist/cjs/middlewares/helmet/index.js",
       "types": "./dist/types/middlewares/helmet/index.d.ts"
     },
     "./middlewares/request-id": {
-      "import": "./dist/esm/middlewares/request-id/index.js",
+      "import": "./dist/esm/middlewares/request-id/index.mjs",
       "require": "./dist/cjs/middlewares/request-id/index.js",
       "types": "./dist/types/middlewares/request-id/index.d.ts"
     },
     "./middlewares/logger": {
-      "import": "./dist/esm/middlewares/logger/index.js",
+      "import": "./dist/esm/middlewares/logger/index.mjs",
       "require": "./dist/cjs/middlewares/logger/index.js",
       "types": "./dist/types/middlewares/logger/index.d.ts"
     },
