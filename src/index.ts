@@ -70,7 +70,7 @@ export function Serve(config: Config) {
   const router = createRouter<Route>();
 
   routes.forEach((route) => {
-    addRoute(router, route.path, route.method, route);
+    addRoute(router, route.method, route.path, route);
   });
 
   (config.serveOptions as BunServe).fetch = async function (
@@ -90,15 +90,15 @@ export function Serve(config: Config) {
     let allowHeader = "";
     let status;
 
-    let route = findRoute(router, path, request.method);
+    let route = findRoute(router, request.method, path);
     if (!route) {
-      route = findRoute(router, path, HTTPMethod.ALL);
+      route = findRoute(router, HTTPMethod.ALL, path);
     }
 
     if (!route && request.method === HTTPMethod.OPTIONS) {
       const allowedMethods = new Set<string>();
       for (const method of Object.keys(HTTPMethod)) {
-        const r = findRoute(router, path, method);
+        const r = findRoute(router, method, path);
         if (r?.data) {
           allowedMethods.add(r.data.method);
         }
@@ -113,7 +113,7 @@ export function Serve(config: Config) {
     }
 
     if (!route && request.method === HTTPMethod.HEAD) {
-      route = findRoute(router, path, HTTPMethod.GET);
+      route = findRoute(router, HTTPMethod.GET, path);
     }
 
     let handlers: Handlers;
