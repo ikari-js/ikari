@@ -1,7 +1,8 @@
 import { ErrorLike, Server } from "bun";
 import { Config, Context, Controller, Group, Route } from ".";
-import fs from "fs";
 import Container from "typedi";
+
+const VERSION = "0.9.7";
 
 export function createPath(str: string) {
   if (str[0] !== "/") {
@@ -91,16 +92,12 @@ export function startupMessage(
   bunServe: Server,
   routes: Route[]
 ) {
-  const { version } = JSON.parse(
-    fs.readFileSync(import.meta.dir + "/../package.json", "utf-8")
-  );
 
   const hostMsg = `${bunServe.url.toString()}`;
   const handlersMsg = `Handlers ...... ${routes.length}`;
   const pidMsg = `PID ...... ${process.pid}`;
   const handlerMsgAndPidMsg = `${handlersMsg}  ${pidMsg}`;
-  let successMsg = `ikari v${version}`;
-  if (!version) successMsg = `ikari`;
+  const successMsg = `ikari v${VERSION}`;
 
   const maxLength = Math.max(
     hostMsg.length,
