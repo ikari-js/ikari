@@ -2,7 +2,7 @@ import { ErrorLike, Server } from "bun";
 import { Config, Context, Controller, Group, Route } from ".";
 import Container from "typedi";
 
-const VERSION = "0.9.7-alpha2";
+const VERSION = "0.9.7-alpha3";
 
 export function createPath(str: string) {
   if (str[0] !== "/") {

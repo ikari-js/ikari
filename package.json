@@ -1,7 +1,9 @@
 {
   "name": "ikari",
   "description": "Elagant Web Framework for Bun",
-  "module": "index.ts",
+  "module": "./dist/esm/index.mjs",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/types/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ikari-js/ikari.git"
@@ -12,7 +14,7 @@
     "name": "Abdurrahman Aydın",
     "url": "https://github.com/aaydin-tr"
   },
-  "version": "0.9.7-alpha2",
+  "version": "0.9.7-alpha3",
   "keywords": [
     "bun",
     "bunjs",
