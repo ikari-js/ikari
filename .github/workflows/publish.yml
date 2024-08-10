@@ -23,6 +23,7 @@ jobs:
           bun-version: latest
 
       - name: Generate Changelog
+        if: ${{ !contains(github.ref, '-alpha') && !contains(github.ref, '-beta') }}
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASER_TOKEN }}
         run: bunx changelogithub --no-group
@@ -42,7 +43,7 @@ jobs:
           bun-version: latest
 
       - name: "Install Dependencies"
-        run: npm install
+        run: bun install
 
       - name: Run eslint
         run: bun lint
