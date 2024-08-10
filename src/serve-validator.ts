@@ -14,7 +14,8 @@ export class ServeValidator {
       .checkServeOptionsIsObject()
       .checkPrefixIsString()
       .checkGroupsOrControllersIsNotEmpty()
-      .checkGroupMiddlewaresIsArray();
+      .checkGroupMiddlewaresIsArray()
+      .checkNotFoundHandlerIsFunction();
   }
 
   private checkConfigIsObject() {
@@ -209,6 +210,17 @@ export class ServeValidator {
           }
         }
       }
+    }
+
+    return this;
+  }
+
+  private checkNotFoundHandlerIsFunction() {
+    if (
+      this.config.notFoundHandler &&
+      typeof this.config.notFoundHandler !== "function"
+    ) {
+      throw new Error("NotFoundHandler must be a function");
     }
 
     return this;

@@ -20,7 +20,8 @@
     "bunjs",
     "https",
     "web",
-    "server"
+    "server",
+    "decorators"
   ],
   "exports": {
     ".": {

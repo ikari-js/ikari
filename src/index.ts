@@ -8,10 +8,10 @@ import { Routes } from "./route";
 import {
   HTTPHeaders,
   HTTPMethod,
-  NotFound,
   StatusCode,
   createPath,
   defaultErrorHandler,
+  defaultNotFound,
   getRoutesFromControllers,
   getRoutesFromGroups,
   returnContextResponse,
@@ -41,6 +41,10 @@ export function Serve(config: Config) {
 
   if (!config.errorHandler) {
     config.errorHandler = defaultErrorHandler;
+  }
+
+  if (!config.notFoundHandler) {
+    config.notFoundHandler = defaultNotFound;
   }
 
   if (!config.serveOptions) {
@@ -114,7 +118,7 @@ export function Serve(config: Config) {
 
     let handlers: Handlers;
     if (!route?.data || !route.data.target) {
-      handlers = [...(config?.middlewares || []), NotFound];
+      handlers = [...(config?.middlewares || []), config.notFoundHandler!];
     } else {
       handlers = [
         ...(config?.middlewares || []),

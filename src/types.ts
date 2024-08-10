@@ -82,6 +82,11 @@ export type Config = {
    */
   errorHandler?: ErrorHandler;
   /**
+   * Not found handler for the server
+   * @default defaultNotFoundHandler
+   */
+  notFoundHandler?: Handler;
+  /**
    * Middlewares to be used in the server
    * @example
    * middlewares: [CORS(), Logger()]

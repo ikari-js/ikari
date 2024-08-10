@@ -2,10 +2,10 @@
 import { expect, test, describe, afterAll } from "bun:test";
 import {
   HTTPMethod,
-  NotFound,
   StatusCode,
   createPath,
   defaultErrorHandler,
+  defaultNotFound,
   getRoutesFromControllers,
   getRoutesFromGroups,
   returnContextResponse,
@@ -1197,6 +1197,51 @@ describe("Serve", async () => {
     expect(config.errorHandler).toBe(customErrorHandler);
     serve.stop();
   });
+
+  test("Serve custom not found handler", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    function customNotFoundHandler(ctx: Context) {
+      return ctx.json({ message: "Custom Not Found" });
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+      notFoundHandler: customNotFoundHandler,
+    };
+
+    const serve = Serve(config);
+    expect(config.notFoundHandler).toBe(customNotFoundHandler);
+    serve.stop();
+  });
+
+  test("Serve default not found handler", async () => {
+    @Controller("/test")
+    class Test {
+      @Get("/get")
+      public get() {}
+    }
+
+    const config: Config = {
+      controllers: [Test],
+      disableStartupMessage: true,
+      serveOptions: {
+        port: 0,
+      },
+    };
+
+    const serve = Serve(config);
+    expect(config.notFoundHandler).toBe(defaultNotFound);
+    serve.stop();
+  })
 
   test("Serve custom server option", async () => {
     @Controller("/test")
@@ -2626,7 +2671,7 @@ describe("NotFound function", async () => {
   test("when NotFound called with HEAD it returns 404 without body.", async () => {
     const { context, statusMock } = createContextMock(HTTPMethod.HEAD);
 
-    NotFound(context);
+    defaultNotFound(context);
 
     expect(statusMock).toHaveBeenCalledTimes(1);
 
@@ -2642,7 +2687,7 @@ describe("NotFound function", async () => {
       HTTPMethod.GET
     );
 
-    NotFound(context);
+    defaultNotFound(context);
 
     expect(jsonMock).toHaveBeenCalledTimes(1);
     expect(statusMock).toHaveBeenCalledTimes(1);

@@ -92,7 +92,6 @@ export function startupMessage(
   bunServe: Server,
   routes: Route[]
 ) {
-
   const hostMsg = `${bunServe.url.toString()}`;
   const handlersMsg = `Handlers ...... ${routes.length}`;
   const pidMsg = `PID ...... ${process.pid}`;
@@ -136,14 +135,6 @@ export function returnContextResponse(ctx: Context) {
     return ctx.getResWithoutBody();
   }
   return ctx.res;
-}
-
-export function NotFound(ctx: Context) {
-  // TODO not sure about this
-  if (ctx.method !== HTTPMethod.OPTIONS) {
-    ctx.status(StatusCode.NOT_FOUND);
-  }
-  return ctx.json({ message: "Not Found" });
 }
 
 //TODO: Tests are missing for this function. We have to test it.
@@ -241,4 +232,12 @@ export function defaultErrorHandler(err: ErrorLike) {
       headers: { "Content-Type": "application/json" },
     }
   );
+}
+
+export function defaultNotFound(ctx: Context) {
+  // TODO not sure about this
+  if (ctx.method !== HTTPMethod.OPTIONS) {
+    ctx.status(StatusCode.NOT_FOUND);
+  }
+  return ctx.json({ message: "Not Found" });
 }
