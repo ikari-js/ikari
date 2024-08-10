@@ -1,44 +1,35 @@
 /* eslint-disable no-console */
 import { $ } from "bun";
+import { build, type Options } from "tsup";
+
 try {
   await $`rm -rf dist`;
+ 
+  const tsupConfig: Options = {
+    entry: ["src/**/*.ts"],
+    splitting: false,
+    sourcemap: false,
+    bundle: true,
+  } satisfies Options;
+
+  await Promise.all([
+    build({
+      outDir: "dist/esm",
+      format: "esm",
+      target: "node20",
+      cjsInterop: false,
+      ...tsupConfig,
+    }),
+    build({
+      outDir: "dist/cjs",
+      format: "cjs",
+      target: "node20",
+      ...tsupConfig,
+    }),
+  ]);
+
   await $`tsc -p tsconfig.build.json`;
 
-  // const files = readdirSync("./dist")
-  //   .filter((file) => file.endsWith(".js"))
-  //   .map((file) => `./dist/${file}`);
-
-  // await Bun.build({
-  //   entrypoints: files,
-  //   target: "bun",
-  //   outdir: "./dist",
-  //   minify: true,
-  // });
-
-  // const decoratorsFiles = readdirSync("./dist/decorators")
-  //   .filter((file) => file.endsWith(".js"))
-  //   .map((file) => `./dist/decorators/${file}`);
-
-  // await Bun.build({
-  //   entrypoints: decoratorsFiles,
-  //   target: "bun",
-  //   outdir: "./",
-  //   minify: true,
-  // });
-
-  // const middlewares = readdirSync("./dist/middlewares");
-  // middlewares.forEach((middleware) => {
-  //   const files = readdirSync(`./dist/middlewares/${middleware}`)
-  //     .filter((file) => file.endsWith(".js"))
-  //     .map((file) => `./dist/middlewares/${middleware}/${file}`);
-
-  //   Bun.build({
-  //     entrypoints: files,
-  //     target: "bun",
-  //     outdir: `./dist/middlewares/${middleware}`,
-  //     minify: true,
-  //   });
-  // });
 } catch (e) {
   console.error(e);
 }

@@ -2,7 +2,6 @@
   "name": "ikari",
   "description": "Elagant Web Framework for Bun",
   "module": "index.ts",
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ikari-js/ikari.git"
@@ -23,23 +22,36 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.js"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
     },
     "./decorators": {
-      "import": "./dist/decorators/index.js"
+      "import": "./dist/esm/decorators/index.js",
+      "require": "./dist/cjs/decorators/index.js",
+      "types": "./dist/types/decorators/index.d.ts"
     },
     "./middlewares/cors": {
-      "import": "./dist/middlewares/cors/index.js"
+      "import": "./dist/esm/middlewares/cors/index.js",
+      "require": "./dist/cjs/middlewares/cors/index.js",
+      "types": "./dist/types/middlewares/cors/index.d.ts"
     },
     "./middlewares/helmet": {
-      "import": "./dist/middlewares/helmet/index.js"
+      "import": "./dist/esm/middlewares/helmet/index.js",
+      "require": "./dist/cjs/middlewares/helmet/index.js",
+      "types": "./dist/types/middlewares/helmet/index.d.ts"
     },
     "./middlewares/request-id": {
-      "import": "./dist/middlewares/request-id/index.js"
+      "import": "./dist/esm/middlewares/request-id/index.js",
+      "require": "./dist/cjs/middlewares/request-id/index.js",
+      "types": "./dist/types/middlewares/request-id/index.d.ts"
     },
     "./middlewares/logger": {
-      "import": "./dist/middlewares/logger/index.js"
-    }
+      "import": "./dist/esm/middlewares/logger/index.js",
+      "require": "./dist/cjs/middlewares/logger/index.js",
+      "types": "./dist/types/middlewares/logger/index.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
@@ -51,11 +63,13 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@swc/core": "^1.7.10",
     "@types/bun": "latest",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "@typescript-eslint/parser": "^6.11.0",
     "eslint": "^8.53.0",
-    "eslint-plugin-import": "^2.29.1"
+    "eslint-plugin-import": "^2.29.1",
+    "tsup": "^8.2.4"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
